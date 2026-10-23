@@ -42,13 +42,55 @@ Ein PowerShell-basiertes All-in-One Automatisierungswerkzeug zum Herunterladen, 
 
 ---
 
-## 📂 Kategorisierte Ordnerstruktur
+## 📂 Unterstützte Distributionen & Systeme (37 Betriebssysteme)
 
-1. **`01_Desktop-Linux`** (Ubuntu, Linux Mint, Fedora, Arch, CachyOS, EndeavourOS, Garuda, Debian, Devuan, Zorin OS, Mageia, Omarchy, Alpine, Gentoo)
-2. **`02_Enterprise-Server`** (Ubuntu Server LTS, Rocky Linux, AlmaLinux, CentOS Stream, Proxmox VE, TrueNAS SCALE, OpenMediaVault, ZimaOS, Rockstor)
-3. **`03_Security-Pentest`** (Kali Linux, Parrot Security, BlackArch)
-4. **`04_Rescue-Systeme`** (SystemRescue, Rescuezilla, GParted Live, Rescatux, netboot.xyz, Kaspersky Rescue Disk, ESET SysRescue, Tiny Core Linux, FygoOS)
-5. **`05_BSD-Unix`** (FreeBSD)
+### 🖥️ 01_Desktop-Linux
+- **CachyOS** – Performance- und Gaming-optimierte Arch-Linux-Distribution mit angepassten x86-64-v3/v4-Kerneln.
+- **Garuda Linux** – Visuell ansprechendes, Arch-basiertes Desktop-System mit BTRFS-Snapshots und Gaming-Fokus ("dr460nized").
+- **Linux Mint Cinnamon** – Äußerst anwenderfreundliche, elegante Desktop-Distribution auf Ubuntu-Basis mit vertrautem Desktop-Layout.
+- **Omarchy** – Schlankes, modernes Arch-Derivat mit leichtgewichtiger Basis und schnellem Installer.
+- **Ubuntu Desktop** – Die weltweit meistgenutzte Standard-Linux-Desktop-Distribution mit GNOME-Arbeitsumgebung.
+- **Ubuntu Cinnamon** – Offizieller Ubuntu-Flavor mit dem modernen, flexiblen Cinnamon-Desktop.
+- **Zorin OS Education** – Speziell für Schulen, Schüler und Bildung konzipierte Zorin-OS-Version mit vorinstallierter Lernsoftware.
+- **Alpine Linux** – Extrem ressourcenschonende, hochsichere Mini-Distribution auf musl-libc- und busybox-Basis.
+- **Arch Linux** – Puristische, flexible Rolling-Release-Distribution nach dem KISS-Prinzip („Keep It Simple, Stupid“).
+- **Debian** – Das universelle, extrem stabile Betriebssystem und Basis unzähliger moderner Linux-Distributionen.
+- **Devuan** – Solider Debian-Fork ohne systemd für Liebhaber klassischer Init-Systeme (SysVinit/OpenRC).
+- **Fedora Workstation** – Innovative, wegweisende Distribution des Red-Hat-Ökosystems mit neuesten Linux-Technologien.
+- **Gentoo LiveGUI** – Quellcode-basierte Meta-Distribution als sofort bootfähiges Live-System mit grafischer Oberfläche.
+- **Mageia** – Community-gestützter Mandriva-Nachfolger mit komfortablem Kontrollzentrum und hoher Stabilität.
+- **EndeavourOS** – Benutzerfreundlicher Arch-Linux-Installer mit aktiver Community und schlanker Standardkonfiguration.
+
+### 🏢 02_Enterprise-Server & NAS
+- **AlmaLinux** – Binärkompatibles 1:1 RHEL-Enterprise-Betriebssystem und stabiler Nachfolger von CentOS.
+- **CentOS Stream 9** – Die kontinuierlich aktualisierte Upstream-Entwicklungsplattform für Red Hat Enterprise Linux (RHEL).
+- **Proxmox VE** – Führende Open-Source-Virtualisierungsplattform für KVM-VMs, LXC-Container und Software-Defined Storage.
+- **Rocky Linux** – Community-getriebenes, hochstabiles Enterprise-Betriebssystem mit 100%iger RHEL-Kompatibilität.
+- **OpenMediaVault** – Modulare, webbasierte Network Attached Storage (NAS)-Lösung auf Debian-Basis.
+- **ZimaOS** – Modernes, einsteigerfreundliches Cloud- & NAS-Betriebssystem für Home-Server und Personal-Cloud.
+- **FreeNAS (TrueNAS SCALE)** – Leistungsstarkes Enterprise-Storage- und NAS-System mit ZFS-Dateisystem und Docker/Apps-Support.
+- **Ubuntu Server LTS** – Die bewährte Long-Term-Support-Plattform für Cloud-, Rechenzentrums- und Server-Workloads.
+- **Rockstor** – BTRFS-fokussierte NAS- und Speicher-Distribution mit flexiblen „Rock-ons“ (Docker-Apps) und Web-Verwaltung.
+
+### 🛡️ 03_Security- & Penetration-Testing
+- **Kali Linux** – Die weltweite Standard-Distribution für professionelle Penetrationstests, Ethical Hacking und Security-Audits.
+- **BlackArch Linux** – Auf Arch basierende Sicherheits-Distribution mit über 2.800 vorinstallierten Pentesting-Werkzeugen.
+- **Parrot Security** – All-in-One-Umgebung für Cyber-Security, Penetration-Testing, Reverse Engineering und digitale Privatsphäre.
+
+### 🧰 04_Rescue-, Diagnose- & Notfall-Systeme
+- **Tiny Core Linux** – Winziges, modulares Mini-Linux-System (nur wenige Megabytes groß), das komplett im RAM läuft.
+- **Rescuezilla** – Die benutzerfreundliche grafische "Schweizer Taschenmesser"-Lösung für Image-Backups, Restore und Klonen ("Clonezilla mit GUI").
+- **GParted Live** – Bootfähiges Spezialsystem zur Verwaltung, Vergrößerung, Verkleinerung und Reparatur von Partitionen.
+- **FygoOS PE** – Leistungsfähiges WinPE-basiertes Rettungssystem zur Diagnose, Datenrettung und Windows-Wartung.
+- **netboot.xyz** – Ultrakompakter Bootloader zum Starten dutzender Betriebssysteme direkt über das Internet per iPXE.
+- **SystemRescue** – Das klassische Notfall- und Rettungssystem für Linux- und Windows-Administratoren mit CLI- und GUI-Tools.
+- **Rescatux** – Spezialisiertes Reparaturwerkzeug zur einfachen Wiederherstellung von Bootloadern (GRUB) und Zurücksetzen von Passwörtern.
+- **Kaspersky Rescue Disk** – Bootfähige Virenscan- und Bereinigungsumgebung zur Rettung schwer infizierter Systeme.
+- **ESET SysRescue Live** – Antiviren-Rettungsumgebung zur Erkennung und Entfernung hartnäckiger Malware außerhalb des Betriebssystems.
+- **Phoronix Test Suite (PTS Desktop Live)** – Automatisierte Benchmarking- und Hardware-Testplattform für Performance- und Stabilitätstests.
+
+### 🌐 05_BSD & Unix
+- **FreeBSD** – Hochentwickeltes, hochsicheres UNIX-Betriebssystem mit nativer ZFS-Unterstützung, Jails und legendärem Netzwerk-Stack.
 
 ---
 
