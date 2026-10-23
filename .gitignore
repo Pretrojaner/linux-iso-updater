@@ -1,0 +1,29 @@
+# ISO Images and Disk Images
+*.iso
+*.img
+*.vhd
+*.vhdx
+*.qcow2
+*.raw
+*.xz
+
+# Archive directory
+/Archiv/
+Archiv/
+
+# Category folders with downloaded ISOs
+/01_Desktop-Linux/
+/02_Enterprise-Server/
+/03_Security-Pentest/
+/04_Rescue-Systeme/
+/05_BSD-Unix/
+/06_Windows/
+
+# Log files and temporary files
+*.log
+update-linux-isos.log
+*.tmp
+*.msi
+.backup/
+.system_generated/
+scratch/
