@@ -1,8 +1,8 @@
-﻿# Linux ISO Auto-Updater & Ventoy Sync Tool (v2.1.0)
+# Linux ISO Auto-Updater & Ventoy Sync Tool (v2.2.0)
 
 **Autor:** Ingo  
 **Repository:** [Pretrojaner/linux-iso-updater](https://github.com/Pretrojaner/linux-iso-updater)  
-**Version:** `2.1.0`
+**Version:** `2.2.0`
 
 Ein PowerShell-basiertes All-in-One Automatisierungswerkzeug zum Herunterladen, Aktualisieren und Verifizieren von Linux-, Server-, BSD- und Rescue-ISOs sowie zur automatischen Synchronisation und Theme-Einrichtung auf bootfähigen Ventoy-USB-Laufwerken.
 
@@ -18,6 +18,16 @@ Ein PowerShell-basiertes All-in-One Automatisierungswerkzeug zum Herunterladen, 
 - **Integritätsprüfung:**
   - Berechnet und verifiziert automatisch SHA256- und SHA512-Prüfsummen direkt nach dem Download.
   - Überspringt bereits vorhandene, aktuelle ISOs für blitzschnelle Durchläufe.
+- **Automatische Ventoy-Installation (`-InstallVentoy`):**
+  - Installiert oder aktualisiert Ventoy direkt per Kommandozeile (CLI) ohne grafische Dialoge (GUI).
+  - Erkennt Ventoy lokal oder installiert es vollautomatisch via Windows Package Manager (`winget`) bzw. direkt von GitHub Releases.
+  - Sichere Laufwerksauswahl mit Bestätigungsabfrage vor dem Formatieren (`/I` mit GPT und NTFS).
+  - Erkennt vorhandene Ventoy-Sticks und bietet zerstörungsfreie Bootcode-Aktualisierungen (`/U`) unter Beibehaltung aller vorhandenen Dateien an.
+- **Intelligente Vorab-Speicherplatzprüfung:**
+  - Berechnet vor dem Kopieren den exakten Speicherbedarf aller aktivierten ISOs.
+  - Bereits auf dem Ziel-Laufwerk vorhandene, identische Dateien werden vom Bedarf abgezogen.
+  - Zeigt bei der Laufwerksauswahl farblich an, ob ausreichend freier Speicher vorhanden ist.
+  - Bricht bei Speichermangel auf Wunsch sicher ab und weist den genauen Fehlbetrag in GB aus.
 - **Automatische Archivierung & Bereinigung:**
   - Ältere lokale ISO-Versionen werden automatisch in den Ordner `Archiv/` verschoben.
   - Abgewählte und veraltete ISOs werden auf dem Ventoy-Ziellaufwerk endgültig gelöscht.
@@ -47,9 +57,9 @@ Ein PowerShell-basiertes All-in-One Automatisierungswerkzeug zum Herunterladen, 
 | Datei | Beschreibung |
 |---|---|
 | `update-linux-isos.bat` | Robuster Starter. Prüft/installiert PowerShell 7 und startet das Skript mit Bypass-Rechten. |
-| `update-linux-isos.ps1` | Hauptskript (Downloads, Hash-Prüfung, Archivierung, Ventoy-Theme & TreeView-Sync). |
+| `update-linux-isos.ps1` | Hauptskript (Downloads, Hash-Prüfung, Archivierung, Ventoy-CLI-Installation, Theme & Sync). |
 | `distros.json` | JSON-Konfigurationsdatei aller Distributionen, Kategorien, Download-Quellen und Regex-Muster. |
-| `.gitignore` | Schließt ISO-Dateien, Logdateien und Systemordner vom Git-Tracking aus. |
+| `.gitignore` | Schließt ISO-Dateien, Logdateien und temporäre Ordner vom Git-Tracking aus. |
 | `GITHUB_ANLEITUNG.md` | Dokumentation zur Verwaltung und Pflege des GitHub-Repositories. |
 
 ---
@@ -70,7 +80,13 @@ Einfach Doppelklick auf **`update-linux-isos.bat`**.
 # Distributionsauswahl interaktiv anpassen / rekonfigurieren:
 .\update-linux-isos.ps1 -SelectDistros
 
-# Direkte Angabe des Ventoy-Ziellaufwerks (z. B. E:):
+# Ventoy automatisiert auf USB-Laufwerk installieren/aktualisieren (ohne GUI):
+.\update-linux-isos.ps1 -InstallVentoy
+
+# Ventoy direkt auf ein bestimmtes Ziellaufwerk installieren (z. B. D:):
+.\update-linux-isos.ps1 -InstallVentoy -TargetDrive D:
+
+# Direkte Angabe des Ventoy-Ziellaufwerks beim ISO-Kopieren:
 .\update-linux-isos.ps1 -TargetDrive E:
 
 # Nur Ventoy-Synchronisation durchführen (Download überspringen):

@@ -1,6 +1,6 @@
 @echo off
 setlocal EnableDelayedExpansion
-title Linux ISO Auto-Updater v2.1.0
+title Linux ISO Auto-Updater v2.2.0
 
 :: Pruefen ob PowerShell 7 (pwsh.exe) verfuegbar ist
 where pwsh.exe >nul 2>&1
