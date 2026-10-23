@@ -56,3 +56,8 @@ Doppelklick auf `update-linux-isos.bat`.
 # Nur Ventoy-Sync durchführen (ohne Download):
 .\update-linux-isos.ps1 -SkipDownload -TargetDrive E:
 ```
+
+## TO-DO (gedankenschnipsel)
+- Cloudflare download problematiken unter powershell 5.1
+- Ventoy Erstellung wenn Speicherort keine ventoy strucktur finden Sollte oder hinweis zur manuellen installation
+- auswahlliste welche distros geladen werden sollen und welche nicht, aktiv inaktiv schaltung auch für schon herrunter geladene distros, update download soll trozdem funktionieren
