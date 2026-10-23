@@ -1,111 +1,76 @@
-# Anleitung: Linux ISO Auto-Updater auf GitHub hochladen
+﻿# Anleitung: Linux ISO Auto-Updater auf GitHub verwalten
 
 Autor: **Ingo**  
-Projekt: **Linux ISO Auto-Updater & Ventoy Sync**
+Projekt: **Linux ISO Auto-Updater & Ventoy Sync**  
+Repository: [Pretrojaner/linux-iso-updater](https://github.com/Pretrojaner/linux-iso-updater)
 
-Diese Anleitung beschreibt Schritt für Schritt, wie die Projektdateien auf ein eigenes GitHub-Repository hochgeladen werden.
-
----
-
-## ⚠️ Wichtiger Hinweis vorab (.gitignore)
-
-Im Projektordner wurde eine Datei namens `.gitignore` angelegt.  
-**Warum ist das wichtig?**  
-GitHub erlaubt standardmäßig keine Dateien, die größer als **100 MB** sind. Linux-ISO-Dateien sind mehrere Gigabyte groß. Die `.gitignore`-Datei stellt sicher, dass beim Hochladen ausschließlich die Skriptdateien (`distros.json`, `update-linux-isos.bat`, `update-linux-isos.ps1` und Dokumentationen) hochgeladen werden, **niemals** die heruntergeladenen ISO-Dateien oder Logs.
+Diese Anleitung beschreibt, wie das GitHub-Repository aktualisiert wird, wie `.gitignore` funktioniert und wie neue Releases erstellt werden.
 
 ---
 
-## Methode 1: Über die Konsole / PowerShell (Empfohlen)
+## 1. Wichtiger Hinweis: Schutz vor großen Dateien (`.gitignore`)
 
-### Schritt 1: Neues Repository auf GitHub erstellen
-1. Öffne im Browser [github.com](https://github.com/) und melde dich an.
-2. Klicke oben rechts auf das **`+`**-Symbol und wähle **`New repository`**.
-3. Vergib einen Namen, z. B. `linux-iso-updater` oder `iso-downloader`.
-4. Wähle **Public** (öffentlich) oder **Private** (privat).
-5. **Wichtig:** Setze **keinen** Haken bei *Add a README file*, *Add .gitignore* oder *Choose a license* (da diese bereits lokal existieren).
-6. Klicke auf **Create repository**.
-7. Kopiere die angezeigte Repository-URL (z. B. `https://github.com/<DeinBenutzername>/linux-iso-updater.git`).
+Auf GitHub gilt ein striktes Limit: Dateien über **100 MB** können nicht hochgeladen werden. Linux-ISO-Dateien sind meist mehrere Gigabyte groß.
+
+Die im Projekt enthaltene `.gitignore`-Datei schließt daher automatisch aus:
+- Alle ISO- und Image-Dateien (`*.iso`, `*.img`, `*.raw` etc.)
+- Die Download- und Kategorieordner (`01_Desktop-Linux/` bis `05_BSD-Unix/`)
+- Logdateien (`*.log`, `update-linux-isos.log`)
+- Den Archiv-Ordner (`Archiv/`)
+
+Beim Hochladen (Push) werden somit **nur** die Skript- und Konfigurationsdateien übertragen:
+- `update-linux-isos.bat`
+- `update-linux-isos.ps1`
+- `distros.json`
+- `README.md`, `GITHUB_ANLEITUNG.md`, `.gitignore`
 
 ---
 
-### Schritt 2: Git lokal initialisieren und Dateien committen
-Öffne die PowerShell oder das Terminal und führe folgende Befehle aus:
+## 2. Änderungen auf GitHub hochladen (Git-Konsole)
+
+Öffne eine PowerShell im Projektordner:
 
 ```powershell
 # 1. In das Projektverzeichnis wechseln
-cd "z:\Tauschen_ID\ID_Böckmann\dev\iso downloader"
+cd "g:\Antigravity\miniprojekte"
 
-# 2. Git-Repository initialisieren
-git init
+# 2. Status prüfen (zeigt geänderte Dateien)
+git status
 
-# 3. Haupt-Branch auf 'main' setzen
-git branch -M main
+# 3. Geänderte Skripte und Dokumentation stagen
+git add distros.json update-linux-isos.bat update-linux-isos.ps1 .gitignore README.md GITHUB_ANLEITUNG.md
 
-# 4. Dateien zur Versionsverwaltung hinzufügen (ignoriert automatisch ISOs & Logs)
-git add distros.json update-linux-isos.bat update-linux-isos.ps1 .gitignore GITHUB_ANLEITUNG.md README.md
+# 4. Commit mit aussagekräftiger Nachricht erstellen
+git commit -m "Update auf Version 2.1.0: Gruppenauswahl, Ventoy-Cleanup, Rockstor, PS7-Installer"
 
-# 5. Ersten Commit erstellen
-git commit -m "Initial commit: Linux ISO Auto-Updater & Ventoy Sync Tool"
-```
-
----
-
-### Schritt 3: Mit GitHub verknüpfen und hochladen (Push)
-
-Ersetze `<URL_DEINES_GITHUB_REPOS>` durch die URL aus Schritt 1:
-
-```powershell
-# 6. Remote-Repository verknüpfen
-git remote add origin https://github.com/<DeinBenutzername>/linux-iso-updater.git
-
-# 7. Dateien auf GitHub hochladen
-git push -u origin main
+# 5. Zu GitHub hochladen
+git push origin main
 ```
 
 > **Hinweis zur Authentifizierung:**  
-> Wenn Git nach Benutzername und Passwort fragt, akzeptiert GitHub seit einiger Zeit kein normales Account-Passwort mehr, sondern ein **Personal Access Token (PAT)**:
-> 1. Auf GitHub: `Settings` -> `Developer Settings` -> `Personal access tokens` -> `Tokens (classic)`.
-> 2. `Generate new token (classic)` anklicken, Haken bei `repo` setzen und Token generieren.
-> 3. Den erzeugten Token kopieren und bei der Passwort-Abfrage im Terminal einfügen.
+> Bei der Passwortabfrage im Terminal muss das **GitHub Personal Access Token (PAT)** eingegeben werden (nicht das Web-Passwort).
 
 ---
 
-## Methode 2: Über die GitHub-Webseite (Ohne Git-Befehle)
+## 3. GitHub Releases & Download-ZIP erstellen
 
-Falls du keine Git-Befehle auf der Kommandozeile verwenden möchtest:
+Für Endanwender, die nicht das gesamte Git-Repository klonen möchten, wird unter dem GitHub-Reiter **Releases** ein fertiges ZIP-Paket (bestehend aus `.bat`, `.ps1` und `distros.json`) bereitgestellt.
 
-1. Erstelle wie oben beschrieben ein neues Repository auf [github.com](https://github.com/).
-2. Klicke im leeren Repository auf den blauen Link **`uploading an existing file`**.
-3. Ziehe folgende Dateien per Drag & Drop in das Browserfenster:
-   - `distros.json`
-   - `update-linux-isos.bat`
-   - `update-linux-isos.ps1`
-   - `.gitignore`
-   - `README.md`
-4. Schreibe unten in das Feld Commit-Message z. B. `Initial commit`.
-5. Klicke auf den grünen Button **Commit changes**.
+### So erstellst du ein neues Release auf GitHub:
+1. Gehe im Webbrowser auf dein Repository: `https://github.com/Pretrojaner/linux-iso-updater`
+2. Klicke auf der rechten Seite auf **Releases** -> **Draft a new release**.
+3. **Tag version:** z. B. `v2.1.0` (Target: `main`).
+4. **Release title:** `Linux ISO Auto-Updater v2.1.0`.
+5. **Beschreibung:** Release Notes / Changelog einfügen.
+6. **Binaries anhängen:** Das vorbereitete `linux-iso-updater-v2.1.0.zip` per Drag & Drop in das Feld *Attach binaries by dropping them here or selecting them* ziehen.
+7. Klicke auf **Publish release**.
 
 ---
 
-## Methode 3: Mit GitHub Desktop
+## 4. Dateien für ein ZIP-Release zusammenstellen
 
-Falls du die grafische Oberfläche [GitHub Desktop](https://desktop.github.com/) installiert hast:
-
-1. Öffne GitHub Desktop.
-2. Wähle **File** -> **Add local repository...**
-3. Wähle den Pfad: `z:\Tauschen_ID\ID_Böckmann\dev\iso downloader`.
-4. Klicke auf **Create a repository**, falls noch keines initialisiert ist.
-5. Klicke auf **Publish repository**, um es direkt mit deinem GitHub-Konto zu synchronisieren.
-
----
-
-## Zukünftige Änderungen hochladen
-
-Wenn du später Änderungen an Skripten oder an `distros.json` vornimmst, lädst du die Aktualisierungen so hoch:
+Um das ZIP-Paket für ein Release lokal zu erstellen, reicht folgender PowerShell-Befehl:
 
 ```powershell
-cd "z:\Tauschen_ID\ID_Böckmann\dev\iso downloader"
-git add .
-git commit -m "Update distributions configuration"
-git push
+Compress-Archive -Path "update-linux-isos.bat", "update-linux-isos.ps1", "distros.json" -DestinationPath "linux-iso-updater-v2.1.0.zip" -Force
 ```
