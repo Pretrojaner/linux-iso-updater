@@ -130,7 +130,7 @@
   {
     "Enabled": true,
     "Name": "CentOS Stream 9",
-    "MatchPattern": "CentOS-Stream-9-[^\"]*?-x86_64-boot",
+    "MatchPattern": "CentOS-Stream-9[^\"]*?-x86_64-(dvd1|boot)",
     "Script": "$html = Get-WebContent -Uri 'https://mirror.stream.centos.org/9-stream/BaseOS/x86_64/iso/'\nif ($html -and $html -match 'href=\"(CentOS-Stream-9-[^\"]*?-x86_64-boot\\.iso)') {\n    $fn = $Matches[1]\n    return @{ Version = \"9-stream\"; Url = \"https://mirror.stream.centos.org/9-stream/BaseOS/x86_64/iso/$fn\"; Filename = $fn }\n}\nreturn $null",
     "Category": "02_Enterprise-Server",
     "SizeBytes": 1572438016

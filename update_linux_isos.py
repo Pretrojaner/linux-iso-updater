@@ -1746,6 +1746,13 @@ def select_distros_interactive(distros_list: List[Dict[str, Any]], iso_dir: Path
         group_map[group_idx] = {"Category": "Sonstige", "Items": leftovers}
         ordered_list.extend(leftovers)
 
+    # Vorab alle vorhandenen lokalen ISOs im Verzeichnis erfassen
+    existing_isos = [
+        p
+        for p in iso_dir.rglob("*.iso")
+        if "Archiv" not in p.parts and not p.name.endswith(".part") and p.is_file() and p.stat().st_size > 1024 * 1024
+    ]
+
     cols = shutil.get_terminal_size(fallback=(80, 24)).columns
     border_len = min(90, max(40, cols - 1))
     banner_border = "=" * border_len
@@ -1756,6 +1763,7 @@ def select_distros_interactive(distros_list: List[Dict[str, Any]], iso_dir: Path
     print(f"{Colors.YELLOW}{'DISTRIBUTIONS-AUSWAHL (MEHRFACHWAHL)'.center(border_len)}{Colors.RESET}")
     print(f"{Colors.CYAN}{banner_border}{Colors.RESET}")
     print(f"{Colors.WHITE}Wähle aus, welche Distributionen künftig geprüft, geladen und synchronisiert werden:{Colors.RESET}")
+    print(f"{Colors.DARK_GRAY}Legende: {Colors.GREEN}[x]{Colors.DARK_GRAY} = ISO bereits lokal vorhanden | {Colors.WHITE}[ ]{Colors.DARK_GRAY} = Noch nicht heruntergeladen{Colors.RESET}")
     print(f"{Colors.DARK_GRAY}Eingabeformate: 'all' (alle), Gruppen z.B. 'G1, G4' oder Nummern z.B. '1, 3, 5-8'!{Colors.RESET}")
     print(f"{Colors.DARK_GRAY}{sub_border}{Colors.RESET}")
 
@@ -1768,10 +1776,26 @@ def select_distros_interactive(distros_list: List[Dict[str, Any]], iso_dir: Path
         print(f" {Colors.DARK_GRAY}{'-' * min(88, max(38, cols - 3))}{Colors.RESET}")
         for d in g["Items"]:
             index_item_map[num_index] = d
-            status_str = "[x]" if d.get("Enabled", True) else "[ ]"
-            size_bytes = d.get("SizeBytes", 0)
-            size_mb = int(round(size_bytes / (1024 * 1024), 0)) if size_bytes else 0
-            size_str = f"ca. {size_mb} MB" if size_mb > 0 else "Größe unbekannt"
+
+            pat = d.get("MatchPattern")
+            local_match = None
+            if pat:
+                for p in existing_isos:
+                    if re.search(pat, p.name):
+                        local_match = p
+                        break
+
+            is_present = local_match is not None
+            status_str = f"{Colors.GREEN}[x]{Colors.RESET}" if is_present else f"{Colors.DARK_GRAY}[ ]{Colors.RESET}"
+
+            if is_present:
+                size_mb = int(round(local_match.stat().st_size / (1024 * 1024), 0))
+                size_str = f"{size_mb} MB vorhanden"
+            else:
+                size_bytes = d.get("SizeBytes", 0)
+                size_mb = int(round(size_bytes / (1024 * 1024), 0)) if size_bytes else 0
+                size_str = f"ca. {size_mb} MB Download" if size_mb > 0 else "Größe unbekannt"
+
             print(f"   {num_index:2d}) {status_str} {d.get('Name', ''):<32} ({size_str})")
             num_index += 1
 
