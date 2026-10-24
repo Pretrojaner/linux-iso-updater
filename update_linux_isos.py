@@ -1735,13 +1735,13 @@ def select_distros_interactive(distros_list: List[Dict[str, Any]], iso_dir: Path
     group_idx = 1
 
     for cat in CATEGORY_ORDER:
-        in_cat = [d for d in distros_list if d.get("Category") == cat]
+        in_cat = sorted([d for d in distros_list if d.get("Category") == cat], key=lambda x: x.get("Name", "").lower())
         if in_cat:
             group_map[group_idx] = {"Category": cat, "Items": in_cat}
             ordered_list.extend(in_cat)
             group_idx += 1
 
-    leftovers = [d for d in distros_list if d.get("Category") not in CATEGORY_ORDER]
+    leftovers = sorted([d for d in distros_list if d.get("Category") not in CATEGORY_ORDER], key=lambda x: x.get("Name", "").lower())
     if leftovers:
         group_map[group_idx] = {"Category": "Sonstige", "Items": leftovers}
         ordered_list.extend(leftovers)
@@ -2262,15 +2262,26 @@ def main() -> None:
             logger.log("Keine Distributionen in distros.json gefunden! Abbruch.", color=Colors.RED, level="FEHLER")
             return
 
-    # Interaktive Auswahl (immer zu Beginn oder bei --select)
+        # Sicherstellen, dass Distributionen nach Gruppen und innerhalb alphabetisch sortiert sind
+        distros = sorted(
+            distros,
+            key=lambda d: (
+                CATEGORY_ORDER.index(d.get("Category", "")) if d.get("Category", "") in CATEGORY_ORDER else 999,
+                d.get("Name", "").lower(),
+            ),
+        )
+
+        # Interaktive Auswahl (immer zu Beginn oder bei --select)
         if not args.skip_download:
             original_json_str = json.dumps(distros, sort_keys=True)
             select_distros_interactive(distros, iso_dir, logger)
             new_json_str = json.dumps(distros, sort_keys=True)
             if original_json_str != new_json_str and not args.dry_run:
                 try:
-                    with open(distros_json_file, "w", encoding="utf-8-sig") as f:
-                        json.dump(distros, f, indent=2, ensure_ascii=False)
+                    formatted = json.dumps(distros, indent=2, ensure_ascii=False)
+                    formatted_crlf = "\r\n".join(formatted.splitlines()) + "\r\n"
+                    with open(distros_json_file, "wb") as f:
+                        f.write(formatted_crlf.encode("utf-8-sig"))
                 except Exception:
                     pass
 
