@@ -41,7 +41,7 @@ git status
 git add distros.json update-linux-isos.bat update-linux-isos.ps1 .gitignore README.md GITHUB_ANLEITUNG.md
 
 # 4. Commit mit aussagekräftiger Nachricht erstellen
-git commit -m "Update auf Version 2.1.0: Gruppenauswahl, Ventoy-Cleanup, Rockstor, PS7-Installer"
+git commit -m "Update auf Version 2.3.0: Gruppenauswahl, Ventoy-Cleanup, Rockstor, PS7-Installer"
 
 # 5. Zu GitHub hochladen
 git push origin main
@@ -59,10 +59,10 @@ Für Endanwender, die nicht das gesamte Git-Repository klonen möchten, wird unt
 ### So erstellst du ein neues Release auf GitHub:
 1. Gehe im Webbrowser auf dein Repository: `https://github.com/Pretrojaner/linux-iso-updater`
 2. Klicke auf der rechten Seite auf **Releases** -> **Draft a new release**.
-3. **Tag version:** z. B. `v2.1.0` (Target: `main`).
-4. **Release title:** `Linux ISO Auto-Updater v2.1.0`.
+3. **Tag version:** z. B. `v2.3.0` (Target: `main`).
+4. **Release title:** `Linux ISO Auto-Updater v2.3.0`.
 5. **Beschreibung:** Release Notes / Changelog einfügen.
-6. **Binaries anhängen:** Das vorbereitete `linux-iso-updater-v2.1.0.zip` per Drag & Drop in das Feld *Attach binaries by dropping them here or selecting them* ziehen.
+6. **Binaries anhängen:** Das vorbereitete `linux-iso-updater-v2.3.0.zip` per Drag & Drop in das Feld *Attach binaries by dropping them here or selecting them* ziehen.
 7. Klicke auf **Publish release**.
 
 ---
@@ -72,5 +72,5 @@ Für Endanwender, die nicht das gesamte Git-Repository klonen möchten, wird unt
 Um das ZIP-Paket für ein Release lokal zu erstellen, reicht folgender PowerShell-Befehl:
 
 ```powershell
-Compress-Archive -Path "update-linux-isos.bat", "update-linux-isos.ps1", "distros.json" -DestinationPath "linux-iso-updater-v2.1.0.zip" -Force
+Compress-Archive -Path "update-linux-isos.bat", "update-linux-isos.ps1", "distros.json" -DestinationPath "linux-iso-updater-v2.3.0.zip" -Force
 ```
