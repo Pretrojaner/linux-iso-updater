@@ -258,18 +258,25 @@ class DownloadManager:
     def get_web_content(self, uri: str, timeout: int = 15) -> Optional[str]:
         headers = {
             "User-Agent": CURL_USER_AGENT if "sourceforge.net" in uri else USER_AGENT,
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,text/plain,*/*;q=0.8",
         }
         try:
-            resp = self.session.get(uri, headers=headers, timeout=timeout)
-            if resp.status_code == 200:
-                return resp.text
+            with self.session.get(uri, headers=headers, stream=True, timeout=timeout) as resp:
+                if resp.status_code == 200:
+                    cl = int(resp.headers.get("Content-Length", 0))
+                    ct = resp.headers.get("Content-Type", "").lower()
+                    # Wenn Datei > 2 MB oder Binärarchiv/ISO, Download ablehnen
+                    if cl > 2 * 1024 * 1024 or any(b in ct for b in ["octet-stream", "x-iso", "bzip2", "gzip", "zip", "image/"]):
+                        return None
+                    # Maximal 2 MB Text lesen
+                    content_bytes = resp.raw.read(2 * 1024 * 1024, decode_content=True)
+                    return content_bytes.decode("utf-8", errors="replace")
         except Exception:
             pass
 
-        # Fallback über systemeigenes curl
+        # Fallback über systemeigenes curl mit Größen-Limit (max 2 MB)
         try:
-            cmd = ["curl", "-sL", "-A", headers["User-Agent"], "--max-time", str(timeout), uri]
+            cmd = ["curl", "-sL", "-A", headers["User-Agent"], "--max-time", str(timeout), "--max-filesize", "2097152", uri]
             res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True)
             if res.returncode == 0 and res.stdout.strip():
                 return res.stdout
@@ -403,31 +410,56 @@ class ChecksumVerifier:
         expected_hash = None
         hash_algo = None
 
+        # Basis-URL ohne Endungen wie .iso, .bz2, .gz etc. ermitteln
+        base_url = re.sub(r"(\.iso)?(\.bz2|\.gz|\.xz|\.zip)?$", "", download_url, flags=re.I)
+
         sha512_candidates = [
+            f"{base_url}.iso.sha512sum",
+            f"{base_url}.iso.sha512",
+            f"{base_url}.sha512sum",
+            f"{base_url}.sha512",
             f"{download_url}.sha512sum",
             f"{download_url}.sha512",
-            re.sub(r"\.iso$", ".sha512sum", download_url),
-            re.sub(r"\.iso$", ".sha512", download_url),
         ]
         if explicit_checksum_url and "sha512" in explicit_checksum_url.lower():
             sha512_candidates.insert(0, explicit_checksum_url)
 
         sha256_candidates = [
+            f"{base_url}.iso.sha256",
+            f"{base_url}.iso.sha256sum",
+            f"{base_url}.iso.SHA256",
+            f"{base_url}.sha256",
+            f"{base_url}.sha256sum",
             f"{download_url}.sha256",
             f"{download_url}.sha256sum",
             f"{download_url}.SHA256",
-            re.sub(r"\.iso$", ".sha256", download_url),
-            re.sub(r"\.iso$", ".sha256sum", download_url),
         ]
         if explicit_checksum_url and not any(k in explicit_checksum_url.lower() for k in ["sha512", "md5"]):
             sha256_candidates.insert(0, explicit_checksum_url)
 
         md5_candidates = [
+            f"{base_url}.iso.md5",
+            f"{base_url}.md5",
             f"{download_url}.md5",
-            re.sub(r"\.iso$", ".md5", download_url),
         ]
         if explicit_checksum_url and "md5" in explicit_checksum_url.lower():
             md5_candidates.insert(0, explicit_checksum_url)
+
+        def clean_candidates(c_list: List[str]) -> List[str]:
+            res = []
+            for c in c_list:
+                if not c or c == download_url:
+                    continue
+                # Niemals ISOs oder Archive selbst als Prüfsummen-URL aufrufen
+                if re.search(r"\.(iso|bz2|gz|xz|tar|zip|img)$", c, re.I):
+                    continue
+                if c not in res:
+                    res.append(c)
+            return res
+
+        sha512_candidates = clean_candidates(sha512_candidates)
+        sha256_candidates = clean_candidates(sha256_candidates)
+        md5_candidates = clean_candidates(md5_candidates)
 
         algo_order = ["SHA256", "SHA512", "MD5"]
         if explicit_checksum_url:
@@ -435,6 +467,8 @@ class ChecksumVerifier:
                 algo_order = ["SHA512", "SHA256", "MD5"]
             elif "md5" in explicit_checksum_url.lower():
                 algo_order = ["MD5", "SHA256", "SHA512"]
+
+        self.logger.detail(f"Suche Online-Prüfsumme für {filename}...", color=Colors.DARK_GRAY)
 
         for algo in algo_order:
             if expected_hash:
@@ -458,7 +492,7 @@ class ChecksumVerifier:
             regex_generic = re.compile(rf"(?<![a-fA-F0-9])([a-fA-F0-9]{{{hex_len}}})(?![a-fA-F0-9])")
 
             for c_url in candidates:
-                content = self.dm.get_web_content(c_url)
+                content = self.dm.get_web_content(c_url, timeout=5)
                 if content:
                     m1 = regex_with_filename_1.search(content)
                     if m1:
@@ -470,11 +504,14 @@ class ChecksumVerifier:
                         expected_hash = m2.group(1).lower()
                         hash_algo = algo
                         break
-                    m3 = regex_generic.search(content)
-                    if m3:
-                        expected_hash = m3.group(1).lower()
-                        hash_algo = algo
-                        break
+                    # regex_generic nur anwenden, wenn es sich nicht um eine HTML-Seite handelt (z.B. Sourceforge 404/Fehlerseite)
+                    is_html = bool(re.search(r"^\s*<(!doctype|html)", content, re.I))
+                    if not is_html:
+                        m3 = regex_generic.search(content)
+                        if m3:
+                            expected_hash = m3.group(1).lower()
+                            hash_algo = algo
+                            break
 
         if not expected_hash:
             self.logger.detail(

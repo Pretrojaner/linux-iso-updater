@@ -40,7 +40,7 @@
     "Category": "01_Desktop-Linux"
   },
   {
-    "Enabled": true,
+    "Enabled": false,
     "Name": "EndeavourOS",
     "MatchPattern": "(?i)EndeavourOS_[^\"]*?-(\\d{4}\\.\\d{2}\\.\\d{2})",
     "Category": "01_Desktop-Linux",
@@ -48,7 +48,7 @@
     "SizeBytes": 3898638336
   },
   {
-    "Enabled": true,
+    "Enabled": false,
     "Name": "Fedora Workstation",
     "MatchPattern": "Fedora-Workstation-Live-(\\d+)",
     "Script": "$baseUrl = 'https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/'\n$html = Get-WebContent -Uri $baseUrl\nif ($html) {\n    $versions = [regex]::Matches($html, 'href=\"(\\d+)/\"') | ForEach-Object { $_.Groups[1].Value } | Sort-Object { [int]$_ } -Descending | Select-Object -First 3\n    foreach ($v in $versions) {\n        $subHtml = Get-WebContent -Uri \"$baseUrl$v/Workstation/x86_64/iso/\"\n        if ($subHtml -and $subHtml -match 'href=\"(Fedora-Workstation-Live-[^\"]+?\\.iso)\"') {\n            return @{ Version = $v; Url = \"$baseUrl$v/Workstation/x86_64/iso/$($Matches[1])\"; Filename = $Matches[1] }\n        }\n    }\n}\nreturn $null",
@@ -64,7 +64,7 @@
     "SizeBytes": 3590965248
   },
   {
-    "Enabled": true,
+    "Enabled": false,
     "Name": "Gentoo LiveGUI",
     "MatchPattern": "livegui-amd64-(\\d{8}T\\d{6}Z)",
     "Script": "$html = Get-WebContent -Uri 'https://distfiles.gentoo.org/releases/amd64/autobuilds/current-livegui-amd64/'\nif ($html -and $html -match 'href=\"(livegui-amd64-(\\d{8}T\\d{6}Z)\\.iso)\"') {\n    return @{ Version = $Matches[2]; Url = \"https://distfiles.gentoo.org/releases/amd64/autobuilds/current-livegui-amd64/$($Matches[1])\"; Filename = $Matches[1] }\n}\nreturn $null",
@@ -80,7 +80,7 @@
     "Category": "01_Desktop-Linux"
   },
   {
-    "Enabled": true,
+    "Enabled": false,
     "Name": "Mageia",
     "MatchPattern": "Mageia-(\\d+)-x86_64",
     "Script": "$baseUrls = @(\n    'https://ftp.fau.de/mageia/iso/',\n    'https://ftp.gwdg.de/pub/linux/mageia/iso/'\n)\nforeach ($baseUrl in $baseUrls) {\n    $html = Get-WebContent -Uri $baseUrl\n    if ($html) {\n        $versions = [regex]::Matches($html, 'href=\"(\\d+)/\"') | ForEach-Object { $_.Groups[1].Value } | Sort-Object { [int]$_ } -Descending | Select-Object -First 3\n        foreach ($v in $versions) {\n            $subHtml = Get-WebContent -Uri \"$baseUrl$v/Mageia-$v-x86_64/\"\n            if ($subHtml -and $subHtml -match 'href=\"(Mageia-[^\"]+?\\.iso)\"') {\n                return @{ Version = $v; Url = \"$baseUrl$v/Mageia-$v-x86_64/$($Matches[1])\"; Filename = $Matches[1] }\n            }\n        }\n    }\n}\nreturn $null",
@@ -136,7 +136,7 @@
     "SizeBytes": 1572438016
   },
   {
-    "Enabled": true,
+    "Enabled": false,
     "Name": "FreeNAS (TrueNAS)",
     "MatchPattern": "TrueNAS-(?:SCALE|CORE)-[^\\\"]*",
     "Category": "02_Enterprise-Server",
@@ -144,7 +144,7 @@
     "SizeBytes": 2339317760
   },
   {
-    "Enabled": true,
+    "Enabled": false,
     "Name": "OpenMediaVault",
     "MatchPattern": "openmediavault_[^\\\"]*?-amd64",
     "Category": "02_Enterprise-Server",
@@ -152,7 +152,7 @@
     "SizeBytes": 1244774400
   },
   {
-    "Enabled": true,
+    "Enabled": false,
     "Name": "Proxmox VE",
     "MatchPattern": "proxmox-ve_(\\d+\\.\\d+-\\d+)",
     "Script": "$html = Get-WebContent -Uri 'https://enterprise.proxmox.com/iso/'\nif ($html -and $html -match 'href=\"\\./(proxmox-ve_(\\d+\\.\\d+-\\d+)\\.iso)\"') {\n    return @{ Version = $Matches[2]; Url = \"https://enterprise.proxmox.com/iso/$($Matches[1])\"; Filename = $Matches[1] }\n}\nreturn $null",
@@ -168,7 +168,7 @@
     "SizeBytes": 940294144
   },
   {
-    "Enabled": true,
+    "Enabled": false,
     "Name": "Rocky Linux",
     "MatchPattern": "Rocky-9[^\"]*?-x86_64-dvd",
     "Script": "$baseUrls = @('https://ftp.halifax.rwth-aachen.de/rockylinux/9/isos/x86_64/', 'https://ftp.fau.de/rockylinux/9/isos/x86_64/', 'https://ftp.gwdg.de/pub/linux/rocky/9/isos/x86_64/', 'https://dl.rockylinux.org/pub/rocky/9/isos/x86_64/')\nforeach ($baseUrl in $baseUrls) {\n    $html = Get-WebContent -Uri $baseUrl\n    if ($html -and $html -match 'href=\"(Rocky-9[^\"]*?-x86_64-dvd\\.iso)\"') {\n        $fn  = $Matches[1]\n        $ver = if ($fn -match 'Rocky-9\\.(\\d+)') { \"9.$($Matches[1])\" } else { \"9\" }\n        return @{ Version = $ver; Url = \"$baseUrl$fn\"; Filename = $fn }\n    }\n}\nreturn $null",
@@ -176,7 +176,7 @@
     "Category": "02_Enterprise-Server"
   },
   {
-    "Enabled": true,
+    "Enabled": false,
     "Name": "Ubuntu Server LTS",
     "MatchPattern": "ubuntu-(\\d+\\.\\d+(\\.\\d+)?)-live-server-amd64",
     "Category": "02_Enterprise-Server",
@@ -184,7 +184,7 @@
     "SizeBytes": 2927861760
   },
   {
-    "Enabled": true,
+    "Enabled": false,
     "Name": "ZimaOS",
     "MatchPattern": "zimaos-[^\\\"]*?installer",
     "Category": "02_Enterprise-Server",
@@ -200,7 +200,7 @@
     "Category": "03_Security-Pentest"
   },
   {
-    "Enabled": true,
+    "Enabled": false,
     "Name": "CAINE Live (Forensic & Autopsy)",
     "Category": "03_Security-Pentest",
     "MatchPattern": "caine(\\d+(\\.\\d+)?)\\.iso",
@@ -216,7 +216,7 @@
     "SizeBytes": 5047031808
   },
   {
-    "Enabled": true,
+    "Enabled": false,
     "Name": "Parrot Security",
     "MatchPattern": "Parrot-security-(\\d+\\.\\d+(\\.\\d+)?)_amd64",
     "Script": "$html = Get-WebContent -Uri 'https://deb.parrot.sh/parrot/iso/'\nif ($html) {\n    $dirs = [regex]::Matches($html, 'href=\"(\\d+\\.\\d+(\\.\\d+)?)/\"') | ForEach-Object { $_.Groups[1].Value } | Sort-Object { [version](ConvertTo-VersionString $_) } -Descending | Select-Object -First 3\n    foreach ($d in $dirs) {\n        $subHtml = Get-WebContent -Uri \"https://deb.parrot.sh/parrot/iso/$d/\"\n        if ($subHtml -and $subHtml -match 'href=\"(Parrot-security-[^\"]*?amd64\\.iso)\"') {\n            return @{ Version = $d; Url = \"https://deb.parrot.sh/parrot/iso/$d/$($Matches[1])\"; Filename = $Matches[1] }\n        }\n    }\n}\nreturn $null",
@@ -248,7 +248,7 @@
     "SizeBytes": 780140544
   },
   {
-    "Enabled": true,
+    "Enabled": false,
     "Name": "FygoOS PE",
     "MatchPattern": "fygoos_PE[^\\\"]*?(\\d+\\.\\d+.*)",
     "Category": "04_Rescue-Systeme",
@@ -304,7 +304,7 @@
     "SizeBytes": 230000000
   },
   {
-    "Enabled": true,
+    "Enabled": false,
     "Name": "SystemRescue (ehem. SystemRescueCd)",
     "MatchPattern": "systemrescue-(\\d+\\.\\d+(\\.\\d+)?)-amd64",
     "Category": "04_Rescue-Systeme",
