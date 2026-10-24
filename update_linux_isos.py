@@ -106,9 +106,13 @@ class Logger:
 
     def clear_screen_distro(self, current: int, total: int, name: str) -> None:
         os.system("clear")
+        cols = shutil.get_terminal_size(fallback=(80, 24)).columns
+        banner_len = min(90, max(40, cols - 1))
+        banner_border = "=" * banner_len
         remaining = total - current
-        banner_border = "=" * 90
         header_text = f" DISTRO-FORTSCHRITT: {current} von {total} verarbeitet | {remaining} verbleibend | Aktuell: {name}"
+        if len(header_text) > cols - 1:
+            header_text = header_text[: cols - 4] + "..."
         print(f"{Colors.CYAN}{banner_border}{Colors.RESET}")
         print(f"{Colors.YELLOW}{header_text}{Colors.RESET}")
         print(f"{Colors.CYAN}{banner_border}{Colors.RESET}")
@@ -116,9 +120,13 @@ class Logger:
 
     def clear_screen_ventoy_copy(self, current: int, total: int, filename: str, size_mb: float) -> None:
         os.system("clear")
+        cols = shutil.get_terminal_size(fallback=(80, 24)).columns
+        banner_len = min(90, max(40, cols - 1))
+        banner_border = "=" * banner_len
         remaining = total - current
-        banner_border = "=" * 90
         header_text = f" VENTOY-KOPIERSTATUS: {current} von {total} ISOs | {remaining} verbleibend | Aktuell: {filename} ({size_mb:.2f} MB)"
+        if len(header_text) > cols - 1:
+            header_text = header_text[: cols - 4] + "..."
         print(f"{Colors.CYAN}{banner_border}{Colors.RESET}")
         print(f"{Colors.YELLOW}{header_text}{Colors.RESET}")
         print(f"{Colors.CYAN}{banner_border}{Colors.RESET}")
@@ -154,6 +162,48 @@ def version_sort_key(ver_str: Any) -> Tuple[int, ...]:
     """Wandelt Versionszeichenketten für numerisches Sortieren in Tuple um."""
     parts = re.findall(r"\d+", str(ver_str))
     return tuple(int(p) for p in parts) if parts else (0,)
+
+
+def format_progress_bar(prefix: str, current_bytes: int, total_bytes: int, speed_bytes_sec: float) -> str:
+    """
+    Erstellt eine einzeilige Fortschrittsanzeige, die sich dynamisch an die Terminalbreite anpasst
+    und niemals umbricht.
+    """
+    cols = shutil.get_terminal_size(fallback=(80, 24)).columns
+    max_len = max(cols - 1, 30)
+
+    speed_mb = speed_bytes_sec / (1024 * 1024)
+    trans_mb = current_bytes / (1024 * 1024)
+
+    if total_bytes > 0:
+        percent = min(100.0, (current_bytes / total_bytes) * 100.0)
+        total_mb = total_bytes / (1024 * 1024)
+        stats_full = f"{percent:5.1f}% | {trans_mb:7.2f} / {total_mb:7.2f} MB | {speed_mb:5.2f} MB/s"
+        stats_short = f"{percent:5.1f}% | {trans_mb:.1f}/{total_mb:.1f} MB | {speed_mb:.1f} MB/s"
+
+        fixed_len = len(prefix) + len(stats_full) + 4  # 'prefix [bar] stats'
+        avail = max_len - fixed_len
+        if avail >= 10:
+            bar_width = min(25, avail)
+            completed = int((percent / 100.0) * bar_width)
+            bar_str = "=" * completed + "-" * (bar_width - completed)
+            line = f"{prefix} [{bar_str}] {stats_full}"
+        else:
+            fixed_short = len(prefix) + len(stats_short) + 4
+            avail_short = max_len - fixed_short
+            if avail_short >= 8:
+                bar_width = min(20, avail_short)
+                completed = int((percent / 100.0) * bar_width)
+                bar_str = "=" * completed + "-" * (bar_width - completed)
+                line = f"{prefix} [{bar_str}] {stats_short}"
+            elif max_len >= len(prefix) + len(stats_short) + 1:
+                line = f"{prefix} {stats_short}"
+            else:
+                line = f"{prefix} {percent:5.1f}% | {trans_mb:.1f} MB"
+    else:
+        line = f"{prefix} {trans_mb:7.2f} MB | {speed_mb:5.2f} MB/s"
+
+    return line[:max_len]
 
 
 # ==============================================================================
@@ -238,6 +288,8 @@ class DownloadManager:
                 start_time = time.monotonic()
                 last_report = 0.0
                 total_read = 0
+                is_tty = sys.stdout.isatty()
+                report_interval = 0.2 if is_tty else 5.0
 
                 with open(temp_dest, "wb") as f:
                     for chunk in resp.iter_content(chunk_size=65536):
@@ -247,28 +299,22 @@ class DownloadManager:
                         total_read += len(chunk)
 
                         now = time.monotonic()
-                        if now - last_report >= 0.2 or total_read == total_bytes:
+                        if now - last_report >= report_interval or total_read == total_bytes:
                             elapsed = max(now - start_time, 0.001)
-                            speed_mbs = (total_read / (1024 * 1024)) / elapsed
-                            trans_mb = total_read / (1024 * 1024)
+                            speed_bytes_sec = total_read / elapsed
+                            status = format_progress_bar("   [LADEN]", total_read, total_bytes, speed_bytes_sec)
 
-                            if total_bytes > 0:
-                                percent = (total_read / total_bytes) * 100.0
-                                total_mb = total_bytes / (1024 * 1024)
-                                bar_width = 25
-                                completed = int((percent / 100.0) * bar_width)
-                                remaining = bar_width - completed
-                                bar = "=" * completed + "-" * remaining
-                                status = f"\r   [LADEN] [{bar}] {percent:5.1f}% | {trans_mb:8.2f} / {total_mb:8.2f} MB | {speed_mbs:6.2f} MB/s  "
+                            if is_tty:
+                                sys.stdout.write(f"\r\033[K{Colors.CYAN}{status}{Colors.RESET}")
+                                sys.stdout.flush()
                             else:
-                                status = f"\r   [LADEN] {trans_mb:8.2f} MB empfangen | {speed_mbs:6.2f} MB/s  "
-
-                            sys.stdout.write(f"{Colors.CYAN}{status}{Colors.RESET}")
-                            sys.stdout.flush()
+                                sys.stdout.write(f"{status}\n")
+                                sys.stdout.flush()
                             last_report = now
 
-                sys.stdout.write("\n")
-                sys.stdout.flush()
+                if is_tty:
+                    sys.stdout.write("\n")
+                    sys.stdout.flush()
 
                 if total_bytes > 0 and total_read < total_bytes:
                     raise IOError(f"Download unvollständig: {total_read} von {total_bytes} Bytes empfangen.")
@@ -279,6 +325,9 @@ class DownloadManager:
                 return total_read
 
         except Exception as e:
+            if sys.stdout.isatty():
+                sys.stdout.write("\n")
+                sys.stdout.flush()
             if temp_dest.exists():
                 try:
                     temp_dest.unlink()
@@ -1651,13 +1700,18 @@ def select_distros_interactive(distros_list: List[Dict[str, Any]], iso_dir: Path
         group_map[group_idx] = {"Category": "Sonstige", "Items": leftovers}
         ordered_list.extend(leftovers)
 
+    cols = shutil.get_terminal_size(fallback=(80, 24)).columns
+    border_len = min(90, max(40, cols - 1))
+    banner_border = "=" * border_len
+    sub_border = "-" * border_len
+
     print("")
-    print(f"{Colors.CYAN}{'=' * 90}{Colors.RESET}")
-    print(f"{Colors.YELLOW}                    DISTRIBUTIONS-AUSWAHL (MEHRFACHWAHL)                                 {Colors.RESET}")
-    print(f"{Colors.CYAN}{'=' * 90}{Colors.RESET}")
+    print(f"{Colors.CYAN}{banner_border}{Colors.RESET}")
+    print(f"{Colors.YELLOW}{'DISTRIBUTIONS-AUSWAHL (MEHRFACHWAHL)'.center(border_len)}{Colors.RESET}")
+    print(f"{Colors.CYAN}{banner_border}{Colors.RESET}")
     print(f"{Colors.WHITE}Wähle aus, welche Distributionen künftig geprüft, geladen und synchronisiert werden:{Colors.RESET}")
     print(f"{Colors.DARK_GRAY}Eingabeformate: 'all' (alle), Gruppen z.B. 'G1, G4' oder Nummern z.B. '1, 3, 5-8'!{Colors.RESET}")
-    print(f"{Colors.DARK_GRAY}{'-' * 90}{Colors.RESET}")
+    print(f"{Colors.DARK_GRAY}{sub_border}{Colors.RESET}")
 
     num_index = 1
     index_item_map: Dict[int, Dict[str, Any]] = {}
@@ -1665,7 +1719,7 @@ def select_distros_interactive(distros_list: List[Dict[str, Any]], iso_dir: Path
     for g_id in sorted(group_map.keys()):
         g = group_map[g_id]
         print(f"\n {Colors.CYAN}[Gruppe G{g_id}] {g['Category']}{Colors.RESET}")
-        print(f" {Colors.DARK_GRAY}{'-' * 88}{Colors.RESET}")
+        print(f" {Colors.DARK_GRAY}{'-' * min(88, max(38, cols - 3))}{Colors.RESET}")
         for d in g["Items"]:
             index_item_map[num_index] = d
             status_str = "[x]" if d.get("Enabled", True) else "[ ]"
@@ -1676,7 +1730,7 @@ def select_distros_interactive(distros_list: List[Dict[str, Any]], iso_dir: Path
             num_index += 1
 
     print("")
-    print(f"{Colors.DARK_GRAY}{'-' * 90}{Colors.RESET}")
+    print(f"{Colors.DARK_GRAY}{sub_border}{Colors.RESET}")
     print(f"{Colors.YELLOW}Auswahl eingeben (ENTER = alle Distros auswählen):{Colors.RESET}")
     try:
         raw_input = input("Auswahl (z.B. all / G1, G3 / 1,4,7-10) [ENTER = all]: ").strip()
@@ -1770,6 +1824,8 @@ def copy_file_with_progress(src_path: Path, dst_path: Path) -> None:
     start_time = time.monotonic()
     last_report = 0.0
     total_read = 0
+    is_tty = sys.stdout.isatty()
+    report_interval = 0.1 if is_tty else 5.0
 
     with open(src_path, "rb") as fsrc, open(dst_path, "wb") as fdst:
         while chunk := fsrc.read(buffer_size):
@@ -1777,25 +1833,22 @@ def copy_file_with_progress(src_path: Path, dst_path: Path) -> None:
             total_read += len(chunk)
 
             now = time.monotonic()
-            if now - last_report >= 0.1 or total_read == total_bytes:
+            if now - last_report >= report_interval or total_read == total_bytes:
                 elapsed = max(now - start_time, 0.001)
-                speed_mbs = (total_read / (1024 * 1024)) / elapsed
-                percent = (total_read / total_bytes) * 100.0 if total_bytes > 0 else 100.0
-                trans_mb = total_read / (1024 * 1024)
-                total_mb = total_bytes / (1024 * 1024)
+                speed_bytes_sec = total_read / elapsed
+                status = format_progress_bar("   [KOPIERE]", total_read, total_bytes, speed_bytes_sec)
 
-                bar_width = 25
-                completed = int((percent / 100.0) * bar_width)
-                remaining = bar_width - completed
-                bar = "=" * completed + "-" * remaining
-
-                status = f"\r   [KOPIERE] [{bar}] {percent:5.1f}% | {trans_mb:8.1f} / {total_mb:8.1f} MB | {speed_mbs:6.2f} MB/s   "
-                sys.stdout.write(f"{Colors.CYAN}{status}{Colors.RESET}")
-                sys.stdout.flush()
+                if is_tty:
+                    sys.stdout.write(f"\r\033[K{Colors.CYAN}{status}{Colors.RESET}")
+                    sys.stdout.flush()
+                else:
+                    sys.stdout.write(f"{status}\n")
+                    sys.stdout.flush()
                 last_report = now
 
-    sys.stdout.write("\n")
-    sys.stdout.flush()
+    if is_tty:
+        sys.stdout.write("\n")
+        sys.stdout.flush()
 
 
 def run_ventoy_sync(
@@ -1966,9 +2019,12 @@ def run_ventoy_sync(
 
     if not dry_run:
         os.system("clear")
-        print(f"{Colors.CYAN}{'=' * 90}{Colors.RESET}")
+        cols = shutil.get_terminal_size(fallback=(80, 24)).columns
+        banner_len = min(90, max(40, cols - 1))
+        banner_border = "=" * banner_len
+        print(f"{Colors.CYAN}{banner_border}{Colors.RESET}")
         print(f"{Colors.GREEN} VENTOY-KOPIERSTATUS: Alle {total_copy} ISOs erfolgreich abgeglichen!{Colors.RESET}")
-        print(f"{Colors.CYAN}{'=' * 90}{Colors.RESET}\n")
+        print(f"{Colors.CYAN}{banner_border}{Colors.RESET}\n")
 
     # Theme & ventoy.json Konfiguration
     logger.log(f"Konfiguriere Ventoy Design & Dir-Modus (Theme + Aliases) auf {target_root}...", color=Colors.CYAN, level="VENTOY")
@@ -2335,12 +2391,14 @@ def main() -> None:
         # Übersichtstabelle
         if summary_items:
             print("")
+            cols = shutil.get_terminal_size(fallback=(80, 24)).columns
+            tbl_border = "-" * min(85, max(40, cols - 1))
             title = "ÜBERSICHT: VERFÜGBARE UPDATES / NEUE ISOS (DRY-RUN)" if args.dry_run else "ÜBERSICHT: HERUNTERGELADENE & AKTUALISIERTE ISOS"
             logger.log(title, color=Colors.CYAN, level="INFO")
-            print(f"{Colors.DARK_GRAY}{'-' * 85}{Colors.RESET}")
+            print(f"{Colors.DARK_GRAY}{tbl_border}{Colors.RESET}")
             header = f"   {'Distribution':<26} | {'Status':<16} | {'Version':<24} | {'Größe':>12}"
             print(f"{Colors.YELLOW}{header}{Colors.RESET}")
-            print(f"{Colors.DARK_GRAY}{'-' * 85}{Colors.RESET}")
+            print(f"{Colors.DARK_GRAY}{tbl_border}{Colors.RESET}")
             logger._write_file(header)
 
             for s in summary_items:
@@ -2348,7 +2406,7 @@ def main() -> None:
                 color = Colors.CYAN if "Update" in s["Aktion"] else Colors.GREEN
                 print(f"{color}{row}{Colors.RESET}")
                 logger._write_file(row)
-            print(f"{Colors.DARK_GRAY}{'-' * 85}{Colors.RESET}\n")
+            print(f"{Colors.DARK_GRAY}{tbl_border}{Colors.RESET}\n")
 
         # SCHRITT 2: VENTOY SYNCHRONISIERUNG
         if not args.skip_ventoy:
