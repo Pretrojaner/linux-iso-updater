@@ -206,6 +206,45 @@ def format_progress_bar(prefix: str, current_bytes: int, total_bytes: int, speed
     return line[:max_len]
 
 
+def format_duration(seconds: float) -> str:
+    """Formatiert Sekunden in eine lesbare Zeichenkette wie '1h 12m 30s', '3m 45s' oder '12.4s'."""
+    sec = int(round(seconds))
+    if sec < 60:
+        return f"{seconds:.1f}s" if seconds < 10 else f"{sec}s"
+    minutes = sec // 60
+    remaining_sec = sec % 60
+    if minutes < 60:
+        return f"{minutes}m {remaining_sec:02d}s"
+    hours = minutes // 60
+    remaining_min = minutes % 60
+    return f"{hours}h {remaining_min:02d}m {remaining_sec:02d}s"
+
+
+class DownloadResult:
+    """Ergebnis eines HTTP-Downloads mit Metriken zu Dateigröße, Dauer und Geschwindigkeit."""
+
+    def __init__(self, downloaded_bytes: int, elapsed_seconds: float):
+        self.bytes = int(downloaded_bytes)
+        self.seconds = max(elapsed_seconds, 0.001)
+        self.size_mb = self.bytes / (1024 * 1024)
+        self.speed_bytes_sec = self.bytes / self.seconds
+        self.speed_mbs = self.speed_bytes_sec / (1024 * 1024)
+        self.speed_mbits = (self.bytes * 8) / (self.seconds * 1_000_000)
+
+    @property
+    def duration_str(self) -> str:
+        return format_duration(self.seconds)
+
+    def __int__(self) -> int:
+        return self.bytes
+
+    def __iter__(self):
+        return iter((self.bytes, self.seconds))
+
+    def __repr__(self) -> str:
+        return f"<DownloadResult {self.size_mb:.2f} MB in {self.duration_str} ({self.speed_mbs:.2f} MB/s)>"
+
+
 # ==============================================================================
 # HTTP & DOWNLOAD MANAGER
 # ==============================================================================
@@ -272,7 +311,7 @@ class DownloadManager:
             pass
         return 0
 
-    def download_file(self, url: str, dest_path: Path, filename: str) -> int:
+    def download_file(self, url: str, dest_path: Path, filename: str) -> DownloadResult:
         dest_path.parent.mkdir(parents=True, exist_ok=True)
         headers = {
             "User-Agent": CURL_USER_AGENT if "sourceforge.net" in url else USER_AGENT,
@@ -322,7 +361,8 @@ class DownloadManager:
                 if dest_path.exists():
                     dest_path.unlink()
                 temp_dest.rename(dest_path)
-                return total_read
+                elapsed_total = max(time.monotonic() - start_time, 0.001)
+                return DownloadResult(total_read, elapsed_total)
 
         except Exception as e:
             if sys.stdout.isatty():
@@ -336,10 +376,12 @@ class DownloadManager:
             # Fallback mit curl falls Python requests scheitert
             try:
                 self.logger.raw(f"\n   [DOWNLOAD FALLBACK] Nutze curl für {filename}...", color=Colors.YELLOW)
+                curl_start = time.monotonic()
                 curl_cmd = ["curl", "-L", "-A", headers["User-Agent"], "--progress-bar", "-o", str(dest_path), url]
                 subprocess.run(curl_cmd, check=True)
+                curl_elapsed = max(time.monotonic() - curl_start, 0.001)
                 if dest_path.exists() and dest_path.stat().st_size > 1024 * 1024:
-                    return dest_path.stat().st_size
+                    return DownloadResult(dest_path.stat().st_size, curl_elapsed)
             except Exception:
                 pass
             raise e
@@ -2340,15 +2382,36 @@ def main() -> None:
                                 "Aktion": "Update (Dry-Run)" if old_version_str else "Neu (Dry-Run)",
                                 "Version": f"{old_version_str} -> {latest_info.get('Version')}" if old_version_str else str(latest_info.get("Version")),
                                 "Groesse": "Dry-Run",
+                                "Dauer": "-",
+                                "Speed": "-",
                             }
                         )
                     else:
                         logger.log(f"[UPDATE GESTARTET] Lade neue Version: {fn} | Version: {latest_info.get('Version')}", color=Colors.GREEN, level="DOWNLOAD")
                         download_dest = cat_dir / fn
                         try:
-                            downloaded_bytes = dm.download_file(latest_info["Url"], download_dest, fn)
-                            dl_mb = downloaded_bytes / (1024 * 1024)
-                            logger.log(f"[DOWNLOAD ERFOLGREICH] {fn} | {dl_mb:.2f} MB", color=Colors.GREEN, level="ERFOLG")
+                            dl_result = dm.download_file(latest_info["Url"], download_dest, fn)
+                            downloaded_bytes = dl_result.bytes
+                            dl_mb = dl_result.size_mb
+                            dur_str = dl_result.duration_str
+                            speed_mbs = dl_result.speed_mbs
+                            speed_mbits = dl_result.speed_mbits
+
+                            logger.log(
+                                f"[DOWNLOAD ERFOLGREICH] {fn} | {dl_mb:.2f} MB in {dur_str} (Ø {speed_mbs:.2f} MB/s | {speed_mbits:.1f} Mbit/s)",
+                                color=Colors.GREEN,
+                                level="ERFOLG",
+                            )
+
+                            # Warnung bei auffällig langsamen Mirrors (Dateien > 50 MB mit unter 4.0 MB/s bzw. 32 Mbit/s)
+                            if speed_mbs < 4.0 and dl_mb > 50.0:
+                                logger.log(
+                                    f"[MIRROR HINWEIS] Die Download-Geschwindigkeit von {speed_mbs:.2f} MB/s ({speed_mbits:.1f} Mbit/s) für '{name}' war auffallend niedrig.",
+                                    color=Colors.YELLOW,
+                                    level="WARNUNG",
+                                )
+                                logger.detail(f"Aktuelle Quelle: {latest_info['Url']}")
+                                logger.detail(f"Empfehlung: Schnelleren alternativen Mirror für '{name}' in distros.json hinterlegen.")
 
                             # BZ2 Dekomprimierung falls nötig
                             if latest_info.get("ExtractTo"):
@@ -2379,6 +2442,8 @@ def main() -> None:
                                         "Aktion": "Update" if old_version_str else "Neu geladen",
                                         "Version": f"{old_version_str} -> {latest_info.get('Version')}" if old_version_str else str(latest_info.get("Version")),
                                         "Groesse": f"{dl_mb:.2f} MB",
+                                        "Dauer": dur_str,
+                                        "Speed": f"Ø {speed_mbs:.2f} MB/s",
                                     }
                                 )
                         except Exception as e:
@@ -2396,20 +2461,46 @@ def main() -> None:
         if summary_items:
             print("")
             cols = shutil.get_terminal_size(fallback=(80, 24)).columns
-            tbl_border = "-" * min(85, max(40, cols - 1))
             title = "ÜBERSICHT: VERFÜGBARE UPDATES / NEUE ISOS (DRY-RUN)" if args.dry_run else "ÜBERSICHT: HERUNTERGELADENE & AKTUALISIERTE ISOS"
             logger.log(title, color=Colors.CYAN, level="INFO")
-            print(f"{Colors.DARK_GRAY}{tbl_border}{Colors.RESET}")
-            header = f"   {'Distribution':<26} | {'Status':<16} | {'Version':<24} | {'Größe':>12}"
-            print(f"{Colors.YELLOW}{header}{Colors.RESET}")
-            print(f"{Colors.DARK_GRAY}{tbl_border}{Colors.RESET}")
-            logger._write_file(header)
 
-            for s in summary_items:
-                row = f"   {s['Distribution']:<26} | {s['Aktion']:<16} | {s['Version']:<24} | {s['Groesse']:>12}"
-                color = Colors.CYAN if "Update" in s["Aktion"] else Colors.GREEN
-                print(f"{color}{row}{Colors.RESET}")
-                logger._write_file(row)
+            if not args.dry_run and cols >= 110:
+                header = f"   {'Distribution':<24} | {'Status':<14} | {'Version':<20} | {'Größe':>10} | {'Dauer':>9} | {'Ø-Speed':>14}"
+                tbl_border = "-" * min(len(header), max(40, cols - 1))
+                print(f"{Colors.DARK_GRAY}{tbl_border}{Colors.RESET}")
+                print(f"{Colors.YELLOW}{header}{Colors.RESET}")
+                print(f"{Colors.DARK_GRAY}{tbl_border}{Colors.RESET}")
+                logger._write_file(header)
+                for s in summary_items:
+                    row = f"   {s['Distribution']:<24} | {s['Aktion']:<14} | {s['Version']:<20} | {s['Groesse']:>10} | {s.get('Dauer', '-'):>9} | {s.get('Speed', '-'):>14}"
+                    color = Colors.CYAN if "Update" in s["Aktion"] else Colors.GREEN
+                    print(f"{color}{row}{Colors.RESET}")
+                    logger._write_file(row)
+            elif cols < 85:
+                header = f"   {'Distribution':<22} | {'Status':<13} | {'Version':<18} | {'Größe':>10}"
+                tbl_border = "-" * min(len(header), max(40, cols - 1))
+                print(f"{Colors.DARK_GRAY}{tbl_border}{Colors.RESET}")
+                print(f"{Colors.YELLOW}{header}{Colors.RESET}")
+                print(f"{Colors.DARK_GRAY}{tbl_border}{Colors.RESET}")
+                logger._write_file(header)
+                for s in summary_items:
+                    row = f"   {s['Distribution']:<22} | {s['Aktion']:<13} | {s['Version']:<18} | {s['Groesse']:>10}"
+                    color = Colors.CYAN if "Update" in s["Aktion"] else Colors.GREEN
+                    print(f"{color}{row}{Colors.RESET}")
+                    logger._write_file(row)
+            else:
+                header = f"   {'Distribution':<26} | {'Status':<16} | {'Version':<24} | {'Größe':>12}"
+                tbl_border = "-" * min(len(header), max(40, cols - 1))
+                print(f"{Colors.DARK_GRAY}{tbl_border}{Colors.RESET}")
+                print(f"{Colors.YELLOW}{header}{Colors.RESET}")
+                print(f"{Colors.DARK_GRAY}{tbl_border}{Colors.RESET}")
+                logger._write_file(header)
+                for s in summary_items:
+                    row = f"   {s['Distribution']:<26} | {s['Aktion']:<16} | {s['Version']:<24} | {s['Groesse']:>12}"
+                    color = Colors.CYAN if "Update" in s["Aktion"] else Colors.GREEN
+                    print(f"{color}{row}{Colors.RESET}")
+                    logger._write_file(row)
+
             print(f"{Colors.DARK_GRAY}{tbl_border}{Colors.RESET}\n")
 
         # SCHRITT 2: VENTOY SYNCHRONISIERUNG
