@@ -292,7 +292,7 @@ class DownloadManager:
                 report_interval = 0.2 if is_tty else 5.0
 
                 with open(temp_dest, "wb") as f:
-                    for chunk in resp.iter_content(chunk_size=65536):
+                    for chunk in resp.iter_content(chunk_size=131072):
                         if not chunk:
                             continue
                         f.write(chunk)
@@ -557,7 +557,11 @@ class DistroScraperEngine:
         return None
 
     def scrape_linux_mint_cinnamon(self) -> Optional[Dict[str, Any]]:
-        for base in ["https://mirrors.edge.kernel.org/linuxmint/stable/", "https://ftp.fau.de/mint/iso/stable/"]:
+        for base in [
+            "https://ftp.fau.de/mint/iso/stable/",
+            "https://mirror.netcologne.de/linuxmint/iso/stable/",
+            "https://mirrors.edge.kernel.org/linuxmint/stable/",
+        ]:
             html = self.dm.get_web_content(base)
             if html:
                 raw_versions = [m[0] for m in re.findall(r'href="(\d+(\.\d+)*)/"', html)]
