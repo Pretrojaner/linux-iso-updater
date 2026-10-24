@@ -288,14 +288,6 @@
     "SizeBytes": 780140544
   },
   {
-    "Enabled": false,
-    "Name": "Phoronix Test Suite (PTS Desktop Live)",
-    "MatchPattern": "pts-desktop-live-([0-9.]+)",
-    "Category": "04_Rescue-Systeme",
-    "Script": "$html = Get-WebContent -Uri 'https://www.phoronix-test-suite.com/?k=downloads'\nif ($html -and $html -match 'href=\"([^\"]*pts-desktop-live-([0-9.]+)[^\"]*\\.iso)\"') {\n    $url = $Matches[1]\n    $ver = $Matches[2]\n    $fn = [System.IO.Path]::GetFileName($url)\n    return @{ Version = $ver; Url = $url; Filename = $fn }\n}\nreturn $null",
-    "SizeBytes": 1458337792
-  },
-  {
     "Enabled": true,
     "Name": "Rockstor",
     "MatchPattern": "(?i)Rockstor-.*-generic\\.x86_64.*\\.iso",
