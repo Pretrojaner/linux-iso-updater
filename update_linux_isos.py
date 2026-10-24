@@ -967,20 +967,19 @@ class DistroScraperEngine:
         }
 
     def scrape_phoronix_test_suite_pts_desktop_live(self) -> Optional[Dict[str, Any]]:
-        html = self.dm.get_web_content("https://www.phoronix-test-suite.com/")
+        html = self.dm.get_web_content("https://www.phoronix-test-suite.com/?k=downloads")
         if html:
-            m = re.search(r'href="(https://[^"]*?pts-desktop-live-(\d+\.\d+)\.iso)"', html)
+            m = re.search(r'href="([^"]*pts-desktop-live-([0-9.]+)[^"]*\.iso)"', html)
             if m:
+                url = m.group(1)
+                ver = m.group(2)
+                fn = Path(url).name
                 return {
-                    "Version": m.group(2),
-                    "Url": m.group(1),
-                    "Filename": f"pts-desktop-live-{m.group(2)}.iso",
+                    "Version": ver,
+                    "Url": url,
+                    "Filename": fn,
                 }
-        return {
-            "Version": "2022",
-            "Url": "https://www.phoronix-test-suite.com/download.php?file=pts-desktop-live-2022.iso",
-            "Filename": "pts-desktop-live-2022.iso",
-        }
+        return None
 
     def scrape_clonezilla_live(self) -> Optional[Dict[str, Any]]:
         chk = self.dm.get_web_content("https://clonezilla.org/downloads/stable/data/CHECKSUMS.TXT")
