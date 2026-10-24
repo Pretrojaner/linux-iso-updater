@@ -116,20 +116,53 @@ Ein PowerShell-basiertes All-in-One Automatisierungswerkzeug zum Herunterladen, 
 
 | Datei | Beschreibung |
 |---|---|
-| `update-linux-isos.bat` | Robuster Starter. Prüft/installiert PowerShell 7 und startet das Skript mit Bypass-Rechten. |
-| `update-linux-isos.ps1` | Hauptskript (Downloads, Hash-Prüfung, Archivierung, Ventoy-Themes, CLI-Installation & Sync). |
-| `distros.json` | JSON-Konfigurationsdatei aller 45 Distributionen, Download-Quellen und Regex-Muster. |
-| `.gitignore` | Schließt ISO-Dateien, Logdateien und temporäre Ordner vom Git-Tracking aus. |
-| `GITHUB_ANLEITUNG.md` | Dokumentation zur Verwaltung und Pflege des GitHub-Repositories. |
+| `update-linux-isos.bat` | Robuster Starter für Windows. Prüft/installiert PowerShell 7 und startet das Skript. |
+| `update-linux-isos.ps1` | Hauptskript für Windows (Downloads, Hash-Prüfung, Archivierung, Ventoy-Themes, Sync). |
+| `update-linux-isos.sh`  | Ausführbares Bash-Startskript für Linux (prüft Abhängigkeiten, richtet ggf. `.venv` ein). |
+| `update_linux_isos.py`  | Vollständige Linux-Portierung in Python 3 (PEP 8, Pillow, Requests, Streaming-Downloads). |
+| `distros.json`          | JSON-Konfigurationsdatei aller 45 Distributionen, Download-Quellen und Regex-Muster. |
+| `.gitignore`            | Schließt ISO-Dateien, Logdateien und temporäre Ordner vom Git-Tracking aus. |
+| `GITHUB_ANLEITUNG.md`   | Dokumentation zur Verwaltung und Pflege des GitHub-Repositories. |
 
 ---
 
 ## 🛠️ Verwendung
 
-### Schneller Start:
+### Schneller Start unter Windows:
 Einfach Doppelklick auf **`update-linux-isos.bat`**.
 
-### Parameter & Optionen (PowerShell / CLI):
+### Schneller Start unter Linux:
+Im Terminal ausführen:
+```bash
+chmod +x update-linux-isos.sh
+./update-linux-isos.sh
+```
+
+### Parameter & Optionen unter Linux:
+```bash
+# Regulärer Start (prüft & lädt Distros, fragt danach nach Ventoy-Kopie):
+./update-linux-isos.sh
+
+# Nur Testlauf ohne Downloads (Dry-Run):
+./update-linux-isos.sh --dry-run
+
+# Distributionsauswahl interaktiv anpassen:
+./update-linux-isos.sh --select
+
+# Ventoy automatisiert auf USB-Laufwerk installieren/aktualisieren:
+./update-linux-isos.sh --install-ventoy
+
+# Ventoy Theme interaktiv auswählen und auf USB-Stick einrichten:
+./update-linux-isos.sh --change-theme
+
+# Direktes Theme setzen (z. B. matrix, cybertech, moderndark):
+./update-linux-isos.sh --change-theme --theme matrix --target /media/$USER/Ventoy
+
+# Nur Ventoy-Synchronisation durchführen (Download überspringen):
+./update-linux-isos.sh --skip-download --target /media/$USER/Ventoy
+```
+
+### Parameter & Optionen unter Windows (PowerShell / CLI):
 ```powershell
 # Regulärer Start (prüft & lädt Distros, fragt danach nach Ventoy-Kopie):
 .\update-linux-isos.ps1
