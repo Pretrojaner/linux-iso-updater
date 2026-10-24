@@ -1093,8 +1093,8 @@ class DistroScraperEngine:
 
     def scrape_eset_sysrescue_live(self) -> Optional[Dict[str, Any]]:
         return {
-            "Version": "1.0.9.0",
-            "Url": "https://download.eset.com/com/eset/apps/business/msas/sysrescue/latest/eset_sysrescue_live_enu.iso",
+            "Version": "2024.05",
+            "Url": "https://archive.org/download/eset_sysrescue_live_enu_202405/eset_sysrescue_live_enu.iso",
             "Filename": "eset_sysrescue_live_enu.iso",
         }
 
