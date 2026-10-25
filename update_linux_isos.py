@@ -1637,11 +1637,17 @@ class VentoyLinuxDriveManager:
                 )
                 return
 
-        # Fall B: Gemountete Partitionen/Laufwerke
+        # Fall B: Gemountete Partitionen/Laufwerke (nur portable Wechselmedien oder bereits existierende Ventoy-Laufwerke)
         mount = node.get("mountpoint")
         if mount and mount not in ["/", "/boot", "/boot/efi", "/home", "[SWAP]"]:
             label = node.get("label") or model or name
             is_ventoy = "ventoy" in label.lower() or Path(f"{mount}/ventoy").exists()
+
+            # Interne Festplatten (NVMe, SATA) und Netzwerklaufwerke überspringen, außer es ist bereits ein Ventoy-Stick
+            if not is_removable and not is_ventoy:
+                for child in children:
+                    self._parse_lsblk_node(child, results)
+                return
 
             try:
                 usage = shutil.disk_usage(mount)
