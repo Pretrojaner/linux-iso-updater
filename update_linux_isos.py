@@ -26,6 +26,7 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
 import time
 from datetime import datetime
 from pathlib import Path
@@ -1311,13 +1312,13 @@ def get_pretty_iso_name(filename: str) -> str:
     return clean.strip()
 
 
-def get_ventoy_theme_definitions() -> Dict[str, Dict[str, str]]:
+def get_ventoy_theme_definitions() -> Dict[str, Dict[str, Any]]:
     """Gibt die 6 integrierten Ventoy-Themes zurück."""
     return {
         "1": {
             "key": "moderndark",
             "name": "Modern Dark",
-            "desc": "Slate Blue & Cyan (Modern, aufgeräumt & kontrastreich)",
+            "desc": "Slate Blue & Cyan (Modern, aufgeräumt & Blade Runner 2049 Artwork)",
             "title": "VENTOY MULTIBOOT SYSTEM MANAGER",
             "title_color": "#38bdf8",
             "bg1": "#0f172a",
@@ -1327,11 +1328,12 @@ def get_ventoy_theme_definitions() -> Dict[str, Dict[str, str]]:
             "text": "#94a3b8",
             "sel_bg": "#38bdf8",
             "sel_fg": "#0f172a",
+            "image_url": "https://m.media-amazon.com/images/M/MV5BMTU5NTkwNTA2NF5BMl5BanBnXkFtZTgwMjQ5MjY2MzI@.jpg",
         },
         "2": {
             "key": "matrix",
             "name": "Matrix Hacker Terminal",
-            "desc": "Nerdig, tiefes Schwarz & leuchtendes Terminal-Phosphorgrün",
+            "desc": "Nerdig, tiefes Schwarz & Hackers (1995) Terminal-Phosphorgrün",
             "title": "ROOT@TERMINAL // MULTIBOOT MATRIX",
             "title_color": "#22c55e",
             "bg1": "#050a05",
@@ -1341,11 +1343,12 @@ def get_ventoy_theme_definitions() -> Dict[str, Dict[str, str]]:
             "text": "#86efac",
             "sel_bg": "#22c55e",
             "sel_fg": "#050a05",
+            "image_url": "https://m.media-amazon.com/images/M/MV5BYzc0OTAxOWQtMWUxNS00ZjAxLTlmODAtMzQyNzQ2NzJmODUzXkEyXkFqcGc@.jpg",
         },
         "3": {
             "key": "cybertech",
             "name": "Cyber Tech & Network",
-            "desc": "Technik & Netzwerk, Deep Navy & Electric Blue Infrastruktur",
+            "desc": "Technik & Cyber-Infrastruktur, Hackers (1995) Electric Blue",
             "title": "CYBER-NET // MULTIBOOT NETWORK OS SUITE",
             "title_color": "#38bdf8",
             "bg1": "#020817",
@@ -1355,11 +1358,12 @@ def get_ventoy_theme_definitions() -> Dict[str, Dict[str, str]]:
             "text": "#93c5fd",
             "sel_bg": "#3b82f6",
             "sel_fg": "#020817",
+            "image_url": "https://m.media-amazon.com/images/M/MV5BZmE2ZDQ2ZjYtYjMwMy00YWQ2LThmNTYtZWE0YmNkNDlhOTRkXkEyXkFqcGc@.jpg",
         },
         "4": {
             "key": "tuxamber",
             "name": "Tux Classic Linux",
-            "desc": "Linux-Distro-Thema, Anthrazit-Carbon & warmes Tux-Gold",
+            "desc": "Klassisch puristisches Distro-Thema (Anthrazit & Gold, bewusst OHNE Hintergrundbild)",
             "title": "TUX MULTIBOOT // LINUX SYSTEM REPOSITORY",
             "title_color": "#f59e0b",
             "bg1": "#18181b",
@@ -1369,11 +1373,12 @@ def get_ventoy_theme_definitions() -> Dict[str, Dict[str, str]]:
             "text": "#fde68a",
             "sel_bg": "#f59e0b",
             "sel_fg": "#18181b",
+            "image_url": None,
         },
         "5": {
             "key": "crimson",
             "name": "Crimson Security & Audit",
-            "desc": "Security & Pentest, Dark Carbon & Blood Crimson Red",
+            "desc": "Security & Pentest, Mr. Robot Blood Crimson Red Artwork",
             "title": "CRIMSON SECURITY // RED TEAM AUDIT & RECOVERY",
             "title_color": "#ef4444",
             "bg1": "#0c0505",
@@ -1383,11 +1388,12 @@ def get_ventoy_theme_definitions() -> Dict[str, Dict[str, str]]:
             "text": "#fca5a5",
             "sel_bg": "#ef4444",
             "sel_fg": "#0c0505",
+            "image_url": "https://m.media-amazon.com/images/M/MV5BMjI2MDY5Mzk4NV5BMl5BanBnXkFtZTgwMTUyMzk3MjE@.jpg",
         },
         "6": {
             "key": "synthwave",
             "name": "Synthwave Neon Retro",
-            "desc": "80s Retro-Wave, Cyberpunk Midnight Purple & Hot Pink/Cyan",
+            "desc": "80s Retro-Wave, Cyberpunk Hackers (1995) Hot Pink & Cyan Neon",
             "title": "SYNTHWAVE MULTIBOOT // RETRO-WAVE",
             "title_color": "#f472b6",
             "bg1": "#13071f",
@@ -1397,6 +1403,7 @@ def get_ventoy_theme_definitions() -> Dict[str, Dict[str, str]]:
             "text": "#e879f9",
             "sel_bg": "#ec4899",
             "sel_fg": "#13071f",
+            "image_url": "https://m.media-amazon.com/images/M/MV5BNjlhNDgxZWMtYWNjMy00NDE3LTlkNjEtNDYwNTQwNWViMDllXkEyXkFqcGc@.jpg",
         },
     }
 
@@ -1482,38 +1489,78 @@ class VentoyThemeManager:
 
         theme_dir.mkdir(parents=True, exist_ok=True)
 
+        w, h = 1920, 1080
+        temp_img_file = Path(tempfile.gettempdir()) / f"ventoy_bg_{int(time.time())}.jpg"
+        img_downloaded = False
         try:
-            # 1. 1080p Hintergrund generieren (1920x1080)
-            w, h = 1920, 1080
-            c1 = hex_to_rgb(selected["bg1"])
-            c2 = hex_to_rgb(selected["bg2"])
+            if selected.get("image_url"):
+                self.logger.log("[VENTOY] Lade Theme-Hintergrundbild herunter...", color=Colors.CYAN, level="THEME")
+                try:
+                    resp = requests.get(selected["image_url"], headers={"User-Agent": USER_AGENT}, timeout=30)
+                    if resp.status_code == 200:
+                        temp_img_file.write_bytes(resp.content)
+                        img_downloaded = True
+                        with Image.open(temp_img_file) as src_img:
+                            bg_img = src_img.convert("RGB").resize((w, h), Image.Resampling.BICUBIC)
+                            draw = ImageDraw.Draw(bg_img, "RGBA")
 
-            grad_small = Image.new("RGB", (256, 144))
-            pixels = grad_small.load()
-            for y in range(144):
-                for x in range(256):
-                    factor = (x / 256.0 + y / 144.0) / 2.0
-                    r = int(c1[0] + factor * (c2[0] - c1[0]))
-                    g = int(c1[1] + factor * (c2[1] - c1[1]))
-                    b = int(c1[2] + factor * (c2[2] - c1[2]))
-                    pixels[x, y] = (r, g, b)
+                            # Dezente halbtransparente Header- und Footer-Balken fuer Lesbarkeit
+                            hdr_rgb = hex_to_rgb(selected["header"])
+                            overlay_color = (hdr_rgb[0], hdr_rgb[1], hdr_rgb[2], 190)
+                            draw.rectangle([0, 0, w, 80], fill=overlay_color)
+                            draw.rectangle([0, 1020, w, h], fill=overlay_color)
 
-            img = grad_small.resize((w, h), Image.Resampling.BICUBIC)
-            draw = ImageDraw.Draw(img)
+                            accent_color = hex_to_rgb(selected["accent"])
+                            draw.line([(0, 80), (w, 80)], fill=accent_color, width=3)
+                            draw.line([(0, 1020), (w, 1020)], fill=accent_color, width=3)
 
-            header_color = hex_to_rgb(selected["header"])
-            draw.rectangle([0, 0, w, 80], fill=header_color)
-            draw.rectangle([0, 1020, w, h], fill=header_color)
+                            bg_img.save(bg_path, format="PNG")
+                            self.logger.log(f"[VENTOY] Hintergrundbild fuer '{selected['name']}' erfolgreich eingerichtet.", color=Colors.GREEN, level="OK")
+                except Exception as dl_err:
+                    self.logger.log(f"[VENTOY] Download des Theme-Bildes fehlgeschlagen: {dl_err}. Verwende Farbverlauf als Fallback.", color=Colors.YELLOW, level="WARNUNG")
+            else:
+                # Theme ohne Hintergrundbild (z. B. Tux Classic Linux bewusst ohne Hintergrund)
+                if bg_path.exists():
+                    try:
+                        bg_path.unlink()
+                    except Exception:
+                        pass
+                self.logger.log(f"[VENTOY] Theme '{selected['name']}' wird puristisch ohne Hintergrundbild eingerichtet.", color=Colors.CYAN, level="THEME")
+        finally:
+            # Heruntergeladenes Bild direkt loeschen
+            if temp_img_file.exists():
+                try:
+                    temp_img_file.unlink()
+                except Exception:
+                    pass
 
-            accent_color = hex_to_rgb(selected["accent"])
-            draw.line([(0, 80), (w, 80)], fill=accent_color, width=3)
-            draw.line([(0, 1020), (w, 1020)], fill=accent_color, width=3)
+        try:
+            if selected.get("image_url") and not img_downloaded:
+                # Fallback Farbverlauf
+                c1 = hex_to_rgb(selected["bg1"])
+                c2 = hex_to_rgb(selected["bg2"])
+                grad_small = Image.new("RGB", (256, 144))
+                pixels = grad_small.load()
+                for y in range(144):
+                    for x in range(256):
+                        factor = (x / 256.0 + y / 144.0) / 2.0
+                        r = int(c1[0] + factor * (c2[0] - c1[0]))
+                        g = int(c1[1] + factor * (c2[1] - c1[1]))
+                        b = int(c1[2] + factor * (c2[2] - c1[2]))
+                        pixels[x, y] = (r, g, b)
 
-            subtle_color = (accent_color[0] // 4, accent_color[1] // 4, accent_color[2] // 4)
-            draw.line([(0, 84), (w, 84)], fill=subtle_color, width=1)
-            draw.line([(0, 1016), (w, 1016)], fill=subtle_color, width=1)
+                img = grad_small.resize((w, h), Image.Resampling.BICUBIC)
+                draw = ImageDraw.Draw(img)
 
-            img.save(bg_path, format="PNG")
+                header_color = hex_to_rgb(selected["header"])
+                draw.rectangle([0, 0, w, 80], fill=header_color)
+                draw.rectangle([0, 1020, w, h], fill=header_color)
+
+                accent_color = hex_to_rgb(selected["accent"])
+                draw.line([(0, 80), (w, 80)], fill=accent_color, width=3)
+                draw.line([(0, 1020), (w, 1020)], fill=accent_color, width=3)
+
+                img.save(bg_path, format="PNG")
 
             # 2. Auswahlelement (select_c.png, 32x36)
             sel_img = Image.new("RGB", (32, 36), color=hex_to_rgb(selected["sel_bg"]))
@@ -1522,8 +1569,9 @@ class VentoyThemeManager:
             self.logger.log(f"[VENTOY] Warnung beim Erstellen der Theme-Grafiken: {e}", color=Colors.YELLOW, level="WARNUNG")
 
         # 3. theme.txt schreiben
+        desktop_image_line = 'desktop-image: "background.png"' if (selected.get("image_url") and bg_path.exists()) else '# bewusst kein Hintergrundbild'
         theme_txt_content = f"""# Ventoy Theme: {selected['name']}
-desktop-image: "background.png"
+{desktop_image_line}
 desktop-color: "{selected['bg1']}"
 title-text: "{selected['title']}"
 title-color: "{selected['title_color']}"
@@ -1657,6 +1705,16 @@ class VentoyLinuxDriveManager:
         mount = node.get("mountpoint")
         if mount and mount not in ["/", "/boot", "/boot/efi", "/home", "[SWAP]"]:
             label = node.get("label") or model or name
+            # VTOYEFI Bootpartition und Winz-Partitionen < 0.5 GB ignorieren
+            if "vtoyefi" in label.lower() or "vtoyefi" in name.lower():
+                for child in children:
+                    self._parse_lsblk_node(child, results)
+                return
+            size_gb = (node.get("size") or 0) / (1024**3)
+            if size_gb > 0 and size_gb < 0.5:
+                for child in children:
+                    self._parse_lsblk_node(child, results)
+                return
             is_ventoy = "ventoy" in label.lower() or Path(f"{mount}/ventoy").exists()
 
             # Interne Festplatten (NVMe, SATA) und Netzwerklaufwerke überspringen, außer es ist bereits ein Ventoy-Stick

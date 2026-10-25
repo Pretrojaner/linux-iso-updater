@@ -668,7 +668,7 @@ function Get-VentoyThemeDefinitions {
         "1" = [ordered]@{
             Key        = "moderndark"
             Name       = "Modern Dark"
-            Desc       = "Slate Blue & Cyan (Modern, aufgeraeumt & kontrastreich)"
+            Desc       = "Slate Blue & Cyan (Modern, aufgeraeumt & Blade Runner 2049 Artwork)"
             Title      = "VENTOY MULTIBOOT SYSTEM MANAGER"
             TitleColor = "#38bdf8"
             Bg1        = "#0f172a"
@@ -678,11 +678,12 @@ function Get-VentoyThemeDefinitions {
             Text       = "#94a3b8"
             SelBg      = "#38bdf8"
             SelFg      = "#0f172a"
+            ImageUrl   = "https://m.media-amazon.com/images/M/MV5BMTU5NTkwNTA2NF5BMl5BanBnXkFtZTgwMjQ5MjY2MzI@.jpg"
         }
         "2" = [ordered]@{
             Key        = "matrix"
             Name       = "Matrix Hacker Terminal"
-            Desc       = "Nerdig, tiefes Schwarz & leuchtendes Terminal-Phosphorgruen"
+            Desc       = "Nerdig, tiefes Schwarz & Hackers (1995) Terminal-Phosphorgruen"
             Title      = "ROOT@TERMINAL // MULTIBOOT MATRIX"
             TitleColor = "#22c55e"
             Bg1        = "#050a05"
@@ -692,11 +693,12 @@ function Get-VentoyThemeDefinitions {
             Text       = "#86efac"
             SelBg      = "#22c55e"
             SelFg      = "#050a05"
+            ImageUrl   = "https://m.media-amazon.com/images/M/MV5BYzc0OTAxOWQtMWUxNS00ZjAxLTlmODAtMzQyNzQ2NzJmODUzXkEyXkFqcGc@.jpg"
         }
         "3" = [ordered]@{
             Key        = "cybertech"
             Name       = "Cyber Tech & Network"
-            Desc       = "Technik & Netzwerk, Deep Navy & Electric Blue Infrastruktur"
+            Desc       = "Technik & Cyber-Infrastruktur, Hackers (1995) Electric Blue"
             Title      = "CYBER-NET // MULTIBOOT NETWORK OS SUITE"
             TitleColor = "#38bdf8"
             Bg1        = "#020817"
@@ -706,11 +708,12 @@ function Get-VentoyThemeDefinitions {
             Text       = "#93c5fd"
             SelBg      = "#3b82f6"
             SelFg      = "#020817"
+            ImageUrl   = "https://m.media-amazon.com/images/M/MV5BZmE2ZDQ2ZjYtYjMwMy00YWQ2LThmNTYtZWE0YmNkNDlhOTRkXkEyXkFqcGc@.jpg"
         }
         "4" = [ordered]@{
             Key        = "tuxamber"
             Name       = "Tux Classic Linux"
-            Desc       = "Linux-Distro-Thema, Anthrazit-Carbon & warmes Tux-Gold"
+            Desc       = "Klassisch puristisches Distro-Thema (Anthrazit & Gold, bewusst OHNE Hintergrundbild)"
             Title      = "TUX MULTIBOOT // LINUX SYSTEM REPOSITORY"
             TitleColor = "#f59e0b"
             Bg1        = "#18181b"
@@ -720,11 +723,12 @@ function Get-VentoyThemeDefinitions {
             Text       = "#fde68a"
             SelBg      = "#f59e0b"
             SelFg      = "#18181b"
+            ImageUrl   = $null
         }
         "5" = [ordered]@{
             Key        = "crimson"
             Name       = "Crimson Security & Audit"
-            Desc       = "Security & Pentest, Dark Carbon & Blood Crimson Red"
+            Desc       = "Security & Pentest, Mr. Robot Blood Crimson Red Artwork"
             Title      = "CRIMSON SECURITY // RED TEAM AUDIT & RECOVERY"
             TitleColor = "#ef4444"
             Bg1        = "#0c0505"
@@ -734,11 +738,12 @@ function Get-VentoyThemeDefinitions {
             Text       = "#fca5a5"
             SelBg      = "#ef4444"
             SelFg      = "#0c0505"
+            ImageUrl   = "https://m.media-amazon.com/images/M/MV5BMjI2MDY5Mzk4NV5BMl5BanBnXkFtZTgwMTUyMzk3MjE@.jpg"
         }
         "6" = [ordered]@{
             Key        = "synthwave"
             Name       = "Synthwave Neon Retro"
-            Desc       = "80s Retro-Wave, Cyberpunk Midnight Purple & Hot Pink/Cyan"
+            Desc       = "80s Retro-Wave, Cyberpunk Hackers (1995) Hot Pink & Cyan Neon"
             Title      = "SYNTHWAVE MULTIBOOT // RETRO-WAVE"
             TitleColor = "#f472b6"
             Bg1        = "#13071f"
@@ -748,6 +753,7 @@ function Get-VentoyThemeDefinitions {
             Text       = "#e879f9"
             SelBg      = "#ec4899"
             SelFg      = "#13071f"
+            ImageUrl   = "https://m.media-amazon.com/images/M/MV5BNjlhNDgxZWMtYWNjMy00NDE3LTlkNjEtNDYwNTQwNWViMDllXkEyXkFqcGc@.jpg"
         }
     }
 }
@@ -832,37 +838,78 @@ function Install-VentoyTheme {
         Add-Type -AssemblyName System.Drawing
         $width = 1920
         $height = 1080
-        $bmp = New-Object System.Drawing.Bitmap($width, $height, [System.Drawing.Imaging.PixelFormat]::Format24bppRgb)
-        $g = [System.Drawing.Graphics]::FromImage($bmp)
-        $g.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::AntiAlias
 
-        # Hintergrund-Farbverlauf
-        $rect = New-Object System.Drawing.Rectangle 0, 0, $width, $height
-        $c1 = [System.Drawing.ColorTranslator]::FromHtml($selectedTheme.Bg1)
-        $c2 = [System.Drawing.ColorTranslator]::FromHtml($selectedTheme.Bg2)
-        $brush = New-Object System.Drawing.Drawing2D.LinearGradientBrush $rect, $c1, $c2, 45.0
-        $g.FillRectangle($brush, $rect)
+        if ($selectedTheme.ImageUrl) {
+            $tempImgFile = [System.IO.Path]::Combine([System.IO.Path]::GetTempPath(), "ventoy_bg_$([System.IO.Path]::GetRandomFileName()).jpg")
+            $imgDownloaded = $false
+            try {
+                Write-Log -Message "[VENTOY] Lade Theme-Hintergrundbild herunter..." -Color Cyan -Level "THEME"
+                Invoke-WebRequest -Uri $selectedTheme.ImageUrl -OutFile $tempImgFile -UseBasicParsing -TimeoutSec 30
+                if ((Test-Path $tempImgFile) -and (Get-Item $tempImgFile).Length -gt 0) {
+                    $imgDownloaded = $true
+                    $srcImg = [System.Drawing.Image]::FromFile($tempImgFile)
+                    $bmp = New-Object System.Drawing.Bitmap($width, $height, [System.Drawing.Imaging.PixelFormat]::Format24bppRgb)
+                    $g = [System.Drawing.Graphics]::FromImage($bmp)
+                    $g.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
+                    $g.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::HighQuality
 
-        # Header- und Footer-Balken
-        $headerRect = New-Object System.Drawing.Rectangle 0, 0, $width, 80
-        $headerBrush = New-Object System.Drawing.SolidBrush ([System.Drawing.ColorTranslator]::FromHtml($selectedTheme.Header))
-        $g.FillRectangle($headerBrush, $headerRect)
+                    # Bild auf 1920x1080 skalieren
+                    $g.DrawImage($srcImg, 0, 0, $width, $height)
 
-        $footerRect = New-Object System.Drawing.Rectangle 0, 1020, $width, 60
-        $g.FillRectangle($headerBrush, $footerRect)
+                    # Dezente halbtransparente Header- und Footer-Balken fuer erstklassige Menue-Lesbarkeit
+                    $hdrColor = [System.Drawing.ColorTranslator]::FromHtml($selectedTheme.Header)
+                    $hdrBrush = New-Object System.Drawing.SolidBrush ([System.Drawing.Color]::FromArgb(190, $hdrColor.R, $hdrColor.G, $hdrColor.B))
+                    $g.FillRectangle($hdrBrush, (New-Object System.Drawing.Rectangle 0, 0, $width, 80))
+                    $g.FillRectangle($hdrBrush, (New-Object System.Drawing.Rectangle 0, 1020, $width, 60))
 
-        # Akzentlinien oben und unten
-        $accentPen = New-Object System.Drawing.Pen ([System.Drawing.ColorTranslator]::FromHtml($selectedTheme.Accent)), 3
-        $g.DrawLine($accentPen, 0, 80, $width, 80)
-        $g.DrawLine($accentPen, 0, 1020, $width, 1020)
+                    # Akzentlinien oben und unten
+                    $accentPen = New-Object System.Drawing.Pen ([System.Drawing.ColorTranslator]::FromHtml($selectedTheme.Accent)), 3
+                    $g.DrawLine($accentPen, 0, 80, $width, 80)
+                    $g.DrawLine($accentPen, 0, 1020, $width, 1020)
 
-        # Dezente High-Tech Designelemente
-        $subtlePen = New-Object System.Drawing.Pen ([System.Drawing.Color]::FromArgb(40, [System.Drawing.ColorTranslator]::FromHtml($selectedTheme.Accent))), 1
-        $g.DrawLine($subtlePen, 0, 84, $width, 84)
-        $g.DrawLine($subtlePen, 0, 1016, $width, 1016)
+                    $bmp.Save($bgPath, [System.Drawing.Imaging.ImageFormat]::Png)
+                    $g.Dispose(); $bmp.Dispose(); $srcImg.Dispose()
+                    Write-Log -Message "[VENTOY] Hintergrundbild fuer '$($selectedTheme.Name)' erfolgreich auf Ventoy-Laufwerk eingerichtet." -Color Green -Level "OK"
+                }
+            } catch {
+                Write-Log -Message "[VENTOY] Download des Theme-Bildes fehlgeschlagen: $_. Verwende Farbverlauf als Fallback." -Color Yellow -Level "WARNUNG"
+            } finally {
+                # Heruntergeladenes Bild direkt wieder loeschen
+                if (Test-Path $tempImgFile) {
+                    Remove-Item -Path $tempImgFile -Force -ErrorAction SilentlyContinue
+                }
+            }
 
-        $bmp.Save($bgPath, [System.Drawing.Imaging.ImageFormat]::Png)
-        $g.Dispose(); $bmp.Dispose()
+            if (-not $imgDownloaded) {
+                # Fallback: Prozeduraler Farbverlauf
+                $bmp = New-Object System.Drawing.Bitmap($width, $height, [System.Drawing.Imaging.PixelFormat]::Format24bppRgb)
+                $g = [System.Drawing.Graphics]::FromImage($bmp)
+                $rect = New-Object System.Drawing.Rectangle 0, 0, $width, $height
+                $c1 = [System.Drawing.ColorTranslator]::FromHtml($selectedTheme.Bg1)
+                $c2 = [System.Drawing.ColorTranslator]::FromHtml($selectedTheme.Bg2)
+                $brush = New-Object System.Drawing.Drawing2D.LinearGradientBrush $rect, $c1, $c2, 45.0
+                $g.FillRectangle($brush, $rect)
+
+                $headerRect = New-Object System.Drawing.Rectangle 0, 0, $width, 80
+                $headerBrush = New-Object System.Drawing.SolidBrush ([System.Drawing.ColorTranslator]::FromHtml($selectedTheme.Header))
+                $g.FillRectangle($headerBrush, $headerRect)
+                $footerRect = New-Object System.Drawing.Rectangle 0, 1020, $width, 60
+                $g.FillRectangle($headerBrush, $footerRect)
+
+                $accentPen = New-Object System.Drawing.Pen ([System.Drawing.ColorTranslator]::FromHtml($selectedTheme.Accent)), 3
+                $g.DrawLine($accentPen, 0, 80, $width, 80)
+                $g.DrawLine($accentPen, 0, 1020, $width, 1020)
+
+                $bmp.Save($bgPath, [System.Drawing.Imaging.ImageFormat]::Png)
+                $g.Dispose(); $bmp.Dispose()
+            }
+        } else {
+            # Kein Hintergrundbild (z. B. Tux Classic Linux bewusst ohne Hintergrund)
+            if (Test-Path $bgPath) {
+                Remove-Item -Path $bgPath -Force -ErrorAction SilentlyContinue
+            }
+            Write-Log -Message "[VENTOY] Theme '$($selectedTheme.Name)' wird puristisch ohne Hintergrundbild eingerichtet." -Color Cyan -Level "THEME"
+        }
 
         # Selection bar (select_c.png)
         $bmpSel = New-Object System.Drawing.Bitmap(32, 36, [System.Drawing.Imaging.PixelFormat]::Format24bppRgb)
@@ -876,9 +923,11 @@ function Install-VentoyTheme {
         Write-Log -Message "[VENTOY] Warnung beim Erstellen der Theme-Grafiken: $_" -Color Yellow -Level "WARNUNG"
     }
 
+    $desktopImageLine = if ($selectedTheme.ImageUrl -and (Test-Path $bgPath)) { 'desktop-image: "background.png"' } else { '# bewusst kein Hintergrundbild' }
+
     $themeTxtContent = @"
 # Ventoy Theme: $($selectedTheme.Name)
-desktop-image: "background.png"
+$desktopImageLine
 desktop-color: "$($selectedTheme.Bg1)"
 title-text: "$($selectedTheme.Title)"
 title-color: "$($selectedTheme.TitleColor)"
@@ -965,17 +1014,18 @@ function Get-AvailableUsbDrives {
         }
     } catch {}
 
-    # USB- und Ventoy-Volumes filtern
+    # USB- und Ventoy-Volumes filtern (ohne VTOYEFI-Bootpartition und Winz-Partitionen < 0.5 GB)
     $vols = Get-CimInstance Win32_Volume | Where-Object {
         $_.DriveLetter -and $_.DriveLetter -ne "C:" -and (
             $usbLetters.Contains($_.DriveLetter) -or 
             $_.DriveType -eq 2 -or 
-            $_.Label -match "Ventoy|VTOYEFI" -or
+            $_.Label -match "Ventoy" -or
             (Test-Path "$($_.DriveLetter)\ventoy")
         )
     } | Select-Object DriveLetter, Label, FileSystem, DriveType,
         @{Name="FreeGB"; Expression={[math]::Round($_.FreeSpace/1GB, 2)}},
-        @{Name="CapacityGB"; Expression={[math]::Round($_.Capacity/1GB, 2)}}
+        @{Name="CapacityGB"; Expression={[math]::Round($_.Capacity/1GB, 2)}} |
+        Where-Object { $_.Label -notmatch '(?i)VTOYEFI|EFI' -and $_.CapacityGB -ge 0.5 }
 
     # Fallback falls keine reinen USB-Flags erkannt wurden, aber Ventoy-Ordner vorhanden ist
     if (-not $vols -and -not $IncludeVentoyOnly) {
@@ -983,7 +1033,8 @@ function Get-AvailableUsbDrives {
             $_.DriveLetter -and $_.DriveLetter -ne "C:" -and ($_.DriveType -eq 2 -or (Test-Path "$($_.DriveLetter)\ventoy"))
         } | Select-Object DriveLetter, Label, FileSystem, DriveType,
             @{Name="FreeGB"; Expression={[math]::Round($_.FreeSpace/1GB, 2)}},
-            @{Name="CapacityGB"; Expression={[math]::Round($_.Capacity/1GB, 2)}}
+            @{Name="CapacityGB"; Expression={[math]::Round($_.Capacity/1GB, 2)}} |
+            Where-Object { $_.Label -notmatch '(?i)VTOYEFI|EFI' -and $_.CapacityGB -ge 0.5 }
     }
 
     return $vols
