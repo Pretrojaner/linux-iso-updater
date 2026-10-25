@@ -1157,12 +1157,6 @@ class DistroScraperEngine:
             "ChecksumUrl": "https://cdn-download.drweb.com/pub/drweb/livedisk/drweb-livedisk-900-cd.iso.md5",
         }
 
-    def scrape_stresslinux(self) -> Optional[Dict[str, Any]]:
-        ver = "0.7.106"
-        fn = f"stresslinux_64bit_11.4.x86_64-{ver}.iso"
-        url = f"https://downloads.sourceforge.net/project/archiveos/s/stresslinux/stresslinux_64bit_11.4.x86_64-{ver}.iso.bz2"
-        return {"Version": ver, "Url": url, "Filename": f"{fn}.bz2", "ExtractTo": fn}
-
     # --- 05 BSD & Unix ---
     def scrape_freebsd(self) -> Optional[Dict[str, Any]]:
         base = "https://download.freebsd.org/releases/ISO-IMAGES/"
@@ -1243,7 +1237,6 @@ def get_pretty_iso_name(filename: str) -> str:
         ("clonezilla", "Clonezilla Live Disk Backup"),
         ("caine", "CAINE Live Digital Forensics & TSK"),
         ("drweb", "Dr.Web LiveDisk Antivirus"),
-        ("stresslinux", "Stresslinux Hardware Load Test"),
         (r"openbsd|install\d+\.iso", "OpenBSD Release"),
         ("netbsd", "NetBSD Release"),
         (r"dfly|dragonfly", "DragonFly BSD Release"),

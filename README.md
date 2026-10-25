@@ -9,14 +9,14 @@ Ein PowerShell-basiertes All-in-One Automatisierungswerkzeug zum Herunterladen, 
 > [!IMPORTANT]
 > **Wichtiger Hinweis zu Speicherort & benötigtem Speicherplatz:**
 > - **Speicherort:** Alle ISO-Dateien werden standardmäßig direkt im **selben Verzeichnis abgelegt, in dem sich die Skripte befinden** (strukturiert in Unterordnern von `01_Desktop-Linux` bis `05_BSD-Unix`).
-> - **Speicherplatzbedarf:** Platziere das Skriptpaket daher unbedingt auf einem Laufwerk mit ausreichend freiem Speicherplatz! Für den vollständigen Download aller 44 vorkonfigurierten Distributionen werden ca. **140 GB** freier Speicherplatz empfohlen.
+> - **Speicherplatzbedarf:** Platziere das Skriptpaket daher unbedingt auf einem Laufwerk mit ausreichend freiem Speicherplatz! Für den vollständigen Download aller 43 vorkonfigurierten Distributionen werden ca. **140 GB** freier Speicherplatz empfohlen.
 > - **Flexible Auswahl:** Beim Start öffnet sich automatisch das interaktive Auswahlmenü. Du kannst mit `[ENTER]` direkt alle Distros laden (`all`) oder gezielt einzelne Gruppen (z. B. `G1, G4`) bzw. Nummern auswählen, um nur die gewünschten Systeme zu beziehen und Speicherplatz zu sparen.
 
 ---
 
 ## 🚀 Funktionen
 
-- **Versions- & Release-Scraping:** Prüft online automatisch die neuesten ISO-Releases für 44 Linux-Distributionen, Enterprise-Server, Rettungssysteme und BSD-Derivate.
+- **Versions- & Release-Scraping:** Prüft online automatisch die neuesten ISO-Releases für 43 Linux-Distributionen, Enterprise-Server, Rettungssysteme und BSD-Derivate.
 - **Interaktive Distributions-Auswahl (`-SelectDistros`):**
   - Übersichtliche Darstellung in 5 Gruppen (`G1` bis `G5`).
   - Mehrfachauswahl via Ziffern (`1, 3, 5-8`), Gruppen (`G1, G4`) oder `all`.
@@ -53,7 +53,7 @@ Ein PowerShell-basiertes All-in-One Automatisierungswerkzeug zum Herunterladen, 
 
 ---
 
-## 📂 Unterstützte Distributionen & Systeme (44 Betriebssysteme)
+## 📂 Unterstützte Distributionen & Systeme (43 Betriebssysteme)
 
 ### 🖥️ 01_Desktop-Linux (15 Distros)
 - **CachyOS** – Performance- und Gaming-optimierte Arch-Linux-Distribution mit angepassten x86-64-v3/v4-Kerneln.
@@ -89,7 +89,7 @@ Ein PowerShell-basiertes All-in-One Automatisierungswerkzeug zum Herunterladen, 
 - **Parrot Security** – All-in-One-Umgebung für Cyber-Security, Penetration-Testing, Reverse Engineering und digitale Privatsphäre.
 - **CAINE Live (Forensic & Autopsy)** – Professionelle italienische Forensik-Live-Distribution mit The Sleuth Kit, Autopsy und schreibgeschütztem Block-Device-Zugriff.
 
-### 🧰 04_Rescue-, Diagnose- & Notfall-Systeme (12 Distros)
+### 🧰 04_Rescue-, Diagnose- & Notfall-Systeme (11 Distros)
 - **Clonezilla Live** – Die bewährte, weltbekannte Festplattenklon- und Image-Backup-Lösung für Bare-Metal-Restore.
 - **Tiny Core Linux** – Winziges, modulares Mini-Linux-System (nur wenige Megabytes groß), das komplett im RAM läuft.
 - **Rescuezilla** – Die benutzerfreundliche grafische "Schweizer Taschenmesser"-Lösung für Image-Backups, Restore und Klonen ("Clonezilla mit GUI").
@@ -101,7 +101,6 @@ Ein PowerShell-basiertes All-in-One Automatisierungswerkzeug zum Herunterladen, 
 - **Kaspersky Rescue Disk** – Bootfähige Virenscan- und Bereinigungsumgebung zur Rettung schwer infizierter Systeme.
 - **ESET SysRescue Live** – Antiviren-Rettungsumgebung zur Erkennung und Entfernung hartnäckiger Malware außerhalb des Betriebssystems.
 - **Dr.Web LiveDisk** – Zuverlässige Antiviren-Rettungsumgebung von Doctor Web zur Säuberung infizierter Windows-Installationen.
-- **Stresslinux** – Spezielles Diagnose-System zum gezielten Stresstesten von CPU, RAM und Mainboard unter Volllast.
 
 ### 🌐 05_BSD & Unix (4 Distros)
 - **FreeBSD** – Hochentwickeltes, hochsicheres UNIX-Betriebssystem mit nativer ZFS-Unterstützung, Jails und legendärem Netzwerk-Stack.

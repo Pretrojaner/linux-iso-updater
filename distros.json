@@ -297,14 +297,6 @@
   },
   {
     "Enabled": true,
-    "Name": "Stresslinux",
-    "Category": "04_Rescue-Systeme",
-    "MatchPattern": "stresslinux_64bit_11\\.4\\.x86_64-(\\d+\\.\\d+\\.\\d+)\\.iso",
-    "Script": "$ver = \"0.7.106\"\n$fn = \"stresslinux_64bit_11.4.x86_64-$ver.iso\"\n$url = \"https://downloads.sourceforge.net/project/archiveos/s/stresslinux/stresslinux_64bit_11.4.x86_64-$ver.iso.bz2\"\nreturn @{ Version = $ver; Url = $url; Filename = \"$fn.bz2\"; ExtractTo = $fn }",
-    "SizeBytes": 230000000
-  },
-  {
-    "Enabled": true,
     "Name": "SystemRescue (ehem. SystemRescueCd)",
     "MatchPattern": "systemrescue-(\\d+\\.\\d+(\\.\\d+)?)-amd64",
     "Category": "04_Rescue-Systeme",
@@ -351,4 +343,4 @@
     "Script": "$html = Get-WebContent -Uri 'https://cdn.openbsd.org/pub/OpenBSD/'\nif ($html) {\n    $vers = [regex]::Matches($html, 'href=\"(\\d+\\.\\d+)/\"') | ForEach-Object { $_.Groups[1].Value } | Sort-Object { [version](ConvertTo-VersionString $_) } -Descending\n    foreach ($v in $vers) {\n        $sub = Get-WebContent -Uri \"https://cdn.openbsd.org/pub/OpenBSD/$v/amd64/\"\n        if ($sub -and $sub -match 'install(\\d+)\\.iso') {\n            $fn = $Matches[0]\n            return @{ Version = $v; Url = \"https://cdn.openbsd.org/pub/OpenBSD/$v/amd64/$fn\"; Filename = $fn; ChecksumUrl = \"https://cdn.openbsd.org/pub/OpenBSD/$v/amd64/SHA256\" }\n        }\n    }\n}\nreturn $null",
     "SizeBytes": 700000000
   }
-]
+]
