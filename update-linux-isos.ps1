@@ -2,7 +2,7 @@
 .SYNOPSIS
     All-in-One Linux ISO Auto-Updater & Ventoy Sync Tool
 .DESCRIPTION
-    Version: 2.3.0
+    Version: 2.4.0
     1. Prueft & laedt neueste Linux ISOs herunter, verifiziert SHA256/SHA512-Hashes & archiviert veraltete Dateien.
     2. Ermoeglicht interaktive Gruppenauswahl (Desktop, Server, Security, Rescue, BSD) mit Mehrfachwahl.
     3. Kopiert die ISO-Ordnerstruktur auf ein Ventoy-Ziel-Laufwerk, bereinigt abgewaehlte und veraltete Staende
@@ -65,7 +65,7 @@ $IsoDirectory = if (-not [string]::IsNullOrWhiteSpace($TargetDirectory)) {
 
 $LogFile = Join-Path $IsoDirectory $LogFileName
 $ArchiveDir = Join-Path $IsoDirectory "Archiv"
-$ScriptVersion = "2.3.0"
+$ScriptVersion = "2.4.0"
 $UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
 
 function ConvertTo-VersionString {
@@ -518,11 +518,16 @@ function Select-DistrosInteractive {
         }
     }
 
+    $existingIsos = Get-ChildItem -Path $IsoDirectory -Filter "*.iso" -Recurse -File -ErrorAction SilentlyContinue | Where-Object { 
+        $_.DirectoryName -notlike "*Archiv*" -and $_.Name -notlike "*.part" -and $_.Length -gt 1MB 
+    }
+
     Write-Host ""
     Write-Host "==========================================================================================" -ForegroundColor Cyan
     Write-Host "                    DISTRIBUTIONS-AUSWAHL (MEHRFACHWAHL)                                 " -ForegroundColor Yellow
     Write-Host "==========================================================================================" -ForegroundColor Cyan
     Write-Host "Waehle aus, welche Distributionen kuenftig geprueft, geladen und synchronisiert werden:" -ForegroundColor White
+    Write-Host "Legende: [x] = ISO bereits lokal vorhanden | [ ] = Noch nicht heruntergeladen" -ForegroundColor DarkGray
     Write-Host "Eingabeformate: 'all' (alle), Gruppen z.B. 'G1, G4' oder Nummern z.B. '1, 3, 5-8'!" -ForegroundColor DarkGray
     Write-Host "------------------------------------------------------------------------------------------" -ForegroundColor DarkGray
 
@@ -535,11 +540,28 @@ function Select-DistrosInteractive {
         Write-Host " ----------------------------------------------------------------------------------------" -ForegroundColor DarkGray
         foreach ($d in $g.Items) {
             $indexItemMap[$numIndex] = $d
-            $statusStr = if ($d.Enabled -ne $false) { "[x]" } else { "[ ]" }
-            $sizeMB = if ($d.SizeBytes) { [math]::Round([long]$d.SizeBytes / 1MB, 0) } else { 0 }
-            $sizeStr = if ($sizeMB -gt 0) { "ca. $sizeMB MB" } else { "Groesse unbekannt" }
+            $localMatch = $null
+            if ($d.MatchPattern -and $existingIsos) {
+                $localMatch = $existingIsos | Where-Object { $_.Name -match $d.MatchPattern } | Select-Object -First 1
+            }
+
+            $isPresent = ($null -ne $localMatch)
+            $statusStr = if ($isPresent) { "[x]" } else { "[ ]" }
+            $statusColor = if ($isPresent) { [ConsoleColor]::Green } else { [ConsoleColor]::DarkGray }
+
+            if ($isPresent) {
+                $sizeMB = [math]::Round($localMatch.Length / 1MB, 0)
+                $sizeStr = "$sizeMB MB vorhanden"
+            } else {
+                $sizeMB = if ($d.SizeBytes) { [math]::Round([long]$d.SizeBytes / 1MB, 0) } else { 0 }
+                $sizeStr = if ($sizeMB -gt 0) { "ca. $sizeMB MB Download" } else { "Groesse unbekannt" }
+            }
+
             $numFmt = "{0,2}" -f $numIndex
-            Write-Host ("   {0}) {1} {2,-32} ({3})" -f $numFmt, $statusStr, $d.Name, $sizeStr) -ForegroundColor White
+            Write-Host "   $numFmt) " -NoNewline -ForegroundColor White
+            Write-Host "$statusStr " -NoNewline -ForegroundColor $statusColor
+            Write-Host ("{0,-32} " -f $d.Name) -NoNewline -ForegroundColor White
+            Write-Host "($sizeStr)" -ForegroundColor DarkGray
             $numIndex++
         }
     }
@@ -896,6 +918,107 @@ message-color: "$($selectedTheme.Text)"
     }
 }
 
+function Get-AvailableUsbDrives {
+    param(
+        [switch]$IncludeVentoyOnly = $false
+    )
+    $usbLetters = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+
+    # 1. Get-Disk USB-BusType
+    try {
+        $usbDisks = Get-Disk | Where-Object { $_.BusType -eq 'USB' }
+        if ($usbDisks) {
+            foreach ($d in $usbDisks) {
+                $parts = $d | Get-Partition -ErrorAction SilentlyContinue
+                foreach ($p in $parts) {
+                    if ($p.DriveLetter) {
+                        [void]$usbLetters.Add("$($p.DriveLetter):")
+                    }
+                }
+            }
+        }
+    } catch {}
+
+    # 2. Win32_DiskDrive WMI InterfaceType
+    try {
+        $usbDrivesWmi = Get-CimInstance Win32_DiskDrive | Where-Object { $_.InterfaceType -eq 'USB' -or $_.MediaType -match 'External|Removable' }
+        foreach ($ud in $usbDrivesWmi) {
+            $query = "ASSOCIATORS OF {Win32_DiskDrive.DeviceID='$($ud.DeviceID)'} WHERE AssocClass = Win32_DiskDriveToDiskPartition"
+            $partitions = Get-CimInstance -Query $query
+            foreach ($part in $partitions) {
+                $query2 = "ASSOCIATORS OF {Win32_DiskPartition.DeviceID='$($part.DeviceID)'} WHERE AssocClass = Win32_LogicalDiskToPartition"
+                $logicals = Get-CimInstance -Query $query2
+                foreach ($log in $logicals) {
+                    if ($log.DeviceID) {
+                        [void]$usbLetters.Add($log.DeviceID)
+                    }
+                }
+            }
+        }
+    } catch {}
+
+    # 3. Win32_Volume mit DriveType 2 (Wechseldatentraeger)
+    try {
+        $remVolumes = Get-CimInstance Win32_Volume | Where-Object { $_.DriveType -eq 2 -and $_.DriveLetter }
+        foreach ($rv in $remVolumes) {
+            [void]$usbLetters.Add($rv.DriveLetter)
+        }
+    } catch {}
+
+    # USB- und Ventoy-Volumes filtern
+    $vols = Get-CimInstance Win32_Volume | Where-Object {
+        $_.DriveLetter -and $_.DriveLetter -ne "C:" -and (
+            $usbLetters.Contains($_.DriveLetter) -or 
+            $_.DriveType -eq 2 -or 
+            $_.Label -match "Ventoy|VTOYEFI" -or
+            (Test-Path "$($_.DriveLetter)\ventoy")
+        )
+    } | Select-Object DriveLetter, Label, FileSystem, DriveType,
+        @{Name="FreeGB"; Expression={[math]::Round($_.FreeSpace/1GB, 2)}},
+        @{Name="CapacityGB"; Expression={[math]::Round($_.Capacity/1GB, 2)}}
+
+    # Fallback falls keine reinen USB-Flags erkannt wurden, aber Ventoy-Ordner vorhanden ist
+    if (-not $vols -and -not $IncludeVentoyOnly) {
+        $vols = Get-CimInstance Win32_Volume | Where-Object {
+            $_.DriveLetter -and $_.DriveLetter -ne "C:" -and ($_.DriveType -eq 2 -or (Test-Path "$($_.DriveLetter)\ventoy"))
+        } | Select-Object DriveLetter, Label, FileSystem, DriveType,
+            @{Name="FreeGB"; Expression={[math]::Round($_.FreeSpace/1GB, 2)}},
+            @{Name="CapacityGB"; Expression={[math]::Round($_.Capacity/1GB, 2)}}
+    }
+
+    return $vols
+}
+
+function Ensure-VentoyTarget {
+    param(
+        [string]$TargetDrive,
+        [string]$ToolsDir = $null,
+        [switch]$DryRun
+    )
+    if ([string]::IsNullOrWhiteSpace($TargetDrive)) { return $null }
+
+    $driveLetter = $TargetDrive.TrimEnd('\').TrimEnd(':') + ":"
+    $ventoyDir = "$driveLetter\ventoy"
+    $targetVol = Get-CimInstance Win32_Volume | Where-Object { $_.DriveLetter -eq $driveLetter }
+    $isVentoy = (Test-Path $ventoyDir) -or ($targetVol -and $targetVol.Label -match "Ventoy")
+
+    if (-not $isVentoy) {
+        Write-Host ""
+        Write-Host "=========================================================" -ForegroundColor Yellow
+        Write-Host " [HINWEIS] Auf Laufwerk $driveLetter wurde noch kein Ventoy gefunden!" -ForegroundColor Yellow
+        Write-Host "=========================================================" -ForegroundColor Yellow
+        Write-Host "Damit das Laufwerk bootfaehig ist, muss Ventoy darauf eingerichtet werden." -ForegroundColor White
+        Write-Host ""
+        $ans = Read-Host "Moechtest du Ventoy jetzt automatisch auf $driveLetter installieren? (J/n)"
+        if ($ans -ne 'n' -and $ans -ne 'N') {
+            Install-VentoyToDisk -TargetDrive $driveLetter -ToolsDir $ToolsDir -DryRun:$DryRun
+        } else {
+            Write-Log -Message "Ventoy-Installation uebersprungen. Fahre fort..." -Color Yellow -Level "WARNUNG"
+        }
+    }
+    return $driveLetter
+}
+
 function Set-VentoyThemeStandalone {
     param(
         [string]$TargetDrive,
@@ -908,22 +1031,20 @@ function Set-VentoyThemeStandalone {
     Write-Host "=========================================================" -ForegroundColor Cyan
 
     if ([string]::IsNullOrWhiteSpace($TargetDrive)) {
-        $drives = Get-CimInstance Win32_Volume | Where-Object { 
-            $_.DriveLetter -and $_.DriveLetter -ne "C:" -and ($_.DriveType -in @(2, 3))
-        } | Select-Object DriveLetter, Label, FileSystem, DriveType,
-            @{Name="FreeGB"; Expression={[math]::Round($_.FreeSpace/1GB, 2)}},
-            @{Name="CapacityGB"; Expression={[math]::Round($_.Capacity/1GB, 2)}}
+        $drives = Get-AvailableUsbDrives
 
         if (-not $drives) {
-            Write-Log -Message "Keine passenden Ziel-Laufwerke gefunden!" -Color Red -Level "FEHLER"
+            Write-Log -Message "Keine angeschlossenen USB- oder Ventoy-Wechseldatentraeger gefunden!" -Color Red -Level "FEHLER"
             return
         }
 
-        Write-Host "Verfuegbare Ziel-Laufwerke:" -ForegroundColor Yellow
+        Write-Host "Verfuegbare USB- & Ventoy-Ziel-Laufwerke:" -ForegroundColor Yellow
         for ($i = 0; $i -lt $drives.Count; $i++) {
             $d = $drives[$i]
             $labelStr = if ($d.Label) { "[$($d.Label)]" } else { "" }
-            Write-Host " [$($i + 1)] $($d.DriveLetter) $labelStr ($($d.CapacityGB) GB, $($d.FileSystem))" -ForegroundColor White
+            $hasVentoy = (Test-Path "$($d.DriveLetter)\ventoy") -or ($d.Label -match "Ventoy")
+            $vMarker = if ($hasVentoy) { " [Ventoy bereit]" } else { " [Kein Ventoy]" }
+            Write-Host " [$($i + 1)] $($d.DriveLetter) $labelStr ($($d.CapacityGB) GB, $($d.FileSystem))$vMarker" -ForegroundColor White
         }
         Write-Host ""
         $selection = Read-Host "Bitte Nummer des Ventoy-Laufwerks eingeben (1-$($drives.Count))"
@@ -935,8 +1056,8 @@ function Set-VentoyThemeStandalone {
         }
     }
 
-    $driveLetter = $TargetDrive.TrimEnd('\').TrimEnd(':') + ":"
-    if (-not (Test-Path "$driveLetter\")) {
+    $driveLetter = Ensure-VentoyTarget -TargetDrive $TargetDrive -ToolsDir (Join-Path $IsoDirectory "tools\ventoy") -DryRun:$DryRun
+    if (-not $driveLetter -or -not (Test-Path "$driveLetter\")) {
         Write-Log -Message "Laufwerk $driveLetter existiert nicht oder ist nicht bereit!" -Color Red -Level "FEHLER"
         return
     }
@@ -1082,23 +1203,20 @@ function Install-VentoyToDisk {
     if ([string]::IsNullOrWhiteSpace($TargetDrive)) {
         Write-Host "`nErmittle verfuegbare USB- & Wechseldatentraeger..." -ForegroundColor Cyan
 
-        $drives = Get-CimInstance Win32_Volume | Where-Object { 
-            $_.DriveLetter -and $_.DriveLetter -ne "C:" -and ($_.DriveType -in @(2, 3))
-        } | Select-Object DriveLetter, Label, FileSystem, DriveType,
-            @{Name="FreeGB"; Expression={[math]::Round($_.FreeSpace/1GB, 2)}},
-            @{Name="CapacityGB"; Expression={[math]::Round($_.Capacity/1GB, 2)}}
+        $drives = Get-AvailableUsbDrives
 
         if (-not $drives) {
-            Write-Log -Message "Keine passenden Ziel-Laufwerke fuer die Ventoy-Installation gefunden!" -Color Red -Level "FEHLER"
+            Write-Log -Message "Keine angeschlossenen USB-Wechseldatentraeger fuer die Ventoy-Installation gefunden!" -Color Red -Level "FEHLER"
             return
         }
 
-        Write-Host "`nVerfuegbare Ziel-Laufwerke fuer Ventoy-Installation:" -ForegroundColor Yellow
+        Write-Host "`nVerfuegbare USB-Ziel-Laufwerke fuer Ventoy-Installation:" -ForegroundColor Yellow
         for ($i = 0; $i -lt $drives.Count; $i++) {
             $d = $drives[$i]
             $labelStr = if ($d.Label) { "[$($d.Label)]" } else { "" }
-            $typeStr = if ($d.DriveType -eq 2) { " [USB/Wechselmedium]" } else { " [Festplatte]" }
-            Write-Host " [$($i + 1)] $($d.DriveLetter) $labelStr ($($d.CapacityGB) GB Gesamt, $($d.FreeGB) GB frei, $($d.FileSystem))$typeStr" -ForegroundColor White
+            $hasVentoy = (Test-Path "$($d.DriveLetter)\ventoy") -or ($d.Label -match "Ventoy")
+            $vMarker = if ($hasVentoy) { " [Ventoy installiert]" } else { " [Neuinstallation moeglich]" }
+            Write-Host " [$($i + 1)] $($d.DriveLetter) $labelStr ($($d.CapacityGB) GB Gesamt, $($d.FreeGB) GB frei, $($d.FileSystem))$vMarker" -ForegroundColor White
         }
         Write-Host ""
         $selection = Read-Host "Bitte Nummer des Ziellaufwerks fuer Ventoy eingeben (1-$($drives.Count))"
@@ -1281,26 +1399,20 @@ function Start-VentoyCopyJob {
         Write-Host "=========================================================" -ForegroundColor Cyan
         Write-Host " Benoetigter Speicherplatz fuer alle aktivierten ISOs: $totalGBToCopy GB ($($isoFilesToCopy.Count) Dateien)`n" -ForegroundColor Yellow
         
-        $drives = Get-CimInstance Win32_Volume | Where-Object { 
-            $_.DriveLetter -and ($_.DriveType -eq 2 -or ($_.FileSystem -match "FAT32|exFAT|NTFS" -and $_.DriveLetter -ne "C:"))
-        } | Select-Object DriveLetter, Label, FileSystem, DriveType,
-            @{Name="FreeGB"; Expression={[math]::Round($_.FreeSpace/1GB, 2)}},
-            @{Name="CapacityGB"; Expression={[math]::Round($_.Capacity/1GB, 2)}}
+        $drives = Get-AvailableUsbDrives
 
         if (-not $drives) {
-            $drives = Get-PSDrive -PSProvider FileSystem | Where-Object { $_.Name -ne "C" } | Select-Object @{Name="DriveLetter"; Expression={$_.Name + ":"}}, @{Name="Label"; Expression={$_.Description}}, @{Name="FileSystem"; Expression={""}}, @{Name="DriveType"; Expression={2}}, @{Name="FreeGB"; Expression={[math]::Round($_.Free/1GB, 2)}}, @{Name="CapacityGB"; Expression={0}}
-        }
-
-        if (-not $drives) {
-            Write-Log -Message "Keine passenden Ziel-Laufwerke gefunden. Bitte Parameter -TargetDrive angeben (z.B. -TargetDrive E:)" -Color Red -Level "FEHLER"
+            Write-Log -Message "Keine angeschlossenen USB- oder Ventoy-Wechseldatentraeger gefunden!" -Color Red -Level "FEHLER"
+            Write-Log -Message "Bitte schliesse deinen USB-Stick an oder gib das Ziellaufwerk mit -TargetDrive an (z.B. -TargetDrive E:)" -Color Yellow -Level "INFO"
             return
         }
 
-        Write-Host "Verfuegbare Ziel-Laufwerke:" -ForegroundColor Cyan
+        Write-Host "Verfuegbare USB- & Ventoy-Ziel-Laufwerke:" -ForegroundColor Cyan
         for ($i = 0; $i -lt $drives.Count; $i++) {
             $d = $drives[$i]
             $labelStr = if ($d.Label) { "[$($d.Label)]" } else { "" }
-            $typeStr = if ($d.DriveType -eq 2) { " [USB/Wechselmedium]" } else { " [Festplatte]" }
+            $hasVentoy = (Test-Path "$($d.DriveLetter)\ventoy") -or ($d.Label -match "Ventoy")
+            $vMarker = if ($hasVentoy) { " [Ventoy bereit]" } else { " [Kein Ventoy]" }
             $spaceStatus = if ($d.FreeGB -ge $totalGBToCopy) {
                 "--> [GENUG PLATZ]"
             } else {
@@ -1308,7 +1420,7 @@ function Start-VentoyCopyJob {
             }
             $statusColor = if ($d.FreeGB -ge $totalGBToCopy) { [ConsoleColor]::Green } else { [ConsoleColor]::Red }
 
-            Write-Host " [$($i + 1)] $($d.DriveLetter) $labelStr ($($d.FreeGB) GB frei / $($d.CapacityGB) GB)$typeStr " -NoNewline -ForegroundColor White
+            Write-Host " [$($i + 1)] $($d.DriveLetter) $labelStr ($($d.FreeGB) GB frei / $($d.CapacityGB) GB)$vMarker " -NoNewline -ForegroundColor White
             Write-Host "$spaceStatus" -ForegroundColor $statusColor
         }
         Write-Host ""
@@ -1321,7 +1433,12 @@ function Start-VentoyCopyJob {
         }
     }
 
-    $TargetDriveLetter = $TargetDrive.TrimEnd('\').TrimEnd(':') + ":"
+    $toolsDir = Join-Path $SourceDir "tools\ventoy"
+    $TargetDriveLetter = Ensure-VentoyTarget -TargetDrive $TargetDrive -ToolsDir $toolsDir -DryRun:$DryRun
+    if (-not $TargetDriveLetter) {
+        Write-Log -Message "Abbruch des Kopiervorgangs." -Color Red -Level "ABBRUCH"
+        return
+    }
     $TargetDriveRoot   = $TargetDriveLetter + "\"
 
     if (-not (Test-Path $TargetDriveRoot)) {
