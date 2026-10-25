@@ -3,7 +3,7 @@
 
 """
 Linux ISO Auto-Updater & Ventoy Sync Tool (Linux Edition)
-Version: 2.3.0-linux
+Version: 2.4.0
 
 Funktionen:
 1. Prüft & lädt neueste Linux ISOs herunter, verifiziert SHA256/SHA512/MD5-Hashes & archiviert veraltete Dateien.
@@ -46,7 +46,7 @@ except ImportError:
 # ==============================================================================
 # GLOBALE KONSTANTEN
 # ==============================================================================
-SCRIPT_VERSION = "2.3.0-linux"
+SCRIPT_VERSION = "2.4.0"
 DEFAULT_LOG_FILE = "update-linux-isos.log"
 DEFAULT_LOCK_FILE = "/tmp/linux_iso_auto_updater.lock"
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"

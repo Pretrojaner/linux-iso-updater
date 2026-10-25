@@ -2,7 +2,7 @@
 .SYNOPSIS
     All-in-One Linux ISO Auto-Updater & Ventoy Sync Tool
 .DESCRIPTION
-    Version: 2.3.0
+    Version: 2.4.0
     1. Prueft & laedt neueste Linux ISOs herunter, verifiziert SHA256/SHA512-Hashes & archiviert veraltete Dateien.
     2. Ermoeglicht interaktive Gruppenauswahl (Desktop, Server, Security, Rescue, BSD) mit Mehrfachwahl.
     3. Kopiert die ISO-Ordnerstruktur auf ein Ventoy-Ziel-Laufwerk, bereinigt abgewaehlte und veraltete Staende
@@ -65,7 +65,7 @@ $IsoDirectory = if (-not [string]::IsNullOrWhiteSpace($TargetDirectory)) {
 
 $LogFile = Join-Path $IsoDirectory $LogFileName
 $ArchiveDir = Join-Path $IsoDirectory "Archiv"
-$ScriptVersion = "2.3.0"
+$ScriptVersion = "2.4.0"
 $UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
 
 function ConvertTo-VersionString {
@@ -518,11 +518,16 @@ function Select-DistrosInteractive {
         }
     }
 
+    $existingIsos = Get-ChildItem -Path $IsoDirectory -Filter "*.iso" -Recurse -File -ErrorAction SilentlyContinue | Where-Object { 
+        $_.DirectoryName -notlike "*Archiv*" -and $_.Name -notlike "*.part" -and $_.Length -gt 1MB 
+    }
+
     Write-Host ""
     Write-Host "==========================================================================================" -ForegroundColor Cyan
     Write-Host "                    DISTRIBUTIONS-AUSWAHL (MEHRFACHWAHL)                                 " -ForegroundColor Yellow
     Write-Host "==========================================================================================" -ForegroundColor Cyan
     Write-Host "Waehle aus, welche Distributionen kuenftig geprueft, geladen und synchronisiert werden:" -ForegroundColor White
+    Write-Host "Legende: [x] = ISO bereits lokal vorhanden | [ ] = Noch nicht heruntergeladen" -ForegroundColor DarkGray
     Write-Host "Eingabeformate: 'all' (alle), Gruppen z.B. 'G1, G4' oder Nummern z.B. '1, 3, 5-8'!" -ForegroundColor DarkGray
     Write-Host "------------------------------------------------------------------------------------------" -ForegroundColor DarkGray
 
@@ -535,11 +540,28 @@ function Select-DistrosInteractive {
         Write-Host " ----------------------------------------------------------------------------------------" -ForegroundColor DarkGray
         foreach ($d in $g.Items) {
             $indexItemMap[$numIndex] = $d
-            $statusStr = if ($d.Enabled -ne $false) { "[x]" } else { "[ ]" }
-            $sizeMB = if ($d.SizeBytes) { [math]::Round([long]$d.SizeBytes / 1MB, 0) } else { 0 }
-            $sizeStr = if ($sizeMB -gt 0) { "ca. $sizeMB MB" } else { "Groesse unbekannt" }
+            $localMatch = $null
+            if ($d.MatchPattern -and $existingIsos) {
+                $localMatch = $existingIsos | Where-Object { $_.Name -match $d.MatchPattern } | Select-Object -First 1
+            }
+
+            $isPresent = ($null -ne $localMatch)
+            $statusStr = if ($isPresent) { "[x]" } else { "[ ]" }
+            $statusColor = if ($isPresent) { [ConsoleColor]::Green } else { [ConsoleColor]::DarkGray }
+
+            if ($isPresent) {
+                $sizeMB = [math]::Round($localMatch.Length / 1MB, 0)
+                $sizeStr = "$sizeMB MB vorhanden"
+            } else {
+                $sizeMB = if ($d.SizeBytes) { [math]::Round([long]$d.SizeBytes / 1MB, 0) } else { 0 }
+                $sizeStr = if ($sizeMB -gt 0) { "ca. $sizeMB MB Download" } else { "Groesse unbekannt" }
+            }
+
             $numFmt = "{0,2}" -f $numIndex
-            Write-Host ("   {0}) {1} {2,-32} ({3})" -f $numFmt, $statusStr, $d.Name, $sizeStr) -ForegroundColor White
+            Write-Host "   $numFmt) " -NoNewline -ForegroundColor White
+            Write-Host "$statusStr " -NoNewline -ForegroundColor $statusColor
+            Write-Host ("{0,-32} " -f $d.Name) -NoNewline -ForegroundColor White
+            Write-Host "($sizeStr)" -ForegroundColor DarkGray
             $numIndex++
         }
     }

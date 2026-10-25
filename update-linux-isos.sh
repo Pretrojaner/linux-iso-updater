@@ -17,7 +17,7 @@ C_RED="\033[91m"
 C_GRAY="\033[90m"
 
 echo -e "${C_CYAN}===================================================================${C_RESET}"
-echo -e "${C_BOLD} Linux ISO Auto-Updater & Ventoy Sync Tool (Linux Edition v2.3.0)${C_RESET}"
+echo -e "${C_BOLD} Linux ISO Auto-Updater & Ventoy Sync Tool (Linux Edition v2.4.0)${C_RESET}"
 echo -e "${C_CYAN}===================================================================${C_RESET}"
 
 # 1. Prüfen auf Python 3
