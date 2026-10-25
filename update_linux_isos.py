@@ -2681,18 +2681,30 @@ def main() -> None:
                 is_already_present = False
                 if target_path.exists():
                     local_size = target_path.stat().st_size
-                    online_size = dm.get_online_file_size(latest_info["Url"])
-                    if online_size >= 1024 * 1024:
-                        if abs(local_size - online_size) < 1024 * 1024:
+                    is_archive_extract = bool(latest_info.get("ExtractTo"))
+
+                    if is_archive_extract:
+                        # Bei komprimierten Archiven (z.B. .bz2 bei Stresslinux) ist die entpackte
+                        # ISO-Datei lokal natürlich deutlich größer als das komprimierte Online-Archiv!
+                        online_size = dm.get_online_file_size(latest_info["Url"])
+                        if local_size >= max(online_size, 10 * 1024 * 1024):
                             is_already_present = True
                         else:
                             logger.log(f"[UNVOLLSTÄNDIG] Lokale Datei {effective_fn} fehlerhaft. Datei wird gelöscht und neu geladen.", color=Colors.YELLOW, level="WARNUNG")
                             target_path.unlink(missing_ok=True)
                     else:
-                        if local_size > 1024 * 1024:
-                            is_already_present = True
+                        online_size = dm.get_online_file_size(latest_info["Url"])
+                        if online_size >= 1024 * 1024:
+                            if abs(local_size - online_size) < 1024 * 1024:
+                                is_already_present = True
+                            else:
+                                logger.log(f"[UNVOLLSTÄNDIG] Lokale Datei {effective_fn} fehlerhaft. Datei wird gelöscht und neu geladen.", color=Colors.YELLOW, level="WARNUNG")
+                                target_path.unlink(missing_ok=True)
                         else:
-                            target_path.unlink(missing_ok=True)
+                            if local_size > 1024 * 1024:
+                                is_already_present = True
+                            else:
+                                target_path.unlink(missing_ok=True)
 
                 if is_already_present:
                     file_mb = target_path.stat().st_size / (1024 * 1024)
