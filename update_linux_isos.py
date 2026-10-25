@@ -735,15 +735,20 @@ class DistroScraperEngine:
         return None
 
     def scrape_arch_linux(self) -> Optional[Dict[str, Any]]:
-        html = self.dm.get_web_content("https://geo.mirror.pkgbuild.com/iso/latest/")
-        if html:
-            m = re.search(r'href="(archlinux-(\d{4}\.\d{2}\.\d{2})-x86_64\.iso)"', html)
-            if m:
-                return {
-                    "Version": m.group(2),
-                    "Url": f"https://geo.mirror.pkgbuild.com/iso/latest/{m.group(1)}",
-                    "Filename": m.group(1),
-                }
+        mirrors = [
+            "https://ftp.halifax.rwth-aachen.de/archlinux/iso/latest/",
+            "https://geo.mirror.pkgbuild.com/iso/latest/",
+        ]
+        for base in mirrors:
+            html = self.dm.get_web_content(base)
+            if html:
+                m = re.search(r'href=[\"\'](archlinux-(\d{4}\.\d{2}\.\d{2})-x86_64\.iso)[\"\']', html)
+                if m:
+                    return {
+                        "Version": m.group(2),
+                        "Url": f"{base}{m.group(1)}",
+                        "Filename": m.group(1),
+                    }
         return None
 
     def scrape_debian(self) -> Optional[Dict[str, Any]]:
@@ -814,21 +819,32 @@ class DistroScraperEngine:
 
     # --- 02 Enterprise Server ---
     def scrape_almalinux(self) -> Optional[Dict[str, Any]]:
-        html = self.dm.get_web_content("https://repo.almalinux.org/almalinux/9/isos/x86_64/")
-        if html:
-            m = re.search(r'href="(AlmaLinux-9[^"]*?-x86_64-dvd\.iso)"', html)
-            if m:
-                fn = m.group(1)
-                vm = re.search(r"AlmaLinux-9\.(\d+)", fn)
-                ver = f"9.{vm.group(1)}" if vm else "9"
-                return {"Version": ver, "Url": f"https://repo.almalinux.org/almalinux/9/isos/x86_64/{fn}", "Filename": fn}
+        mirrors = [
+            "https://ftp.halifax.rwth-aachen.de/almalinux/9/isos/x86_64/",
+            "https://ftp.fau.de/almalinux/9/isos/x86_64/",
+            "https://repo.almalinux.org/almalinux/9/isos/x86_64/",
+        ]
+        for base in mirrors:
+            html = self.dm.get_web_content(base)
+            if html:
+                m = re.search(r'href=[\"\'](AlmaLinux-9[^\"]*?-x86_64-dvd\.iso)[\"\']', html)
+                if m:
+                    fn = m.group(1)
+                    vm = re.search(r"AlmaLinux-9\.(\d+)", fn)
+                    ver = f"9.{vm.group(1)}" if vm else "9"
+                    return {"Version": ver, "Url": f"{base}{fn}", "Filename": fn}
         return None
 
     def scrape_centos_stream_9(self) -> Optional[Dict[str, Any]]:
-        for base in ["https://mirrors.almalinux.org/centos-stream/9-stream/BaseOS/x86_64/iso/", "https://mirror.stream.centos.org/9-stream/BaseOS/x86_64/iso/"]:
+        mirrors = [
+            "https://ftp.halifax.rwth-aachen.de/centos-stream/9-stream/BaseOS/x86_64/iso/",
+            "https://mirrors.almalinux.org/centos-stream/9-stream/BaseOS/x86_64/iso/",
+            "https://mirror.stream.centos.org/9-stream/BaseOS/x86_64/iso/",
+        ]
+        for base in mirrors:
             html = self.dm.get_web_content(base)
             if html:
-                m = re.search(r'href="(CentOS-Stream-9[^"]*?-x86_64-dvd1\.iso)"', html)
+                m = re.search(r'href=[\"\'](CentOS-Stream-9[^\"]*?-x86_64-dvd1\.iso)[\"\']', html)
                 if m:
                     fn = m.group(1)
                     vm = re.search(r"CentOS-Stream-9-(\d+)", fn)
@@ -846,15 +862,21 @@ class DistroScraperEngine:
         return None
 
     def scrape_rocky_linux(self) -> Optional[Dict[str, Any]]:
-        base = "https://download.rockylinux.org/pub/rocky/9/isos/x86_64/"
-        html = self.dm.get_web_content(base)
-        if html:
-            m = re.search(r'href="(Rocky-9[^"]*?-x86_64-dvd\.iso)"', html)
-            if m:
-                fn = m.group(1)
-                vm = re.search(r"Rocky-9\.(\d+)", fn)
-                ver = f"9.{vm.group(1)}" if vm else "9"
-                return {"Version": ver, "Url": f"{base}{fn}", "Filename": fn}
+        mirrors = [
+            "https://ftp.halifax.rwth-aachen.de/rockylinux/9/isos/x86_64/",
+            "https://ftp.fau.de/rockylinux/9/isos/x86_64/",
+            "https://ftp.gwdg.de/pub/linux/rocky/9/isos/x86_64/",
+            "https://download.rockylinux.org/pub/rocky/9/isos/x86_64/",
+        ]
+        for base in mirrors:
+            html = self.dm.get_web_content(base)
+            if html:
+                m = re.search(r'href=[\"\'](Rocky-9[^\"]*?-x86_64-dvd\.iso)[\"\']', html)
+                if m:
+                    fn = m.group(1)
+                    vm = re.search(r"Rocky-9\.(\d+)", fn)
+                    ver = f"9.{vm.group(1)}" if vm else "9"
+                    return {"Version": ver, "Url": f"{base}{fn}", "Filename": fn}
         return None
 
     def scrape_openmediavault(self) -> Optional[Dict[str, Any]]:
@@ -936,15 +958,20 @@ class DistroScraperEngine:
 
     # --- 03 Security & Pentest ---
     def scrape_kali_linux(self) -> Optional[Dict[str, Any]]:
-        html = self.dm.get_web_content("https://cdimage.kali.org/current/")
-        if html:
-            m = re.search(r'href="(kali-linux-(\d{4}\.\d+)-installer-amd64\.iso)"', html)
-            if m:
-                return {
-                    "Version": m.group(2),
-                    "Url": f"https://cdimage.kali.org/current/{m.group(1)}",
-                    "Filename": m.group(1),
-                }
+        mirrors = [
+            "https://ftp.halifax.rwth-aachen.de/kali-images/current/",
+            "https://cdimage.kali.org/current/",
+        ]
+        for base in mirrors:
+            html = self.dm.get_web_content(base)
+            if html:
+                m = re.search(r'href=[\"\'](kali-linux-(\d{4}\.\d+)-installer-amd64\.iso)[\"\']', html)
+                if m:
+                    return {
+                        "Version": m.group(2),
+                        "Url": f"{base}{m.group(1)}",
+                        "Filename": m.group(1),
+                    }
         return None
 
     def scrape_blackarch_linux(self) -> Optional[Dict[str, Any]]:
