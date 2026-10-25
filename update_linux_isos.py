@@ -1555,11 +1555,11 @@ class VentoyLinuxDriveManager:
         self.logger = logger
 
     def get_mounted_drives(self) -> List[Dict[str, Any]]:
-        """Ermittelt alle unter Linux gemounteten Wechseldatenträger und Ventoy-Laufwerke."""
-        drives = []
+        """Ermittelt alle unter Linux gemounteten Wechseldatenträger, USB-Sticks sowie ungemountete USB-Blockgeräte."""
+        drives: List[Dict[str, Any]] = []
         try:
             res = subprocess.run(
-                ["lsblk", "-J", "-o", "NAME,TYPE,SIZE,MOUNTPOINT,LABEL,RM,HOTPLUG,FSTYPE,MODEL,TRAN"],
+                ["lsblk", "-J", "-b", "-o", "NAME,TYPE,SIZE,MOUNTPOINT,LABEL,RM,HOTPLUG,FSTYPE,MODEL,TRAN"],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.DEVNULL,
                 text=True,
@@ -1571,7 +1571,7 @@ class VentoyLinuxDriveManager:
         except Exception:
             pass
 
-        # Zusätzliche Prüfung gängiger Mountpoints unter /media und /run/media
+        # Zusätzliche Prüfung echter Einhängepunkte unter /media, /run/media und /mnt (nur tatsächliche Mounts)
         seen_mounts = {d["mountpoint"] for d in drives}
         user = os.environ.get("USER", "")
         scan_paths = [Path("/media"), Path(f"/run/media/{user}"), Path("/mnt")]
@@ -1579,12 +1579,13 @@ class VentoyLinuxDriveManager:
         for base_p in scan_paths:
             if base_p.exists() and base_p.is_dir():
                 for sub in base_p.iterdir():
-                    if sub.is_dir() and str(sub) not in seen_mounts:
+                    if sub.is_dir() and str(sub) not in seen_mounts and os.path.ismount(str(sub)):
                         try:
                             usage = shutil.disk_usage(sub)
                             drives.append(
                                 {
                                     "name": sub.name,
+                                    "device": str(sub),
                                     "mountpoint": str(sub),
                                     "label": sub.name,
                                     "fstype": "unknown",
@@ -1592,6 +1593,7 @@ class VentoyLinuxDriveManager:
                                     "total_gb": usage.total / (1024**3),
                                     "is_removable": True,
                                     "is_ventoy": (sub / "ventoy").exists() or "ventoy" in sub.name.lower(),
+                                    "is_raw_disk": False,
                                 }
                             )
                             seen_mounts.add(str(sub))
@@ -1600,17 +1602,53 @@ class VentoyLinuxDriveManager:
         return drives
 
     def _parse_lsblk_node(self, node: Dict[str, Any], results: List[Dict[str, Any]]) -> None:
+        name = node.get("name", "")
+        is_removable = bool(node.get("rm") or node.get("hotplug") or node.get("tran") == "usb")
+        model = node.get("model") or ""
+        children = node.get("children", [])
+
+        # Fall A: USB-/Wechselmedium als Ganzes (Disk) ohne eingehängte Partitionen
+        if is_removable and node.get("type") == "disk":
+            mounted_children = [c for c in children if c.get("mountpoint")]
+            if not mounted_children:
+                size_gb = (node.get("size") or 0) / (1024**3)
+                ventoy_child = None
+                for c in children:
+                    lbl = (c.get("label") or "").lower()
+                    if "ventoy" in lbl and "vtoyefi" not in lbl:
+                        ventoy_child = c
+                        break
+
+                state_fstype = node.get("fstype") or (ventoy_child.get("fstype") if ventoy_child else "unformatiert / raw")
+                results.append(
+                    {
+                        "name": name,
+                        "device": f"/dev/{name}",
+                        "mountpoint": f"/dev/{name}",
+                        "label": model or name,
+                        "fstype": state_fstype,
+                        "free_gb": size_gb,
+                        "total_gb": size_gb,
+                        "is_removable": True,
+                        "is_ventoy": ventoy_child is not None,
+                        "is_raw_disk": True,
+                        "ventoy_part": f"/dev/{ventoy_child.get('name')}" if ventoy_child else None,
+                    }
+                )
+                return
+
+        # Fall B: Gemountete Partitionen/Laufwerke
         mount = node.get("mountpoint")
         if mount and mount not in ["/", "/boot", "/boot/efi", "/home", "[SWAP]"]:
-            label = node.get("label") or ""
+            label = node.get("label") or model or name
             is_ventoy = "ventoy" in label.lower() or Path(f"{mount}/ventoy").exists()
-            is_removable = bool(node.get("rm") or node.get("hotplug") or node.get("tran") == "usb")
 
             try:
                 usage = shutil.disk_usage(mount)
                 results.append(
                     {
-                        "name": node.get("name"),
+                        "name": name,
+                        "device": f"/dev/{name}",
                         "mountpoint": mount,
                         "label": label,
                         "fstype": node.get("fstype", ""),
@@ -1618,12 +1656,13 @@ class VentoyLinuxDriveManager:
                         "total_gb": usage.total / (1024**3),
                         "is_removable": is_removable,
                         "is_ventoy": is_ventoy,
+                        "is_raw_disk": False,
                     }
                 )
             except Exception:
                 pass
 
-        for child in node.get("children", []):
+        for child in children:
             self._parse_lsblk_node(child, results)
 
     def get_parent_block_device(self, target: str) -> Optional[str]:
@@ -1765,13 +1804,34 @@ class VentoyLinuxDriveManager:
         for idx, d in enumerate(drives, 1):
             status = f"{Colors.GREEN}--> [GENUG PLATZ]{Colors.RESET}" if d["free_gb"] >= total_gb_needed else f"{Colors.RED}--> [ZU WENIG PLATZ - fehlen ca. {total_gb_needed - d['free_gb']:.2f} GB]{Colors.RESET}"
             marker = f" {Colors.GREEN}[Ventoy]{Colors.RESET}" if d["is_ventoy"] else ""
-            print(f" [{idx}] {d['mountpoint']} [{d['label']}] ({d['free_gb']:.2f} GB frei / {d['total_gb']:.2f} GB Gesamt, {d['fstype']}){marker} {status}")
+            usb_marker = f" {Colors.CYAN}[USB]{Colors.RESET}" if d.get("is_removable") else ""
+
+            if d.get("is_raw_disk"):
+                state_desc = "bereit für Ventoy-Installation" if not d["is_ventoy"] else "Ventoy vorhanden (nicht eingehängt)"
+                print(f" [{idx}] {d['device']} [{d['label']}] ({d['total_gb']:.2f} GB, {state_desc}){marker}{usb_marker} {status}")
+            else:
+                print(f" [{idx}] {d['mountpoint']} [{d['label']}] ({d['free_gb']:.2f} GB frei / {d['total_gb']:.2f} GB Gesamt, {d['fstype']}){marker}{usb_marker} {status}")
 
         print("")
         try:
             sel = input(f"Bitte Nummer des Ventoy-Ziel-Laufwerks eingeben (1-{len(drives)}): ").strip()
             if sel.isdigit() and 1 <= int(sel) <= len(drives):
                 chosen = drives[int(sel) - 1]
+
+                # Fall 1: Bereits installierter, aber ungemounteter Ventoy-Stick
+                if chosen.get("is_raw_disk") and chosen.get("is_ventoy") and chosen.get("ventoy_part"):
+                    self.logger.log(f"Hänge Ventoy-Partition {chosen['ventoy_part']} ein...", color=Colors.CYAN, level="VENTOY")
+                    m = self.mount_ventoy_partition(chosen["ventoy_part"])
+                    if m:
+                        return m
+
+                # Fall 2: Unformatierter / roher USB-Stick
+                if chosen.get("is_raw_disk"):
+                    if tools_dir:
+                        return self.ensure_ventoy_target(chosen["device"], tools_dir=tools_dir, dry_run=dry_run)
+                    return chosen["device"]
+
+                # Fall 3: Gemountetes Dateisystem / Partition
                 mountpoint = chosen["mountpoint"]
                 if tools_dir:
                     return self.ensure_ventoy_target(mountpoint, tools_dir=tools_dir, dry_run=dry_run)
@@ -1894,6 +1954,12 @@ class VentoyLinuxDriveManager:
         for p in tools_dir.glob("**/Ventoy2Disk.sh"):
             if p.is_file():
                 os.chmod(p, 0o755)
+                try:
+                    tool_dir = p.parent / "tool"
+                    if tool_dir.exists():
+                        subprocess.run(["chmod", "-R", "+x", str(tool_dir)], stderr=subprocess.DEVNULL)
+                except Exception:
+                    pass
                 return p
 
         self.logger.log("Lade offizielles Ventoy Linux-Paket von GitHub Releases...", color=Colors.CYAN, level="VENTOY")
@@ -1923,6 +1989,12 @@ class VentoyLinuxDriveManager:
                         for p in tools_dir.glob("**/Ventoy2Disk.sh"):
                             if p.is_file():
                                 os.chmod(p, 0o755)
+                                try:
+                                    tool_dir = p.parent / "tool"
+                                    if tool_dir.exists():
+                                        subprocess.run(["chmod", "-R", "+x", str(tool_dir)], stderr=subprocess.DEVNULL)
+                                except Exception:
+                                    pass
                                 return p
         except Exception as e:
             self.logger.log(f"Automatischer Ventoy-Download fehlgeschlagen: {e}", color=Colors.RED, level="FEHLER")
