@@ -15,7 +15,10 @@ Funktionen:
 
 import argparse
 import bz2
-import fcntl
+try:
+    import fcntl
+except ImportError:
+    fcntl = None
 import hashlib
 import json
 import os
@@ -142,7 +145,7 @@ class SingleInstanceLock:
     def acquire(self) -> bool:
         try:
             self.fp = open(self.lock_file_path, "w")
-            fcntl.flock(self.fp.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+            if fcntl: fcntl.flock(self.fp.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
             return True
         except (IOError, BlockingIOError):
             return False
@@ -150,7 +153,7 @@ class SingleInstanceLock:
     def release(self) -> None:
         if self.fp:
             try:
-                fcntl.flock(self.fp.fileno(), fcntl.LOCK_UN)
+                if fcntl: fcntl.flock(self.fp.fileno(), fcntl.LOCK_UN)
                 self.fp.close()
                 if os.path.exists(self.lock_file_path):
                     os.unlink(self.lock_file_path)
@@ -703,6 +706,26 @@ class DistroScraperEngine:
                         if m:
                             return {"Version": v, "Url": f"{sub_dir}{m.group(1)}", "Filename": m.group(1)}
         return None
+
+    def scrape_winux(self) -> Optional[Dict[str, Any]]:
+        raw = self.dm.get_web_content("https://sourceforge.net/projects/windows-linux/best_release.json")
+        if raw:
+            try:
+                obj = json.loads(raw)
+                fn_path = obj.get("release", {}).get("filename", "")
+                m = re.search(r"winux-([0-9.]+[^/]*?)\.iso$", fn_path)
+                if m:
+                    ver = m.group(1)
+                    fn = Path(fn_path).name
+                    url = f"https://downloads.sourceforge.net/project/windows-linux{fn_path}"
+                    return {"Version": ver, "Url": url, "Filename": fn}
+            except Exception:
+                pass
+        return {
+            "Version": "11.26.10-noble-lts",
+            "Url": "https://downloads.sourceforge.net/project/windows-linux/winux-11.26.10-noble-lts.iso",
+            "Filename": "winux-11.26.10-noble-lts.iso",
+        }
 
     def scrape_zorin_os_education(self) -> Optional[Dict[str, Any]]:
         html = self.dm.get_web_content("https://zorin.com/os/download/")

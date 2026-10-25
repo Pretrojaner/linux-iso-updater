@@ -9,14 +9,14 @@ Ein PowerShell-basiertes All-in-One Automatisierungswerkzeug zum Herunterladen, 
 > [!IMPORTANT]
 > **Wichtiger Hinweis zu Speicherort & benötigtem Speicherplatz:**
 > - **Speicherort:** Alle ISO-Dateien werden standardmäßig direkt im **selben Verzeichnis abgelegt, in dem sich die Skripte befinden** (strukturiert in Unterordnern von `01_Desktop-Linux` bis `05_BSD-Unix`).
-> - **Speicherplatzbedarf:** Platziere das Skriptpaket daher unbedingt auf einem Laufwerk mit ausreichend freiem Speicherplatz! Für den vollständigen Download aller 43 vorkonfigurierten Distributionen werden ca. **140 GB** freier Speicherplatz empfohlen.
+> - **Speicherplatzbedarf:** Platziere das Skriptpaket daher unbedingt auf einem Laufwerk mit ausreichend freiem Speicherplatz! Für den vollständigen Download aller 44 vorkonfigurierten Distributionen werden ca. **147 GB** freier Speicherplatz empfohlen.
 > - **Flexible Auswahl:** Beim Start öffnet sich automatisch das interaktive Auswahlmenü. Du kannst mit `[ENTER]` direkt alle Distros laden (`all`) oder gezielt einzelne Gruppen (z. B. `G1, G4`) bzw. Nummern auswählen, um nur die gewünschten Systeme zu beziehen und Speicherplatz zu sparen.
 
 ---
 
 ## 🚀 Funktionen
 
-- **Versions- & Release-Scraping:** Prüft online automatisch die neuesten ISO-Releases für 43 Linux-Distributionen, Enterprise-Server, Rettungssysteme und BSD-Derivate.
+- **Versions- & Release-Scraping:** Prüft online automatisch die neuesten ISO-Releases für 44 Linux-Distributionen, Enterprise-Server, Rettungssysteme und BSD-Derivate.
 - **Interaktive Distributions-Auswahl (`-SelectDistros`):**
   - Übersichtliche Darstellung in 5 Gruppen (`G1` bis `G5`).
   - Mehrfachauswahl via Ziffern (`1, 3, 5-8`), Gruppen (`G1, G4`) oder `all`.
@@ -53,15 +53,16 @@ Ein PowerShell-basiertes All-in-One Automatisierungswerkzeug zum Herunterladen, 
 
 ---
 
-## 📂 Unterstützte Distributionen & Systeme (43 Betriebssysteme)
+## 📂 Unterstützte Distributionen & Systeme (44 Betriebssysteme)
 
-### 🖥️ 01_Desktop-Linux (15 Distros)
+### 🖥️ 01_Desktop-Linux (16 Distros)
 - **CachyOS** – Performance- und Gaming-optimierte Arch-Linux-Distribution mit angepassten x86-64-v3/v4-Kerneln.
 - **Garuda Linux** – Visuell ansprechendes, Arch-basiertes Desktop-System mit BTRFS-Snapshots und Gaming-Fokus ("dr460nized").
 - **Linux Mint Cinnamon** – Äußerst anwenderfreundliche, elegante Desktop-Distribution auf Ubuntu-Basis mit vertrautem Desktop-Layout.
 - **Omarchy** – Schlankes, modernes Arch-Derivat mit leichtgewichtiger Basis und schnellem Installer.
 - **Ubuntu Desktop** – Die weltweit meistgenutzte Standard-Linux-Desktop-Distribution mit GNOME-Arbeitsumgebung.
 - **Ubuntu Cinnamon** – Offizieller Ubuntu-Flavor mit dem modernen, flexiblen Cinnamon-Desktop.
+- **Winux** – Auf Ubuntu 24.04 LTS basierende Distribution mit modernem Windows-11-Look (KDE Plasma), vorkonfiguriertem Wine/Proton und hoher Einsteigerfreundlichkeit.
 - **Zorin OS Education** – Speziell für Schulen, Schüler und Bildung konzipierte Zorin-OS-Version mit vorinstallierter Lernsoftware.
 - **Alpine Linux** – Extrem ressourcenschonende, hochsichere Mini-Distribution auf musl-libc- und busybox-Basis.
 - **Arch Linux** – Puristische, flexible Rolling-Release-Distribution nach dem KISS-Prinzip („Keep It Simple, Stupid“).

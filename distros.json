@@ -113,6 +113,14 @@
   },
   {
     "Enabled": true,
+    "Name": "Winux",
+    "Category": "01_Desktop-Linux",
+    "MatchPattern": "winux-(\\d+\\.\\d+(\\.\\d+)?)-noble-lts",
+    "Script": "$json = Get-WebContent -Uri 'https://sourceforge.net/projects/windows-linux/best_release.json'\nif ($json) {\n    try {\n        $obj = $json | ConvertFrom-Json\n        $fnPath = $obj.release.filename\n        if ($fnPath -match 'winux-([0-9.]+[^/]*?)\\.iso$') {\n            $ver = $Matches[1]\n            $fn = [System.IO.Path]::GetFileName($fnPath)\n            $url = \"https://downloads.sourceforge.net/project/windows-linux$fnPath\"\n            return @{ Version = $ver; Url = $url; Filename = $fn; Sha256 = $obj.release.sha256sum }\n        }\n    } catch {}\n}\nreturn @{ Version = '11.26.10-noble-lts'; Url = 'https://downloads.sourceforge.net/project/windows-linux/winux-11.26.10-noble-lts.iso'; Filename = 'winux-11.26.10-noble-lts.iso'; Sha256 = '5ba96c841a12518b0df69f8ed1d506f1c4e86ad343c3bfdc01ef789424739630' }",
+    "SizeBytes": 6685507584
+  },
+  {
+    "Enabled": true,
     "Name": "Zorin OS Education",
     "MatchPattern": "Zorin-OS-(\\d+(\\.\\d+)?)-Education-64-bit",
     "Script": "$html = Get-WebContent -Uri 'https://zorin.com/os/download/'\n$mainVer = '18'\nif ($html -and $html -match '/os/download/(\\d+)/education/') {\n    $mainVer = $Matches[1]\n}\n$dlPageHtml = Get-WebContent -Uri \"https://zorin.com/os/download/$mainVer/education/\"\nif ($dlPageHtml -and $dlPageHtml -match 'href=\"(https://[^\"]*?Zorin-OS-(\\d+(\\.\\d+)?)-Education-64-bit\\.iso)\"') {\n    $url = $Matches[1]\n    $ver = $Matches[2]\n    $fn  = \"Zorin-OS-$ver-Education-64-bit.iso\"\n    return @{ Version = $ver; Url = $url; Filename = $fn }\n}\nreturn $null",
@@ -343,4 +351,4 @@
     "Script": "$html = Get-WebContent -Uri 'https://cdn.openbsd.org/pub/OpenBSD/'\nif ($html) {\n    $vers = [regex]::Matches($html, 'href=\"(\\d+\\.\\d+)/\"') | ForEach-Object { $_.Groups[1].Value } | Sort-Object { [version](ConvertTo-VersionString $_) } -Descending\n    foreach ($v in $vers) {\n        $sub = Get-WebContent -Uri \"https://cdn.openbsd.org/pub/OpenBSD/$v/amd64/\"\n        if ($sub -and $sub -match 'install(\\d+)\\.iso') {\n            $fn = $Matches[0]\n            return @{ Version = $v; Url = \"https://cdn.openbsd.org/pub/OpenBSD/$v/amd64/$fn\"; Filename = $fn; ChecksumUrl = \"https://cdn.openbsd.org/pub/OpenBSD/$v/amd64/SHA256\" }\n        }\n    }\n}\nreturn $null",
     "SizeBytes": 700000000
   }
-]
+]
