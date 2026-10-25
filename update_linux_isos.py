@@ -1626,7 +1626,132 @@ class VentoyLinuxDriveManager:
         for child in node.get("children", []):
             self._parse_lsblk_node(child, results)
 
-    def select_target_mount_interactive(self, total_gb_needed: float) -> Optional[str]:
+    def get_parent_block_device(self, target: str) -> Optional[str]:
+        """Ermittelt das physische Basis-Blockgerät (z.B. /dev/sdb) für einen Mountpoint oder eine Partition."""
+        try:
+            target_str = str(target).strip()
+            src = target_str
+            if Path(target_str).exists() and not target_str.startswith("/dev/"):
+                res = subprocess.run(["findmnt", "-n", "-o", "SOURCE", target_str], stdout=subprocess.PIPE, text=True)
+                src = res.stdout.strip()
+
+            if not src or not src.startswith("/dev/"):
+                return None
+
+            res_pk = subprocess.run(["lsblk", "-no", "PKNAME", src], stdout=subprocess.PIPE, text=True)
+            pk = res_pk.stdout.strip()
+            if pk:
+                return f"/dev/{pk}"
+            return src
+        except Exception:
+            return None
+
+    def get_ventoy_data_partition(self, disk_device: str) -> Optional[str]:
+        """Ermittelt die primäre Ventoy-Datenpartition (exFAT) eines Datenträgers."""
+        try:
+            res = subprocess.run(["lsblk", "-ln", "-o", "NAME,LABEL,TYPE", disk_device], stdout=subprocess.PIPE, text=True)
+            lines = res.stdout.strip().splitlines()
+            for line in lines:
+                parts = line.split()
+                if len(parts) >= 2:
+                    name = parts[0]
+                    if "ventoy" in line.lower() and "vtoyefi" not in line.lower():
+                        return f"/dev/{name}"
+            # Fallback: erste Partition
+            for line in lines:
+                parts = line.split()
+                if len(parts) >= 2 and parts[-1] == "part":
+                    return f"/dev/{parts[0]}"
+        except Exception:
+            pass
+        return None
+
+    def mount_ventoy_partition(self, part_dev: str) -> Optional[str]:
+        """Hängt die Ventoy-Datenpartition ein und gibt den Mountpoint zurück."""
+        import time
+
+        time.sleep(2)  # Dem Kernel kurz Zeit geben, die Partitionstabelle neu einzulesen
+
+        # 1. Prüfen ob Partition bereits durch Desktop (udisks2) automatisch gemountet wurde
+        res = subprocess.run(["lsblk", "-no", "MOUNTPOINT", part_dev], stdout=subprocess.PIPE, text=True)
+        m = res.stdout.strip().splitlines()
+        if m and m[0]:
+            return m[0]
+
+        # 2. Versuch via udisksctl (sauberer User-Space Mount ohne sudo)
+        try:
+            u_res = subprocess.run(
+                ["udisksctl", "mount", "-b", part_dev],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+            )
+            if u_res.returncode == 0:
+                m_search = re.search(r"Mounted\s+\S+\s+at\s+(\S+)", u_res.stdout)
+                if m_search:
+                    return m_search.group(1).rstrip(".")
+        except Exception:
+            pass
+
+        # 3. Fallback: Manueller Mount unter /media/$USER/Ventoy oder /mnt/ventoy
+        user = os.environ.get("USER", "root")
+        mount_candidates = [Path(f"/media/{user}/Ventoy"), Path("/mnt/ventoy")]
+        for m_path in mount_candidates:
+            try:
+                m_path.mkdir(parents=True, exist_ok=True)
+                cmd = ["mount", part_dev, str(m_path)]
+                if os.geteuid() != 0:
+                    cmd = ["sudo"] + cmd
+                res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                if res.returncode == 0:
+                    return str(m_path)
+            except Exception:
+                pass
+
+        # Letzte Prüfung via lsblk
+        res = subprocess.run(["lsblk", "-no", "MOUNTPOINT", part_dev], stdout=subprocess.PIPE, text=True)
+        m = res.stdout.strip().splitlines()
+        if m and m[0]:
+            return m[0]
+        return None
+
+    def ensure_ventoy_target(self, target_mount: str, tools_dir: Path, dry_run: bool = False) -> str:
+        """Prüft, ob target_mount ein Ventoy-Laufwerk ist; falls nicht, wird eine interaktive Ventoy-Installation angeboten."""
+        t_path = Path(target_mount)
+        is_ventoy = (t_path / "ventoy").exists() or "ventoy" in t_path.name.lower()
+        if is_ventoy:
+            return target_mount
+
+        print(f"\n{Colors.YELLOW}[HINWEIS] Das Ziellaufwerk '{target_mount}' ist noch kein bootfähiges Ventoy-Laufwerk!{Colors.RESET}")
+        try:
+            ans = input("Möchtest du Ventoy jetzt auf diesem Laufwerk installieren und einrichten? (j/N): ").strip().lower()
+        except (KeyboardInterrupt, EOFError):
+            print("")
+            return target_mount
+
+        if ans in ["j", "ja", "y", "yes"]:
+            parent_dev = self.get_parent_block_device(target_mount)
+            if not parent_dev:
+                self.logger.log(f"Konnte das zugrundeliegende Blockgerät für '{target_mount}' nicht ermitteln.", color=Colors.RED, level="FEHLER")
+                return target_mount
+
+            success = self.install_ventoy_cli(tools_dir=tools_dir, target_device=parent_dev, dry_run=dry_run)
+            if success and not dry_run:
+                part_dev = self.get_ventoy_data_partition(parent_dev)
+                if part_dev:
+                    new_mount = self.mount_ventoy_partition(part_dev)
+                    if new_mount:
+                        self.logger.log(f"Ventoy-Laufwerk erfolgreich gemountet unter: {new_mount}", color=Colors.GREEN, level="ERFOLG")
+                        return new_mount
+                self.logger.log("Ventoy wurde erfolgreich eingerichtet.", color=Colors.GREEN, level="ERFOLG")
+        else:
+            self.logger.log(f"Fahre ohne Ventoy-Installation mit bestehendem Ordner '{target_mount}' fort.", color=Colors.DARK_GRAY, level="INFO")
+
+        return target_mount
+
+    def select_target_mount_interactive(
+        self, total_gb_needed: float, tools_dir: Optional[Path] = None, dry_run: bool = False
+    ) -> Optional[str]:
         drives = self.get_mounted_drives()
         if not drives:
             self.logger.log("Keine passenden Ziel-Laufwerke gefunden! Bitte --target <pfad> angeben.", color=Colors.RED, level="FEHLER")
@@ -1646,13 +1771,17 @@ class VentoyLinuxDriveManager:
         try:
             sel = input(f"Bitte Nummer des Ventoy-Ziel-Laufwerks eingeben (1-{len(drives)}): ").strip()
             if sel.isdigit() and 1 <= int(sel) <= len(drives):
-                return drives[int(sel) - 1]["mountpoint"]
+                chosen = drives[int(sel) - 1]
+                mountpoint = chosen["mountpoint"]
+                if tools_dir:
+                    return self.ensure_ventoy_target(mountpoint, tools_dir=tools_dir, dry_run=dry_run)
+                return mountpoint
         except (KeyboardInterrupt, EOFError):
             print("")
             return None
         return None
 
-    def install_ventoy_cli(self, tools_dir: Path, target_device: Optional[str] = None, dry_run: bool = False) -> None:
+    def install_ventoy_cli(self, tools_dir: Path, target_device: Optional[str] = None, dry_run: bool = False) -> bool:
         """Lädt Ventoy für Linux herunter und installiert oder aktualisiert es auf einem USB-Blockgerät."""
         print(f"\n{Colors.CYAN}{'=' * 60}{Colors.RESET}")
         print(f"{Colors.CYAN} AUTOMATISIERTE VENTOY-INSTALLATION (CLI LINUX){Colors.RESET}")
@@ -1662,7 +1791,7 @@ class VentoyLinuxDriveManager:
         ventoy_script = self._ensure_ventoy_linux_package(tools_dir)
         if not ventoy_script or not ventoy_script.exists():
             self.logger.log("Konnte Ventoy2Disk.sh nicht beschaffen. Abbruch.", color=Colors.RED, level="FEHLER")
-            return
+            return False
 
         # 2. Blockgeräte via lsblk listen
         if not target_device:
@@ -1687,17 +1816,22 @@ class VentoyLinuxDriveManager:
 
             if not devices:
                 self.logger.log("Keine geeigneten Blockgeräte gefunden.", color=Colors.RED, level="FEHLER")
-                return
+                return False
 
             try:
                 sel = input(f"\nBitte Nummer des USB-Laufwerks für Ventoy eingeben (1-{len(devices)}): ").strip()
                 if not sel.isdigit() or not (1 <= int(sel) <= len(devices)):
                     self.logger.log("Ungültige Auswahl. Abbruch.", color=Colors.RED, level="FEHLER")
-                    return
+                    return False
                 target_device = devices[int(sel) - 1]
             except (KeyboardInterrupt, EOFError):
                 print("")
-                return
+                return False
+        else:
+            # Falls target_device ein Mountpoint oder eine Partition ist, Parent-Disk ermitteln
+            parent_disk = self.get_parent_block_device(target_device)
+            if parent_disk:
+                target_device = parent_disk
 
         # 3. Prüfen ob Ventoy bereits vorhanden ist
         is_ventoy = False
@@ -1721,7 +1855,7 @@ class VentoyLinuxDriveManager:
                 flag = "-i"
             else:
                 self.logger.log("Installation abgebrochen.", color=Colors.YELLOW, level="ABBRUCH")
-                return
+                return False
 
         if flag == "-i":
             print(f"\n{Colors.RED}!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!{Colors.RESET}")
@@ -1730,7 +1864,7 @@ class VentoyLinuxDriveManager:
             confirm = input(f"Bist du VOLLKOMMEN SICHER, dass du Ventoy auf {target_device} installieren willst? (j/N): ").strip().lower()
             if confirm not in ["j", "ja", "y", "yes"]:
                 self.logger.log("Installation aus Sicherheitsgründen abgebrochen.", color=Colors.YELLOW, level="ABBRUCH")
-                return
+                return False
 
         cmd = [str(ventoy_script), flag, target_device]
         if os.geteuid() != 0:
@@ -1738,14 +1872,20 @@ class VentoyLinuxDriveManager:
 
         if dry_run:
             self.logger.log(f"[DRY-RUN] Würde ausführen: {' '.join(cmd)}", color=Colors.DARK_GRAY, level="DRY-RUN")
-            return
+            return True
 
         self.logger.log(f"Starte Ventoy Installation ({flag}) auf {target_device}...", color=Colors.CYAN, level="VENTOY")
         try:
-            subprocess.run(cmd, check=True)
-            self.logger.log(f"Ventoy wurde ERFOLGREICH auf {target_device} eingerichtet!", color=Colors.GREEN, level="ERFOLG")
+            res = subprocess.run(cmd, cwd=str(ventoy_script.parent))
+            if res.returncode == 0:
+                self.logger.log(f"Ventoy wurde ERFOLGREICH auf {target_device} eingerichtet!", color=Colors.GREEN, level="ERFOLG")
+                return True
+            else:
+                self.logger.log(f"Ventoy-Installation mit Exit-Code {res.returncode} beendet.", color=Colors.RED, level="FEHLER")
+                return False
         except Exception as e:
             self.logger.log(f"Fehler bei Ventoy-Installation: {e}", color=Colors.RED, level="FEHLER")
+            return False
 
     def _ensure_ventoy_linux_package(self, tools_dir: Path) -> Optional[Path]:
         """Sucht Ventoy2Disk.sh oder lädt das offizielle GitHub Release-Tarball herunter."""
@@ -2285,8 +2425,13 @@ def main() -> None:
                         if not args.skip_ventoy:
                             cp = input("Möchtest du vorhandene ISOs auf den Ventoy-Stick kopieren? (J/n): ").strip().lower()
                             if cp not in ["n", "no", "nein"]:
-                                t_mount = args.target or drive_mgr.select_target_mount_interactive(total_gb_needed=10.0)
+                                t_mount = args.target or drive_mgr.select_target_mount_interactive(
+                                    total_gb_needed=10.0, tools_dir=iso_dir / "tools" / "ventoy", dry_run=args.dry_run
+                                )
                                 if t_mount:
+                                    t_mount = drive_mgr.ensure_ventoy_target(
+                                        t_mount, tools_dir=iso_dir / "tools" / "ventoy", dry_run=args.dry_run
+                                    )
                                     with open(iso_dir / "distros.json", "r", encoding="utf-8-sig") as f:
                                         pats = json.load(f)
                                     run_ventoy_sync(t_mount, iso_dir, pats, args.theme, args.dry_run, logger)
@@ -2298,10 +2443,16 @@ def main() -> None:
 
         # SCHRITT 0.5: STANDALONE THEME ÄNDERN
         if args.change_theme or (args.theme and args.skip_download):
-            target_mount = args.target or drive_mgr.select_target_mount_interactive(total_gb_needed=0.1)
+            target_mount = args.target or drive_mgr.select_target_mount_interactive(
+                total_gb_needed=0.1, tools_dir=iso_dir / "tools" / "ventoy", dry_run=args.dry_run
+            )
             if not target_mount:
                 logger.log("Kein Ziel-Laufwerk gewählt. Abbruch.", color=Colors.RED, level="FEHLER")
                 return
+
+            target_mount = drive_mgr.ensure_ventoy_target(
+                target_mount, tools_dir=iso_dir / "tools" / "ventoy", dry_run=args.dry_run
+            )
 
             ventoy_dir = Path(target_mount) / "ventoy"
             active_t = "1"
@@ -2615,7 +2766,13 @@ def main() -> None:
                     print("")
                     return
 
-                target_mount = drive_mgr.select_target_mount_interactive(total_gb_needed=total_gb_needed)
+                target_mount = drive_mgr.select_target_mount_interactive(
+                    total_gb_needed=total_gb_needed, tools_dir=iso_dir / "tools" / "ventoy", dry_run=args.dry_run
+                )
+            else:
+                target_mount = drive_mgr.ensure_ventoy_target(
+                    target_mount, tools_dir=iso_dir / "tools" / "ventoy", dry_run=args.dry_run
+                )
 
             if target_mount:
                 run_ventoy_sync(
