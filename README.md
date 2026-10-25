@@ -1,8 +1,8 @@
-# Linux ISO Auto-Updater & Ventoy Sync Tool (v2.3.0)
+# Linux ISO Auto-Updater & Ventoy Sync Tool (v2.4.0)
 
 **Autor:** Ingo  
 **Repository:** [Pretrojaner/linux-iso-updater](https://github.com/Pretrojaner/linux-iso-updater)  
-**Version:** `2.3.0`
+**Version:** `2.4.0`
 
 Ein PowerShell-basiertes All-in-One Automatisierungswerkzeug zum Herunterladen, Aktualisieren und Verifizieren von Linux-, Server-, BSD- und Rescue-ISOs sowie zur automatischen Synchronisation und Theme-Einrichtung auf bootfähigen Ventoy-USB-Laufwerken.
 
