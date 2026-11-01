@@ -225,6 +225,14 @@
   },
   {
     "Enabled": true,
+    "Name": "Kodachi OS",
+    "Category": "03_Security-Pentest",
+    "MatchPattern": "kodachi-os-xfce-(\\d+\\.\\d+\\.\\d+)-amd64",
+    "Script": "$html = Get-WebContent -Uri 'https://kodachi.cloud/downloads/'\nif ($html -and $html -match 'kodachi-os-xfce-(\\d+\\.\\d+\\.\\d+)-amd64\\.iso') {\n    $ver = $Matches[1]\n    $fn = \"kodachi-os-xfce-$ver-amd64.iso\"\n    $url = \"https://kodachi.cloud/downloads/download.php?f=xfce-iso\"\n    $chk = \"https://kodachi.cloud/downloads/installers/desktop/kodachi-os-xfce-$ver-amd64.iso.sha256\"\n    return @{ Version = $ver; Url = $url; Filename = $fn; ChecksumUrl = $chk }\n}\nreturn @{ Version = '10.0.3'; Url = 'https://kodachi.cloud/downloads/download.php?f=xfce-iso'; Filename = 'kodachi-os-xfce-10.0.3-amd64.iso'; ChecksumUrl = 'https://kodachi.cloud/downloads/installers/desktop/kodachi-os-xfce-10.0.3-amd64.iso.sha256' }",
+    "SizeBytes": 4516642816
+  },
+  {
+    "Enabled": true,
     "Name": "Parrot Security",
     "MatchPattern": "Parrot-security-(\\d+\\.\\d+(\\.\\d+)?)_amd64",
     "Script": "$html = Get-WebContent -Uri 'https://deb.parrot.sh/parrot/iso/'\nif ($html) {\n    $dirs = [regex]::Matches($html, 'href=\"(\\d+\\.\\d+(\\.\\d+)?)/\"') | ForEach-Object { $_.Groups[1].Value } | Sort-Object { [version](ConvertTo-VersionString $_) } -Descending | Select-Object -First 3\n    foreach ($d in $dirs) {\n        $subHtml = Get-WebContent -Uri \"https://deb.parrot.sh/parrot/iso/$d/\"\n        if ($subHtml -and $subHtml -match 'href=\"(Parrot-security-[^\"]*?amd64\\.iso)\"') {\n            return @{ Version = $d; Url = \"https://deb.parrot.sh/parrot/iso/$d/$($Matches[1])\"; Filename = $Matches[1] }\n        }\n    }\n}\nreturn $null",

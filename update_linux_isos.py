@@ -1010,6 +1010,23 @@ class DistroScraperEngine:
                 }
         return None
 
+    def scrape_kodachi_os(self) -> Optional[Dict[str, Any]]:
+        html = self.dm.get_web_content("https://kodachi.cloud/downloads/")
+        if html:
+            m = re.search(r'kodachi-os-xfce-(\d+\.\d+\.\d+)-amd64\.iso', html)
+            if m:
+                ver = m.group(1)
+                fn = f"kodachi-os-xfce-{ver}-amd64.iso"
+                url = "https://kodachi.cloud/downloads/download.php?f=xfce-iso"
+                chk = f"https://kodachi.cloud/downloads/installers/desktop/{fn}.sha256"
+                return {"Version": ver, "Url": url, "Filename": fn, "ChecksumUrl": chk}
+        return {
+            "Version": "10.0.3",
+            "Url": "https://kodachi.cloud/downloads/download.php?f=xfce-iso",
+            "Filename": "kodachi-os-xfce-10.0.3-amd64.iso",
+            "ChecksumUrl": "https://kodachi.cloud/downloads/installers/desktop/kodachi-os-xfce-10.0.3-amd64.iso.sha256"
+        }
+
     def scrape_parrot_security(self) -> Optional[Dict[str, Any]]:
         for base in ["https://deb.parrot.sh/parrot/iso/", "https://download.parrot.sh/parrot/iso/"]:
             html = self.dm.get_web_content(base)
