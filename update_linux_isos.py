@@ -2890,6 +2890,7 @@ def main() -> None:
 
         # Übersichtstabelle
         if summary_items:
+            os.system("clear")
             print("")
             cols = shutil.get_terminal_size(fallback=(80, 24)).columns
             title = "ÜBERSICHT: VERFÜGBARE UPDATES / NEUE ISOS (DRY-RUN)" if args.dry_run else "ÜBERSICHT: HERUNTERGELADENE & AKTUALISIERTE ISOS"

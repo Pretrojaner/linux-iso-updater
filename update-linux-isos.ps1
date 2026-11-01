@@ -2245,6 +2245,7 @@ if (-not $SkipDownload) {
     Write-Log -Message "ISO Auto-Update-Vorgang abgeschlossen." -Color Cyan -Level "ENDE"
 
     if ($summaryItems.Count -gt 0) {
+        try { Clear-Host } catch {}
         Write-Host ""
         $titleText = if ($DryRun) { "UeBERSICHT: VERFUeGBARE UPDATES / NEUE ISOS (DRY-RUN)" } else { "UeBERSICHT: HERUNTERGELADENE & AKTUALISIERTE ISOS" }
         Write-Log -Message $titleText -Color Cyan -Level "INFO"
