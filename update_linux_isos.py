@@ -861,23 +861,29 @@ class DistroScraperEngine:
         return None
 
     def scrape_antix(self) -> Optional[Dict[str, Any]]:
-        base = "https://ftp.gwdg.de/pub/linux/mx/iso/ANTIX/Final/"
-        html = self.dm.get_web_content(base)
-        if html:
-            dirs = re.findall(r'href="(antiX-[0-9.]+)/?"', html)
-            if dirs:
-                latest = sorted(dirs)[-1]
-                sub = f"{base}{latest}/"
-                sub_html = self.dm.get_web_content(sub)
-                if sub_html:
-                    m = re.search(r'href="(antiX-([0-9.]+)_x64-full\.iso)"', sub_html)
-                    if m:
-                        return {
-                            "Version": m.group(2),
-                            "Url": f"{sub}{m.group(1)}",
-                            "Filename": m.group(1),
-                            "ChecksumUrl": f"{sub}{m.group(1)}.sha256",
-                        }
+        mirrors = [
+            "https://ftp.fau.de/mxlinux-cd/ANTIX/Final/",
+            "https://ftp.halifax.rwth-aachen.de/mxlinux/isos/ANTIX/Final/",
+            "https://ftp.tu-chemnitz.de/pub/linux/MX/Linux/ANTIX/Final/",
+            "https://ftp.gwdg.de/pub/linux/mx/iso/ANTIX/Final/",
+        ]
+        for base in mirrors:
+            html = self.dm.get_web_content(base)
+            if html:
+                dirs = re.findall(r'href="(antiX-[0-9.]+)/?"', html)
+                if dirs:
+                    latest = sorted(dirs)[-1]
+                    sub = f"{base}{latest}/"
+                    sub_html = self.dm.get_web_content(sub)
+                    if sub_html:
+                        m = re.search(r'href="(antiX-([0-9.]+)_x64-full\.iso)"', sub_html)
+                        if m:
+                            return {
+                                "Version": m.group(2),
+                                "Url": f"{sub}{m.group(1)}",
+                                "Filename": m.group(1),
+                                "ChecksumUrl": f"{sub}{m.group(1)}.sha256",
+                            }
         return None
 
     def scrape_calculate_linux(self) -> Optional[Dict[str, Any]]:

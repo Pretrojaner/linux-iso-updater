@@ -11,7 +11,7 @@
     "Enabled": true,
     "Name": "antiX",
     "MatchPattern": "antiX-(\\d+\\.\\d+)_x64-full",
-    "Script": "$baseUrl = 'https://ftp.gwdg.de/pub/linux/mx/iso/ANTIX/Final/'\n$html = Get-WebContent -Uri $baseUrl\nif ($html) {\n    $dirs = [regex]::Matches($html, 'href=\"(antiX-[0-9.]+)/?\"') | ForEach-Object { $_.Groups[1].Value } | Sort-Object | Select-Object -Last 1\n    if ($dirs) {\n        $subHtml = Get-WebContent -Uri \"$baseUrl$dirs/\"\n        if ($subHtml -and $subHtml -match 'href=\"(antiX-([0-9.]+)_x64-full\\.iso)\"') {\n            return @{ Version = $Matches[2]; Url = \"$baseUrl$dirs/$($Matches[1])\"; Filename = $Matches[1]; ChecksumUrl = \"$baseUrl$dirs/$($Matches[1]).sha256\" }\n        }\n    }\n}\nreturn $null",
+    "Script": "$mirrors = @(\n    'https://ftp.fau.de/mxlinux-cd/ANTIX/Final/',\n    'https://ftp.halifax.rwth-aachen.de/mxlinux/isos/ANTIX/Final/',\n    'https://ftp.tu-chemnitz.de/pub/linux/MX/Linux/ANTIX/Final/',\n    'https://ftp.gwdg.de/pub/linux/mx/iso/ANTIX/Final/'\n)\nforeach ($baseUrl in $mirrors) {\n    $html = Get-WebContent -Uri $baseUrl\n    if ($html) {\n        $dirs = [regex]::Matches($html, 'href=\"(antiX-[0-9.]+)/?\"') | ForEach-Object { $_.Groups[1].Value } | Sort-Object | Select-Object -Last 1\n        if ($dirs) {\n            $subHtml = Get-WebContent -Uri \"$baseUrl$dirs/\"\n            if ($subHtml -and $subHtml -match 'href=\"(antiX-([0-9.]+)_x64-full\\.iso)\"') {\n                return @{ Version = $Matches[2]; Url = \"$baseUrl$dirs/$($Matches[1])\"; Filename = $Matches[1]; ChecksumUrl = \"$baseUrl$dirs/$($Matches[1]).sha256\" }\n            }\n        }\n    }\n}\nreturn $null",
     "SizeBytes": 1845493760,
     "Category": "01_Desktop-Linux"
   },
