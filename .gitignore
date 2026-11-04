@@ -27,6 +27,8 @@ update-linux-isos.log
 .backup/
 .system_generated/
 scratch/
+tools/
+/tools/
 
 # Python artifacts & virtual environments
 __pycache__/

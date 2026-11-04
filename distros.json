@@ -81,6 +81,14 @@
   },
   {
     "Enabled": true,
+    "Name": "Lubuntu",
+    "MatchPattern": "lubuntu-(\\d+\\.\\d+(\\.\\d+)?)-desktop-amd64",
+    "Script": "$baseUrl = 'https://cdimage.ubuntu.com/lubuntu/releases/'\n$html = Get-WebContent -Uri $baseUrl\nif ($html) {\n    $versions = [regex]::Matches($html, 'href=\"(\\d+\\.\\d+(\\.\\d+)?)/\"') | ForEach-Object { $_.Groups[1].Value } | Sort-Object { [version](ConvertTo-VersionString $_) } -Descending | Select-Object -First 3\n    foreach ($ver in $versions) {\n        $subHtml = Get-WebContent -Uri \"$baseUrl$ver/release/\"\n        if ($subHtml -and $subHtml -match 'href=\"(lubuntu-[^\"]+-desktop-amd64\\.iso)\"') {\n            return @{ Version = $ver; Url = \"$baseUrl$ver/release/$($Matches[1])\"; Filename = $Matches[1]; ChecksumUrl = \"$baseUrl$ver/release/SHA256SUMS\" }\n        }\n        $subHtmlDir = Get-WebContent -Uri \"$baseUrl$ver/\"\n        if ($subHtmlDir -and $subHtmlDir -match 'href=\"(lubuntu-[^\"]+-desktop-amd64\\.iso)\"') {\n            return @{ Version = $ver; Url = \"$baseUrl$ver/$($Matches[1])\"; Filename = $Matches[1]; ChecksumUrl = \"$baseUrl$ver/SHA256SUMS\" }\n        }\n    }\n}\nreturn $null",
+    "SizeBytes": 3996559360,
+    "Category": "01_Desktop-Linux"
+  },
+  {
+    "Enabled": true,
     "Name": "Mageia",
     "MatchPattern": "Mageia-(\\d+)-x86_64",
     "Script": "$baseUrls = @(\n    'https://ftp.fau.de/mageia/iso/',\n    'https://ftp.gwdg.de/pub/linux/mageia/iso/'\n)\nforeach ($baseUrl in $baseUrls) {\n    $html = Get-WebContent -Uri $baseUrl\n    if ($html) {\n        $versions = [regex]::Matches($html, 'href=\"(\\d+)/\"') | ForEach-Object { $_.Groups[1].Value } | Sort-Object { [int]$_ } -Descending | Select-Object -First 3\n        foreach ($v in $versions) {\n            $subHtml = Get-WebContent -Uri \"$baseUrl$v/Mageia-$v-x86_64/\"\n            if ($subHtml -and $subHtml -match 'href=\"(Mageia-[^\"]+?\\.iso)\"') {\n                return @{ Version = $v; Url = \"$baseUrl$v/Mageia-$v-x86_64/$($Matches[1])\"; Filename = $Matches[1] }\n            }\n        }\n    }\n}\nreturn $null",
@@ -359,4 +367,4 @@
     "Script": "$html = Get-WebContent -Uri 'https://cdn.openbsd.org/pub/OpenBSD/'\nif ($html) {\n    $vers = [regex]::Matches($html, 'href=\"(\\d+\\.\\d+)/\"') | ForEach-Object { $_.Groups[1].Value } | Sort-Object { [version](ConvertTo-VersionString $_) } -Descending\n    foreach ($v in $vers) {\n        $sub = Get-WebContent -Uri \"https://cdn.openbsd.org/pub/OpenBSD/$v/amd64/\"\n        if ($sub -and $sub -match 'install(\\d+)\\.iso') {\n            $fn = $Matches[0]\n            return @{ Version = $v; Url = \"https://cdn.openbsd.org/pub/OpenBSD/$v/amd64/$fn\"; Filename = $fn; ChecksumUrl = \"https://cdn.openbsd.org/pub/OpenBSD/$v/amd64/SHA256\" }\n        }\n    }\n}\nreturn $null",
     "SizeBytes": 700000000
   }
-]
+]

@@ -9,14 +9,14 @@ Ein PowerShell-basiertes All-in-One Automatisierungswerkzeug zum Herunterladen, 
 > [!IMPORTANT]
 > **Wichtiger Hinweis zu Speicherort & benötigtem Speicherplatz:**
 > - **Speicherort:** Alle ISO-Dateien werden standardmäßig direkt im **selben Verzeichnis abgelegt, in dem sich die Skripte befinden** (strukturiert in Unterordnern von `01_Desktop-Linux` bis `05_BSD-Unix`).
-> - **Speicherplatzbedarf:** Platziere das Skriptpaket daher unbedingt auf einem Laufwerk mit ausreichend freiem Speicherplatz! Für den vollständigen Download aller 45 vorkonfigurierten Distributionen werden ca. **152 GB** freier Speicherplatz empfohlen.
+> - **Speicherplatzbedarf:** Platziere das Skriptpaket daher unbedingt auf einem Laufwerk mit ausreichend freiem Speicherplatz! Für den vollständigen Download aller 46 vorkonfigurierten Distributionen werden ca. **156 GB** freier Speicherplatz empfohlen.
 > - **Flexible Auswahl:** Beim Start öffnet sich automatisch das interaktive Auswahlmenü. Du kannst mit `[ENTER]` direkt alle Distros laden (`all`) oder gezielt einzelne Gruppen (z. B. `G1, G4`) bzw. Nummern auswählen, um nur die gewünschten Systeme zu beziehen und Speicherplatz zu sparen.
 
 ---
 
 ## 🚀 Funktionen
 
-- **Versions- & Release-Scraping:** Prüft online automatisch die neuesten ISO-Releases für 45 Linux-Distributionen, Enterprise-Server, Rettungssysteme und BSD-Derivate.
+- **Versions- & Release-Scraping:** Prüft online automatisch die neuesten ISO-Releases für 46 Linux-Distributionen, Enterprise-Server, Rettungssysteme und BSD-Derivate.
 - **Interaktive Distributions-Auswahl (`-SelectDistros`):**
   - Übersichtliche Darstellung in 5 Gruppen (`G1` bis `G5`).
   - Mehrfachauswahl via Ziffern (`1, 3, 5-8`), Gruppen (`G1, G4`) oder `all`.
@@ -53,12 +53,13 @@ Ein PowerShell-basiertes All-in-One Automatisierungswerkzeug zum Herunterladen, 
 
 ---
 
-## 📂 Unterstützte Distributionen & Systeme (45 Betriebssysteme)
+## 📂 Unterstützte Distributionen & Systeme (46 Betriebssysteme)
 
-### 🖥️ 01_Desktop-Linux (16 Distros)
+### 🖥️ 01_Desktop-Linux (17 Distros)
 - **CachyOS** – Performance- und Gaming-optimierte Arch-Linux-Distribution mit angepassten x86-64-v3/v4-Kerneln.
 - **Garuda Linux** – Visuell ansprechendes, Arch-basiertes Desktop-System mit BTRFS-Snapshots und Gaming-Fokus ("dr460nized").
 - **Linux Mint Cinnamon** – Äußerst anwenderfreundliche, elegante Desktop-Distribution auf Ubuntu-Basis mit vertrautem Desktop-Layout.
+- **Lubuntu** – Offizieller, extrem schlanker und ressourcenschonender Ubuntu-Flavor mit dem modernen, schnellen LXQt-Desktop.
 - **Omarchy** – Schlankes, modernes Arch-Derivat mit leichtgewichtiger Basis und schnellem Installer.
 - **Ubuntu Desktop** – Die weltweit meistgenutzte Standard-Linux-Desktop-Distribution mit GNOME-Arbeitsumgebung.
 - **Ubuntu Cinnamon** – Offizieller Ubuntu-Flavor mit dem modernen, flexiblen Cinnamon-Desktop.
@@ -120,7 +121,7 @@ Ein PowerShell-basiertes All-in-One Automatisierungswerkzeug zum Herunterladen, 
 | `update-linux-isos.ps1` | Hauptskript für Windows (Downloads, Hash-Prüfung, Archivierung, Ventoy-Themes, Sync). |
 | `update-linux-isos.sh`  | Ausführbares Bash-Startskript für Linux (prüft Abhängigkeiten, richtet ggf. `.venv` ein). |
 | `update_linux_isos.py`  | Vollständige Linux-Portierung in Python 3 (PEP 8, Pillow, Requests, Streaming-Downloads). |
-| `distros.json`          | JSON-Konfigurationsdatei aller 45 Distributionen, Download-Quellen und Regex-Muster. |
+| `distros.json`          | JSON-Konfigurationsdatei aller 46 Distributionen, Download-Quellen und Regex-Muster. |
 | `.gitignore`            | Schließt ISO-Dateien, Logdateien und temporäre Ordner vom Git-Tracking aus. |
 | `GITHUB_ANLEITUNG.md`   | Dokumentation zur Verwaltung und Pflege des GitHub-Repositories. |
 

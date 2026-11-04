@@ -708,6 +708,25 @@ class DistroScraperEngine:
                             return {"Version": v, "Url": f"{sub_dir}{m.group(1)}", "Filename": m.group(1)}
         return None
 
+    def scrape_lubuntu(self) -> Optional[Dict[str, Any]]:
+        base = "https://cdimage.ubuntu.com/lubuntu/releases/"
+        html = self.dm.get_web_content(base)
+        if html:
+            matches = [m[0] for m in re.findall(r'href="(\d+\.\d+(\.\d+)?)/"', html)]
+            for v in sorted(matches, key=version_sort_key, reverse=True)[:3]:
+                for sub_dir in [f"{base}{v}/release/", f"{base}{v}/"]:
+                    sub = self.dm.get_web_content(sub_dir)
+                    if sub:
+                        m = re.search(r'href="(lubuntu-[^"]+-desktop-amd64\.iso)"', sub)
+                        if m:
+                            return {
+                                "Version": v,
+                                "Url": f"{sub_dir}{m.group(1)}",
+                                "Filename": m.group(1),
+                                "ChecksumUrl": f"{sub_dir}SHA256SUMS",
+                            }
+        return None
+
     def scrape_winux(self) -> Optional[Dict[str, Any]]:
         raw = self.dm.get_web_content("https://sourceforge.net/projects/windows-linux/best_release.json")
         if raw:
@@ -1293,6 +1312,7 @@ def get_pretty_iso_name(filename: str) -> str:
         (r"livegui.*gentoo", "Gentoo Live GUI"),
         ("mageia", "Mageia Linux"),
         ("omarchy", "Omarchy Linux"),
+        ("lubuntu", "Lubuntu Desktop"),
         ("ubuntucinnamon", "Ubuntu Cinnamon"),
         (r"ubuntu.*live-server", "Ubuntu Server LTS"),
         ("ubuntu", "Ubuntu Desktop"),
