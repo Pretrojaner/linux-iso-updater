@@ -1,26 +1,28 @@
-# Linux ISO Auto-Updater & Ventoy Sync Tool (v2.4.0)
+# Linux ISO Auto-Updater & Ventoy Sync Tool (v2.6.0)
 
 **Autor:** Ingo  
 **Repository:** [Pretrojaner/linux-iso-updater](https://github.com/Pretrojaner/linux-iso-updater)  
-**Version:** `2.4.0`
+**Version:** `2.6.0`
 
-Ein PowerShell-basiertes All-in-One Automatisierungswerkzeug zum Herunterladen, Aktualisieren und Verifizieren von Linux-, Server-, BSD- und Rescue-ISOs sowie zur automatischen Synchronisation und Theme-Einrichtung auf bootfähigen Ventoy-USB-Laufwerken.
+Ein PowerShell- und Python-basiertes All-in-One Automatisierungswerkzeug zum Herunterladen, Aktualisieren und Verifizieren von Linux-, Server-, BSD-, Windows-PE- und Rescue-ISOs sowie zur automatischen Synchronisation und Theme-Einrichtung auf bootfähigen Ventoy-USB-Laufwerken.
 
 > [!IMPORTANT]
 > **Wichtiger Hinweis zu Speicherort & benötigtem Speicherplatz:**
-> - **Speicherort:** Alle ISO-Dateien werden standardmäßig direkt im **selben Verzeichnis abgelegt, in dem sich die Skripte befinden** (strukturiert in Unterordnern von `01_Desktop-Linux` bis `05_BSD-Unix`).
-> - **Speicherplatzbedarf:** Platziere das Skriptpaket daher unbedingt auf einem Laufwerk mit ausreichend freiem Speicherplatz! Für den vollständigen Download aller 59 vorkonfigurierten Distributionen werden ca. **190 GB** freier Speicherplatz empfohlen.
-> - **Flexible Auswahl:** Beim Start öffnet sich automatisch das interaktive Auswahlmenü. Du kannst mit `[ENTER]` direkt alle Distros laden (`all`) oder gezielt einzelne Gruppen (z. B. `G1, G4`) bzw. Nummern auswählen, um nur die gewünschten Systeme zu beziehen und Speicherplatz zu sparen.
+> - **Speicherort:** Alle ISO- und Boot-Image-Dateien werden standardmäßig direkt im **selben Verzeichnis abgelegt, in dem sich die Skripte befinden** (strukturiert in Unterordnern von `01_Desktop-Linux` bis `06_Windows-PE_Rescue`).
+> - **Speicherplatzbedarf:** Platziere das Skriptpaket daher unbedingt auf einem Laufwerk mit ausreichend freiem Speicherplatz! Für den vollständigen Download aller 64 vorkonfigurierten Distributionen werden ca. **195 GB** freier Speicherplatz empfohlen.
+> - **Flexible Auswahl:** Beim Start öffnet sich automatisch das interaktive Auswahlmenü. Du kannst mit `[ENTER]` direkt alle Distros laden (`all`) oder gezielt einzelne Gruppen (z. B. `G1, G4, G6`) bzw. Nummern auswählen, um nur die gewünschten Systeme zu beziehen und Speicherplatz zu sparen.
 
 ---
 
 ## 🚀 Funktionen
 
-- **Versions- & Release-Scraping:** Prüft online automatisch die neuesten ISO-Releases für 59 Linux-Distributionen, Enterprise-Server, Rettungssysteme und BSD-Derivate.
+- **Versions- & Release-Scraping:** Prüft online automatisch die neuesten Releases für 64 Linux-Distributionen, Enterprise-Server, Rettungssysteme, BSD-Derivate und Windows-PE-Notfallumgebungen.
 - **Interaktive Distributions-Auswahl (`-SelectDistros`):**
-  - Übersichtliche Darstellung in 5 Gruppen (`G1` bis `G5`).
-  - Mehrfachauswahl via Ziffern (`1, 3, 5-8`), Gruppen (`G1, G4`) oder `all`.
+  - Übersichtliche Darstellung in 6 Gruppen (`G1` bis `G6`).
+  - Mehrfachauswahl via Ziffern (`1, 3, 5-8`), Gruppen (`G1, G4, G6`) oder `all`.
   - Bei Neu- oder Umkonfiguration werden abgewählte ISOs auf Wunsch lokal und auf dem Ventoy-Laufwerk bereinigt.
+- **Multi-Format Boot-Support:**
+  - Unterstützt standardmäßige Boot-Images im Format `.iso` sowie `.img` (z. B. ShredOS Disk Sanitizer).
 - **Integritätsprüfung:**
   - Berechnet und verifiziert automatisch SHA256-, SHA512- und MD5-Prüfsummen direkt nach dem Download.
   - Erkennt dateispezifische Hashes auch in Multi-File-Prüfsummendateien präzise.
@@ -30,15 +32,16 @@ Ein PowerShell-basiertes All-in-One Automatisierungswerkzeug zum Herunterladen, 
   - Erkennt Ventoy lokal oder installiert es vollautomatisch via Windows Package Manager (`winget`) bzw. direkt von GitHub Releases.
   - Sichere Laufwerksauswahl mit Bestätigungsabfrage vor dem Formatieren (`/I` mit GPT und NTFS).
   - Erkennt vorhandene Ventoy-Sticks und bietet zerstörungsfreie Bootcode-Aktualisierungen (`/U`) unter Beibehaltung aller vorhandenen Dateien an.
-- **Ventoy Themes (6 Styles zur Auswahl & `-ChangeTheme`):**
+- **Ventoy Themes (7 Styles zur Auswahl & `-ChangeTheme`):**
   - Generiert automatisch hochauflösende 1080p RGB-Hintergründe und Menügrafiken.
-  - **6 Themes enthalten:**
+  - **7 Themes enthalten:**
     1. `moderndark` – Modern Dark (Slate Blue & Cyan Accent) [Standard]
     2. `matrix` – Matrix Hacker Terminal (Nerdig, tiefschwarz & leuchtendes Phosphorgruen)
     3. `cybertech` – Cyber Tech & Network (Deep Navy & Electric Blue Infrastruktur)
     4. `tuxamber` – Tux Classic Linux (Anthrazit-Carbon & warmes Tux-Gold)
     5. `crimson` – Crimson Security & Audit (Dark Carbon & Blood Crimson Red)
     6. `synthwave` – Synthwave Neon Retro (Midnight Purple & 80s Hot Pink/Cyan)
+    7. `medicatdark` – MediCat Dark Glass (Edles 9-Slice Rahmen-Design, transluzente Box & dunkler Anthrazit-Farbverlauf ohne Wallpaper)
   - Kann beim Kopieren interaktiv ausgewählt werden oder eigenständig per Schalter `-ChangeTheme` bzw. `-Theme <name/nr>` gewechselt werden.
 - **Intelligente Vorab-Speicherplatzprüfung:**
   - Berechnet vor dem Kopieren den exakten Speicherbedarf aller aktivierten ISOs.
@@ -53,7 +56,7 @@ Ein PowerShell-basiertes All-in-One Automatisierungswerkzeug zum Herunterladen, 
 
 ---
 
-## 📂 Unterstützte Distributionen & Systeme (59 Betriebssysteme)
+## 📂 Unterstützte Distributionen & Systeme (64 Betriebssysteme & Tools)
 
 ### 🖥️ 01_Desktop-Linux (30 Distros)
 - **Alpine Linux** – Extrem ressourcenschonende, hochsichere Mini-Distribution auf musl-libc- und busybox-Basis.
@@ -105,24 +108,31 @@ Ein PowerShell-basiertes All-in-One Automatisierungswerkzeug zum Herunterladen, 
 - **Kodachi OS** – Extrem fokussiertes Anonymitäts- und Anti-Forensic-Betriebssystem (basiert auf XFCE) mit automatischem VPN, Tor-Routing, DNSCrypt und Panic-Wipe-Tools.
 - **CAINE Live (Forensic & Autopsy)** – Professionelle italienische Forensik-Live-Distribution mit The Sleuth Kit, Autopsy und schreibgeschütztem Block-Device-Zugriff.
 
-### 🧰 04_Rescue-, Diagnose- & Notfall-Systeme (11 Distros)
+### 🧰 04_Rescue-, Diagnose- & Notfall-Systeme (15 Distros & Tools)
+- **Boot-Repair-Disk** – Offizielles 64-Bit Rettungswerkzeug zur Ein-Klick-Reparatur beschädigter GRUB- und EFI-Bootloader.
 - **Clonezilla Live** – Die bewährte, weltbekannte Festplattenklon- und Image-Backup-Lösung für Bare-Metal-Restore.
-- **Tiny Core Linux** – Winziges, modulares Mini-Linux-System (nur wenige Megabytes groß), das komplett im RAM läuft.
-- **Rescuezilla** – Die benutzerfreundliche grafische "Schweizer Taschenmesser"-Lösung für Image-Backups, Restore und Klonen ("Clonezilla mit GUI").
-- **GParted Live** – Bootfähiges Spezialsystem zur Verwaltung, Vergrößerung, Verkleinerung und Reparatur von Partitionen.
-- **FygoOS PE** – Leistungsfähiges WinPE-basiertes Rettungssystem zur Diagnose, Datenrettung und Windows-Wartung.
-- **netboot.xyz** – Ultrakompakter Bootloader zum Starten dutzender Betriebssysteme direkt über das Internet per iPXE.
-- **SystemRescue (ehem. SystemRescueCd)** – Das klassische Notfall- und Rettungssystem für Linux- und Windows-Administratoren mit CLI/GUI-Tools und vorinstalliertem ClamAV-Antivirus.
-- **Rescatux** – Spezialisiertes Reparaturwerkzeug zur einfachen Wiederherstellung von Bootloadern (GRUB) und Zurücksetzen von Passwörtern.
-- **Kaspersky Rescue Disk** – Bootfähige Virenscan- und Bereinigungsumgebung zur Rettung schwer infizierter Systeme.
-- **ESET SysRescue Live** – Antiviren-Rettungsumgebung zur Erkennung und Entfernung hartnäckiger Malware außerhalb des Betriebssystems.
 - **Dr.Web LiveDisk** – Zuverlässige Antiviren-Rettungsumgebung von Doctor Web zur Säuberung infizierter Windows-Installationen.
+- **ESET SysRescue Live** – Antiviren-Rettungsumgebung zur Erkennung und Entfernung hartnäckiger Malware außerhalb des Betriebssystems.
+- **FygoOS PE** – Leistungsfähiges WinPE-basiertes Rettungssystem zur Diagnose, Datenrettung und Windows-Wartung.
+- **GParted Live** – Bootfähiges Spezialsystem zur Verwaltung, Vergrößerung, Verkleinerung und Reparatur von Partitionen.
+- **Kaspersky Rescue Disk** – Bootfähige Virenscan- und Bereinigungsumgebung zur Rettung schwer infizierter Systeme.
+- **netboot.xyz** – Ultrakompakter Bootloader zum Starten dutzender Betriebssysteme direkt über das Internet per iPXE.
+- **Rescatux** – Spezialisiertes Reparaturwerkzeug zur einfachen Wiederherstellung von Bootloadern (GRUB) und Zurücksetzen von Passwörtern.
+- **Rescuezilla** – Die benutzerfreundliche grafische "Schweizer Taschenmesser"-Lösung für Image-Backups, Restore und Klonen ("Clonezilla mit GUI").
+- **ShredOS Disk Sanitizer** – Moderner UEFI/BIOS DoD/NIST Datenträger-Löscher auf nwipe-Basis (unterstützt NVMe, SSD, HDD).
+- **Super Grub2 Disk** – Universeller Multi-Boot-Rettungsbootloader zum Starten installierter Systeme bei defektem Bootloader.
+- **SystemRescue (ehem. SystemRescueCd)** – Das klassische Notfall- und Rettungssystem für Linux- und Windows-Administratoren mit CLI/GUI-Tools und vorinstalliertem ClamAV-Antivirus.
+- **Tiny Core Linux** – Winziges, modulares Mini-Linux-System (nur wenige Megabytes groß), das komplett im RAM läuft.
+- **Ultimate Boot CD (UBCD)** – Die legendäre Diagnosesuite mit zahllosen Hardware-, CPU-, RAM- und Datenträger-Testwerkzeugen.
 
 ### 🌐 05_BSD & Unix (4 Distros)
-- **FreeBSD** – Hochentwickeltes, hochsicheres UNIX-Betriebssystem mit nativer ZFS-Unterstützung, Jails und legendärem Netzwerk-Stack.
-- **OpenBSD** – Das auf maximale Sicherheit, Korrektheit und Kryptographie fokussierte BSD-Betriebssystem.
-- **NetBSD** – Extrem portables, sauberes BSD-Betriebssystem ("Of course it runs NetBSD") mit hoher Code-Integrität.
 - **DragonFly BSD** – Hochperformantes BSD-Derivat mit dem revolutionären HAMMER2-Cluster- und Snapshot-Dateisystem.
+- **FreeBSD** – Hochentwickeltes, hochsicheres UNIX-Betriebssystem mit nativer ZFS-Unterstützung, Jails und legendärem Netzwerk-Stack.
+- **NetBSD** – Extrem portables, sauberes BSD-Betriebssystem ("Of course it runs NetBSD") mit hoher Code-Integrität.
+- **OpenBSD** – Das auf maximale Sicherheit, Korrektheit und Kryptographie fokussierte BSD-Betriebssystem.
+
+### 🪟 06_Windows-PE & Recovery (1 System)
+- **Hiren's BootCD PE** – Die weltweite Referenz für Windows-Notfallumgebungen (Windows 11 PE x64). Ausgestattet mit über 100 Diagnose-, Datenrettungs-, Partitions-, Antivirus- und Hardware-Testtools für Windows-Systeme.
 
 ---
 
@@ -134,7 +144,7 @@ Ein PowerShell-basiertes All-in-One Automatisierungswerkzeug zum Herunterladen, 
 | `update-linux-isos.ps1` | Hauptskript für Windows (Downloads, Hash-Prüfung, Archivierung, Ventoy-Themes, Sync). |
 | `update-linux-isos.sh`  | Ausführbares Bash-Startskript für Linux (prüft Abhängigkeiten, richtet ggf. `.venv` ein). |
 | `update_linux_isos.py`  | Vollständige Linux-Portierung in Python 3 (PEP 8, Pillow, Requests, Streaming-Downloads). |
-| `distros.json`          | JSON-Konfigurationsdatei aller 59 Distributionen, Download-Quellen und Regex-Muster. |
+| `distros.json`          | JSON-Konfigurationsdatei aller 64 Distributionen, Download-Quellen und Regex-Muster. |
 | `.gitignore`            | Schließt ISO-Dateien, Logdateien und temporäre Ordner vom Git-Tracking aus. |
 | `GITHUB_ANLEITUNG.md`   | Dokumentation zur Verwaltung und Pflege des GitHub-Repositories. |
 
@@ -160,45 +170,38 @@ chmod +x update-linux-isos.sh
 # Nur Testlauf ohne Downloads (Dry-Run):
 ./update-linux-isos.sh --dry-run
 
-# Distributionsauswahl interaktiv anpassen:
+# Interaktive Distributionsauswahl öffnen:
 ./update-linux-isos.sh --select
 
-# Ventoy automatisiert auf USB-Laufwerk installieren/aktualisieren:
+# Downloads überspringen und direkt auf Ventoy synchronisieren:
+./update-linux-isos.sh --skip-download
+
+# Ventoy-Stick vorbereiten / Bootcode aktualisieren:
 ./update-linux-isos.sh --install-ventoy
 
-# Ventoy Theme interaktiv auswählen und auf USB-Stick einrichten:
+# Ventoy-Theme eigenständig wechseln:
 ./update-linux-isos.sh --change-theme
-
-# Direktes Theme setzen (z. B. matrix, cybertech, moderndark):
-./update-linux-isos.sh --change-theme --theme matrix --target /media/$USER/Ventoy
-
-# Nur Ventoy-Synchronisation durchführen (Download überspringen):
-./update-linux-isos.sh --skip-download --target /media/$USER/Ventoy
+# oder direkt ein bestimmtes Theme (1-7 oder Name) erzwingen:
+./update-linux-isos.sh --theme medicatdark
 ```
 
-### Parameter & Optionen unter Windows (PowerShell / CLI):
+### Parameter & Optionen unter Windows (PowerShell):
 ```powershell
-# Regulärer Start (prüft & lädt Distros, fragt danach nach Ventoy-Kopie):
-.\update-linux-isos.ps1
-
-# Nur Testlauf ohne Downloads (Dry-Run):
-.\update-linux-isos.ps1 -DryRun
-
-# Distributionsauswahl interaktiv anpassen / rekonfigurieren:
+# Interaktive Distributionsauswahl:
 .\update-linux-isos.ps1 -SelectDistros
 
-# Ventoy automatisiert auf USB-Laufwerk installieren/aktualisieren (ohne GUI):
-.\update-linux-isos.ps1 -InstallVentoy
+# Downloads überspringen und nur synchronisieren:
+.\update-linux-isos.ps1 -SkipDownload
 
-# Ventoy Theme interaktiv auswählen und auf USB-Stick einrichten (ohne Downloads):
+# Ventoy-Theme wechseln (Themes 1 bis 7):
 .\update-linux-isos.ps1 -ChangeTheme
-
-# Direktes Theme setzen (z. B. Matrix Hacker Green):
-.\update-linux-isos.ps1 -Theme matrix -TargetDrive D:
-
-# Direkte Angabe des Ventoy-Ziellaufwerks beim ISO-Kopieren:
-.\update-linux-isos.ps1 -TargetDrive E:
-
-# Nur Ventoy-Synchronisation durchführen (Download überspringen):
-.\update-linux-isos.ps1 -SkipDownload -TargetDrive E:
+.\update-linux-isos.ps1 -Theme medicatdark -SkipDownload
 ```
+
+---
+
+## 📄 Lizenz & Danksagung
+
+Entwickelt für IT-Administratoren, Techniker und Linux-Enthusiasten.
+Basiert auf den offiziellen Upstream-Quellen aller 64 Distributionen und dem herausragenden [Ventoy-Projekt](https://www.ventoy.net/).
+Theme-Inspiration für das MediCat Dark Glass Design stammt aus dem renommierten MediCat USB Toolkit (Jayro & MON5TERMATT).

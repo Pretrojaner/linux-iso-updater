@@ -353,6 +353,14 @@
   },
   {
     "Enabled": true,
+    "Name": "Boot-Repair-Disk",
+    "Category": "04_Rescue-Systeme",
+    "MatchPattern": "boot-repair-disk-64bit",
+    "Script": "$xmlStr = Get-WebContent -Uri 'https://sourceforge.net/projects/boot-repair-cd/rss?path=/'\nif ($xmlStr) {\n    try {\n        [xml]$xml = $xmlStr\n        foreach ($item in $xml.rss.channel.item) {\n            if ($item.title.InnerText -match 'boot-repair-disk-64bit\\.iso') {\n                return @{ Version = 'latest'; Url = $item.link; Filename = 'boot-repair-disk-64bit.iso' }\n            }\n        }\n    } catch {}\n}\nreturn @{ Version = 'latest'; Url = 'https://sourceforge.net/projects/boot-repair-cd/files/boot-repair-disk-64bit.iso/download'; Filename = 'boot-repair-disk-64bit.iso' }",
+    "SizeBytes": 922746880
+  },
+  {
+    "Enabled": true,
     "Name": "Clonezilla Live",
     "Category": "04_Rescue-Systeme",
     "MatchPattern": "clonezilla-live-(\\d+\\.\\d+\\.\\d+-\\d+)-amd64",
@@ -425,6 +433,22 @@
   },
   {
     "Enabled": true,
+    "Name": "ShredOS Disk Sanitizer",
+    "Category": "04_Rescue-Systeme",
+    "MatchPattern": "shredos-[^\"']*-x86-64",
+    "Script": "$json = Get-WebContent -Uri 'https://api.github.com/repos/PartialVolume/shredos.x86_64/releases/latest'\nif ($json) {\n    try {\n        $rel = $json | ConvertFrom-Json\n        $ver = $rel.tag_name.TrimStart('v')\n        $asset = $rel.assets | Where-Object { $_.name -like '*.img' -and $_.name -like '*x86-64*' -and $_.name -notlike '*lite*' } | Select-Object -First 1\n        if ($asset) {\n            return @{ Version = $ver; Url = $asset.browser_download_url; Filename = $asset.name }\n        }\n    } catch {}\n}\nreturn @{ Version = '0.43.1'; Url = 'https://github.com/PartialVolume/shredos.x86_64/releases/download/v2025.11_32_x86-64_0.43.1/shredos-2025.11_32_x86-64_v0.43.1_20261010.img'; Filename = 'shredos-2025.11_32_x86-64_v0.43.1_20261010.img' }",
+    "SizeBytes": 372612864
+  },
+  {
+    "Enabled": true,
+    "Name": "Super Grub2 Disk",
+    "Category": "04_Rescue-Systeme",
+    "MatchPattern": "supergrub2-classic-[0-9a-zA-Z.]+-multiarch-CD",
+    "Script": "$xmlStr = Get-WebContent -Uri 'https://sourceforge.net/projects/supergrub2/rss?path=/'\nif ($xmlStr) {\n    try {\n        [xml]$xml = $xmlStr\n        foreach ($item in $xml.rss.channel.item) {\n            if ($item.title.InnerText -match 'supergrub2-classic-([0-9a-zA-Z.]+)-multiarch-CD\\.iso') {\n                $ver = $Matches[1]\n                $fn = [System.IO.Path]::GetFileName($item.title.InnerText)\n                return @{ Version = $ver; Url = $item.link; Filename = $fn }\n            }\n        }\n    } catch {}\n}\nreturn @{ Version = '2.06s4'; Url = 'https://downloads.sourceforge.net/project/supergrub2/2.06s4/super_grub2_disk_2.06s4/supergrub2-classic-2.06s4-multiarch-CD.iso'; Filename = 'supergrub2-classic-2.06s4-multiarch-CD.iso' }",
+    "SizeBytes": 11534336
+  },
+  {
+    "Enabled": true,
     "Name": "SystemRescue (ehem. SystemRescueCd)",
     "MatchPattern": "systemrescue-(\\d+\\.\\d+(\\.\\d+)?)-amd64",
     "Category": "04_Rescue-Systeme",
@@ -438,6 +462,14 @@
     "Script": "$html = Get-WebContent -Uri 'http://tinycorelinux.net/15.x/x86_64/release/'\nif ($html -and $html -match 'href=\"(CorePure64-(\\d+\\.\\d+(\\.\\d+)?)\\.iso)\"') {\n    return @{ Version = $Matches[2]; Url = \"http://tinycorelinux.net/15.x/x86_64/release/$($Matches[1])\"; Filename = $Matches[1] }\n}\nreturn $null",
     "SizeBytes": 20523008,
     "Category": "04_Rescue-Systeme"
+  },
+  {
+    "Enabled": true,
+    "Name": "Ultimate Boot CD (UBCD)",
+    "Category": "04_Rescue-Systeme",
+    "MatchPattern": "ubcd\\d+",
+    "Script": "return @{ Version = '5.3.9'; Url = 'https://archive.org/download/ubcd539_202306/ubcd539.iso'; Filename = 'ubcd539.iso' }",
+    "SizeBytes": 842489856
   },
   {
     "Enabled": true,
@@ -470,5 +502,13 @@
     "MatchPattern": "install(\\d+)\\.iso",
     "Script": "$html = Get-WebContent -Uri 'https://cdn.openbsd.org/pub/OpenBSD/'\nif ($html) {\n    $vers = [regex]::Matches($html, 'href=\"(\\d+\\.\\d+)/\"') | ForEach-Object { $_.Groups[1].Value } | Sort-Object { [version](ConvertTo-VersionString $_) } -Descending\n    foreach ($v in $vers) {\n        $sub = Get-WebContent -Uri \"https://cdn.openbsd.org/pub/OpenBSD/$v/amd64/\"\n        if ($sub -and $sub -match 'install(\\d+)\\.iso') {\n            $fn = $Matches[0]\n            return @{ Version = $v; Url = \"https://cdn.openbsd.org/pub/OpenBSD/$v/amd64/$fn\"; Filename = $fn; ChecksumUrl = \"https://cdn.openbsd.org/pub/OpenBSD/$v/amd64/SHA256\" }\n        }\n    }\n}\nreturn $null",
     "SizeBytes": 700000000
+  },
+  {
+    "Enabled": true,
+    "Name": "Hiren's BootCD PE",
+    "Category": "06_Windows-PE_Rescue",
+    "MatchPattern": "HBCD_PE_x64",
+    "Script": "$html = Get-WebContent -Uri 'https://www.hirensbootcd.org/download/'\nif ($html -and $html -match 'href=\"([^\"]*?HBCD_PE_x64\\.iso)\"') {\n    $url = $Matches[1]\n    $ver = if ($html -match 'v(\\d+\\.\\d+(\\.\\d+)?)') { $Matches[1] } else { '1.0.8' }\n    return @{ Version = $ver; Url = $url; Filename = 'HBCD_PE_x64.iso' }\n}\nreturn @{ Version = '1.0.8'; Url = 'https://www.hirensbootcd.org/files/HBCD_PE_x64.iso'; Filename = 'HBCD_PE_x64.iso' }",
+    "SizeBytes": 3291686912
   }
 ]

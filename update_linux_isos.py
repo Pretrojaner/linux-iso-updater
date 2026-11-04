@@ -62,6 +62,7 @@ CATEGORY_ORDER = [
     "03_Security-Pentest",
     "04_Rescue-Systeme",
     "05_BSD-Unix",
+    "06_Windows-PE_Rescue",
 ]
 
 
@@ -581,7 +582,7 @@ def decompress_bz2(bz2_path: Path, dest_iso_path: Path) -> bool:
 # DISTRIBUTIONS SCRAPING ENGINE (ALLE 59 DISTROS)
 # ==============================================================================
 class DistroScraperEngine:
-    """Implementiert native Web-Scraper für alle 59 Distributionen."""
+    """Implementiert native Web-Scraper für alle 64 Distributionen."""
 
     def __init__(self, download_mgr: DownloadManager):
         self.dm = download_mgr
@@ -602,7 +603,7 @@ class DistroScraperEngine:
             direct_url = item["Url"]
             clean_url = direct_url.split("?")[0]
             fn = Path(clean_url).name
-            if not fn or not fn.endswith(".iso"):
+            if not fn or not (fn.endswith(".iso") or fn.endswith(".img")):
                 fn = f"{name.replace(' ', '_')}.iso"
             vm = re.search(r"(\d+\.\d+(\.\d+)?)", fn)
             ver = vm.group(1) if vm else "Direkt"
@@ -1487,6 +1488,92 @@ class DistroScraperEngine:
                 }
         return None
 
+    # --- 04 Rescue Systeme & Windows PE (Erweiterung) ---
+    def scrape_hirens_bootcd_pe(self) -> Optional[Dict[str, Any]]:
+        html = self.dm.get_web_content("https://www.hirensbootcd.org/download/")
+        dl_url = "https://www.hirensbootcd.org/files/HBCD_PE_x64.iso"
+        if html:
+            m = re.search(r'href=["\'](https?://[^\s"\']*?HBCD_PE_x64\.iso)["\']', html)
+            if m:
+                dl_url = m.group(1)
+            vm = re.search(r'v(\d+\.\d+(\.\d+)?)', html)
+            ver = vm.group(1) if vm else "1.0.8"
+            return {"Version": ver, "Url": dl_url, "Filename": "HBCD_PE_x64.iso"}
+        return {"Version": "1.0.8", "Url": dl_url, "Filename": "HBCD_PE_x64.iso"}
+
+    def scrape_bootrepairdisk(self) -> Optional[Dict[str, Any]]:
+        rss = self.dm.get_web_content("https://sourceforge.net/projects/boot-repair-cd/rss?path=/")
+        if rss:
+            try:
+                import xml.etree.ElementTree as ET
+                root = ET.fromstring(rss)
+                for item in root.findall(".//item"):
+                    t = item.find("title").text or ""
+                    l = item.find("link").text or ""
+                    if "64bit.iso" in t:
+                        fn = t.strip("/").split("/")[-1]
+                        vm = re.search(r"(\d{4}[-.]\d{2}[-.]\d{2})", fn)
+                        ver = vm.group(1) if vm else "latest"
+                        return {"Version": ver, "Url": l, "Filename": fn}
+            except Exception:
+                pass
+        return {
+            "Version": "latest",
+            "Url": "https://sourceforge.net/projects/boot-repair-cd/files/boot-repair-disk-64bit.iso/download",
+            "Filename": "boot-repair-disk-64bit.iso"
+        }
+
+    def scrape_super_grub2_disk(self) -> Optional[Dict[str, Any]]:
+        rss = self.dm.get_web_content("https://sourceforge.net/projects/supergrub2/rss?path=/")
+        if rss:
+            try:
+                import xml.etree.ElementTree as ET
+                root = ET.fromstring(rss)
+                for item in root.findall(".//item"):
+                    t = item.find("title").text or ""
+                    l = item.find("link").text or ""
+                    if t.endswith(".iso") and "multiarch" in t:
+                        fn = t.strip("/").split("/")[-1]
+                        vm = re.search(r"supergrub2-classic-([0-9a-zA-Z.]+)-multiarch", fn)
+                        ver = vm.group(1) if vm else "2.06s4"
+                        return {"Version": ver, "Url": l, "Filename": fn}
+            except Exception:
+                pass
+        return {
+            "Version": "2.06s4",
+            "Url": "https://downloads.sourceforge.net/project/supergrub2/2.06s4/super_grub2_disk_2.06s4/supergrub2-classic-2.06s4-multiarch-CD.iso",
+            "Filename": "supergrub2-classic-2.06s4-multiarch-CD.iso"
+        }
+
+    def scrape_ultimate_boot_cd_ubcd(self) -> Optional[Dict[str, Any]]:
+        return {
+            "Version": "5.3.9",
+            "Url": "https://archive.org/download/ubcd539_202306/ubcd539.iso",
+            "Filename": "ubcd539.iso"
+        }
+
+    def scrape_shredos_disk_sanitizer(self) -> Optional[Dict[str, Any]]:
+        raw = self.dm.get_web_content("https://api.github.com/repos/PartialVolume/shredos.x86_64/releases/latest")
+        if raw:
+            try:
+                data = json.loads(raw)
+                ver = data.get("tag_name", "").lstrip("v")
+                for a in data.get("assets", []):
+                    name = a.get("name", "")
+                    if name.endswith(".img") and "x86-64" in name and "lite" not in name:
+                        return {
+                            "Version": ver,
+                            "Url": a.get("browser_download_url"),
+                            "Filename": name
+                        }
+            except Exception:
+                pass
+        return {
+            "Version": "0.43.1",
+            "Url": "https://github.com/PartialVolume/shredos.x86_64/releases/download/v2025.11_32_x86-64_0.43.1/shredos-2025.11_32_x86-64_v0.43.1_20261010.img",
+            "Filename": "shredos-2025.11_32_x86-64_v0.43.1_20261010.img"
+        }
+
 
 # ==============================================================================
 # PRETTY ISO NAMES & THEMES
@@ -1553,18 +1640,23 @@ def get_pretty_iso_name(filename: str) -> str:
         ("rescuezilla", "Rescuezilla Recovery"),
         ("systemrescue", "SystemRescue (ehem. SystemRescueCd)"),
         ("freebsd", "FreeBSD Release"),
+        (r"hbcd|hiren", "Hiren's BootCD PE (Windows Recovery Environment)"),
+        (r"boot-repair", "Boot-Repair-Disk (GRUB & EFI Repair)"),
+        (r"super_?grub", "Super Grub2 Disk (Multi-Boot Rescue)"),
+        (r"ubcd", "Ultimate Boot CD (Diagnostic Suite)"),
+        (r"shredos", "ShredOS (Disk Sanitizer & DoD Wipe)"),
     ]
     for pattern, pretty in mapping:
         if re.search(pattern, fn_lower):
             return pretty
 
-    clean = re.sub(r"\.iso$", "", filename, flags=re.IGNORECASE)
+    clean = re.sub(r"\.(iso|img)$", "", filename, flags=re.IGNORECASE)
     clean = re.sub(r"[-_]", " ", clean)
     return clean.strip()
 
 
 def get_ventoy_theme_definitions() -> Dict[str, Dict[str, Any]]:
-    """Gibt die 6 integrierten Ventoy-Themes zurück."""
+    """Gibt die 7 integrierten Ventoy-Themes zurück."""
     return {
         "1": {
             "key": "moderndark",
@@ -1656,6 +1748,21 @@ def get_ventoy_theme_definitions() -> Dict[str, Dict[str, Any]]:
             "sel_fg": "#13071f",
             "image_url": "https://m.media-amazon.com/images/M/MV5BNjlhNDgxZWMtYWNjMy00NDE3LTlkNjEtNDYwNTQwNWViMDllXkEyXkFqcGc@.jpg",
         },
+        "7": {
+            "key": "medicatdark",
+            "name": "MediCat Dark Glass",
+            "desc": "MediCat 9-Slice Box-Design mit edlem, dunklem Anthrazit-/Glas-Hintergrund (ohne Wallpaper)",
+            "title": "MEDICAT MULTIBOOT TOOLKIT // DARK GLASS EDITION",
+            "title_color": "#38bdf8",
+            "bg1": "#0a0e17",
+            "bg2": "#121824",
+            "header": "#141c2b",
+            "accent": "#38bdf8",
+            "text": "#94a3b8",
+            "sel_bg": "#1e293b",
+            "sel_fg": "#38bdf8",
+            "image_url": None,
+        },
     }
 
 
@@ -1684,7 +1791,7 @@ class VentoyThemeManager:
 
     def select_theme_interactive(self, default_choice: str = "1") -> str:
         print(f"\n{Colors.CYAN}{'=' * 60}{Colors.RESET}")
-        print(f"{Colors.CYAN} VENTOY THEME AUSWAHL (6 Themen){Colors.RESET}")
+        print(f"{Colors.CYAN} VENTOY THEME AUSWAHL (7 Themen){Colors.RESET}")
         print(f"{Colors.CYAN}{'=' * 60}{Colors.RESET}")
 
         for k, t in sorted(self.themes.items()):
@@ -1694,7 +1801,7 @@ class VentoyThemeManager:
 
         print("")
         try:
-            choice = input(f"Bitte Nummer des Ventoy-Themes eingeben (1-6) [Standard: {default_choice}]: ").strip()
+            choice = input(f"Bitte Nummer des Ventoy-Themes eingeben (1-7) [Standard: {default_choice}]: ").strip()
         except (KeyboardInterrupt, EOFError):
             print("")
             return default_choice
@@ -1785,9 +1892,22 @@ class VentoyThemeManager:
                 except Exception:
                     pass
 
-        try:
-            if selected.get("image_url") and not img_downloaded:
-                # Fallback Farbverlauf
+        if selected["key"] == "medicatdark":
+            # MediCat 9-Slice PNGs entpacken
+            try:
+                import gzip, base64
+                b64_str = "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"
+                raw = gzip.decompress(base64.b64decode(b64_str)).decode("utf-8")
+                assets = json.loads(raw)
+                for asset_name, asset_b64 in assets.items():
+                    asset_path = theme_dir / asset_name
+                    asset_path.write_bytes(base64.b64decode(asset_b64))
+                self.logger.log("[VENTOY] MediCat 9-Slice Rahmen- und Terminal-Grafiken entpackt.", color=Colors.CYAN, level="THEME")
+            except Exception as e:
+                self.logger.log(f"[VENTOY] Warnung beim Entpacken der MediCat Theme-Assets: {e}", color=Colors.YELLOW, level="WARNUNG")
+
+            # Prozeduraler Dark Glass Farbverlauf fuer background.png
+            try:
                 c1 = hex_to_rgb(selected["bg1"])
                 c2 = hex_to_rgb(selected["bg2"])
                 grad_small = Image.new("RGB", (256, 144))
@@ -1804,24 +1924,110 @@ class VentoyThemeManager:
                 draw = ImageDraw.Draw(img)
 
                 header_color = hex_to_rgb(selected["header"])
-                draw.rectangle([0, 0, w, 80], fill=header_color)
+                draw.rectangle([0, 0, w, 70], fill=header_color)
                 draw.rectangle([0, 1020, w, h], fill=header_color)
 
                 accent_color = hex_to_rgb(selected["accent"])
-                draw.line([(0, 80), (w, 80)], fill=accent_color, width=3)
-                draw.line([(0, 1020), (w, 1020)], fill=accent_color, width=3)
+                draw.line([(0, 70), (w, 70)], fill=accent_color, width=2)
+                draw.line([(0, 1020), (w, 1020)], fill=accent_color, width=2)
 
                 img.save(bg_path, format="PNG")
+            except Exception as e:
+                self.logger.log(f"[VENTOY] Warnung beim Erstellen der Hintergrundgrafik: {e}", color=Colors.YELLOW, level="WARNUNG")
 
-            # 2. Auswahlelement (select_c.png, 32x36)
-            sel_img = Image.new("RGB", (32, 36), color=hex_to_rgb(selected["sel_bg"]))
-            sel_img.save(sel_path, format="PNG")
-        except Exception as e:
-            self.logger.log(f"[VENTOY] Warnung beim Erstellen der Theme-Grafiken: {e}", color=Colors.YELLOW, level="WARNUNG")
+            theme_txt_content = f"""# Ventoy Theme: {selected['name']}
+desktop-image: "background.png"
+title-text: " "
+title-font: "ascii"
+title-color: "{selected['title_color']}"
+message-font: "ascii"
+message-color: "{selected['text']}"
+terminal-box: "terminal_box_*.png"
 
-        # 3. theme.txt schreiben
-        desktop_image_line = 'desktop-image: "background.png"' if (selected.get("image_url") and bg_path.exists()) else '# bewusst kein Hintergrundbild'
-        theme_txt_content = f"""# Ventoy Theme: {selected['name']}
++ hbox {{
+    top = 9%
+    left = 20%
+    width = 60%
+    + vbox {{
+        + label {{text = "{selected['title']}" color = "{selected['title_color']}" align = "left"}}
+    }}
+}}
+
++ boot_menu {{
+    left = 20%
+    top = 16%
+    width = 60%
+    height = 72%
+    menu_pixmap_style = "menu_*.png"
+    item_font = "ascii"
+    item_color = "{selected['text']}"
+    item_height = 34
+    item_spacing = 4
+    item_padding = 8
+    selected_item_font = "ascii"
+    selected_item_color = "{selected['title_color']}"
+    selected_item_pixmap_style = "select_*.png"
+    item_icon_space = 20
+    scrollbar = true
+    scrollbar_width = 10
+    scrollbar_thumb = "slider_*.png"
+}}
+
++ label {{
+    left = 0%
+    top = 95%
+    width = 100%
+    height = 30
+    text = "[F1] Memdisk  |  [F2] Power  |  [F3] ListView/TreeView  |  [F4] Localboot  |  [F5] Tools"
+    color = "{selected['text']}"
+    align = "center"
+}}
+"""
+        else:
+            # Bereinige eventuelle 9-Slice PNGs von medicatdark
+            for ptn in ["menu_*.png", "slider_*.png", "terminal_box_*.png"]:
+                for f in theme_dir.glob(ptn):
+                    try:
+                        f.unlink()
+                    except Exception:
+                        pass
+
+            try:
+                if selected.get("image_url") and not img_downloaded:
+                    # Fallback Farbverlauf
+                    c1 = hex_to_rgb(selected["bg1"])
+                    c2 = hex_to_rgb(selected["bg2"])
+                    grad_small = Image.new("RGB", (256, 144))
+                    pixels = grad_small.load()
+                    for y in range(144):
+                        for x in range(256):
+                            factor = (x / 256.0 + y / 144.0) / 2.0
+                            r = int(c1[0] + factor * (c2[0] - c1[0]))
+                            g = int(c1[1] + factor * (c2[1] - c1[1]))
+                            b = int(c1[2] + factor * (c2[2] - c1[2]))
+                            pixels[x, y] = (r, g, b)
+
+                    img = grad_small.resize((w, h), Image.Resampling.BICUBIC)
+                    draw = ImageDraw.Draw(img)
+
+                    header_color = hex_to_rgb(selected["header"])
+                    draw.rectangle([0, 0, w, 80], fill=header_color)
+                    draw.rectangle([0, 1020, w, h], fill=header_color)
+
+                    accent_color = hex_to_rgb(selected["accent"])
+                    draw.line([(0, 80), (w, 80)], fill=accent_color, width=3)
+                    draw.line([(0, 1020), (w, 1020)], fill=accent_color, width=3)
+
+                    img.save(bg_path, format="PNG")
+
+                # 2. Auswahlelement (select_c.png, 32x36)
+                sel_img = Image.new("RGB", (32, 36), color=hex_to_rgb(selected["sel_bg"]))
+                sel_img.save(sel_path, format="PNG")
+            except Exception as e:
+                self.logger.log(f"[VENTOY] Warnung beim Erstellen der Theme-Grafiken: {e}", color=Colors.YELLOW, level="WARNUNG")
+
+            desktop_image_line = 'desktop-image: "background.png"' if (selected.get("image_url") and bg_path.exists()) else '# bewusst kein Hintergrundbild'
+            theme_txt_content = f"""# Ventoy Theme: {selected['name']}
 {desktop_image_line}
 desktop-color: "{selected['bg1']}"
 title-text: "{selected['title']}"
@@ -2356,7 +2562,7 @@ def select_distros_interactive(distros_list: List[Dict[str, Any]], iso_dir: Path
     # Vorab alle vorhandenen lokalen ISOs im Verzeichnis erfassen
     existing_isos = [
         p
-        for p in iso_dir.rglob("*.iso")
+        for p in [x for x in iso_dir.rglob("*") if x.is_file() and x.suffix.lower() in [".iso", ".img"]]
         if "Archiv" not in p.parts and not p.name.endswith(".part") and p.is_file() and p.stat().st_size > 1024 * 1024
     ]
 
@@ -2455,7 +2661,7 @@ def select_distros_interactive(distros_list: List[Dict[str, Any]], iso_dir: Path
             pattern = d.get("MatchPattern")
             if pattern:
                 local_matches = []
-                for p in iso_dir.rglob("*.iso"):
+                for p in [x for x in iso_dir.rglob("*") if x.is_file() and x.suffix.lower() in [".iso", ".img"]]:
                     if "Archiv" not in str(p) and re.search(pattern, p.name):
                         local_matches.append(p)
                 if local_matches:
@@ -2547,7 +2753,7 @@ def run_ventoy_sync(
 
     iso_files_to_copy = []
     for folder in category_folders:
-        for iso in folder.rglob("*.iso"):
+        for iso in [x for x in folder.rglob("*") if x.is_file() and x.suffix.lower() in [".iso", ".img"]]:
             # Prüfen ob Distro aktiviert ist
             is_enabled = True
             for d in distro_patterns:
@@ -2632,7 +2838,7 @@ def run_ventoy_sync(
     deselected = [d for d in distro_patterns if d.get("Enabled") is False and d.get("MatchPattern")]
     for des in deselected:
         pat = des["MatchPattern"]
-        for target_iso in target_root.rglob("*.iso"):
+        for target_iso in [x for x in target_root.rglob("*") if x.is_file() and x.suffix.lower() in [".iso", ".img"]]:
             if re.search(pat, target_iso.name):
                 mb = target_iso.stat().st_size / (1024 * 1024)
                 if dry_run:
@@ -2674,7 +2880,7 @@ def run_ventoy_sync(
             pat_to_use = re.sub(r"[-_\d\.]+\.iso$", "", item["filename"])
 
         if dst_cat_dir.exists() and pat_to_use:
-            for old_target in dst_cat_dir.glob("*.iso"):
+            for old_target in [x for x in dst_cat_dir.glob("*") if x.is_file() and x.suffix.lower() in [".iso", ".img"]]:
                 if old_target.name != item["filename"] and re.search(pat_to_use, old_target.name):
                     old_mb = old_target.stat().st_size / (1024 * 1024)
                     logger.log(f"[CLEANUP] Veraltete ISO auf Ziel-Laufwerk ENDGÜLTIG gelöscht: {old_target.name} ({old_mb:.2f} MB)", color=Colors.YELLOW, level="CLEANUP")
@@ -2757,6 +2963,7 @@ def run_ventoy_sync(
             {"image": "/03_Security-Pentest", "alias": "Security & Pentesting (Kali, Parrot, BlackArch...)"},
             {"image": "/04_Rescue-Systeme", "alias": "Rescue & Recovery (GParted, Rescuezilla, FygoOS...)"},
             {"image": "/05_BSD-Unix", "alias": "BSD & Unix (FreeBSD, OpenBSD, NetBSD, DragonFly...)"},
+            {"image": "/06_Windows-PE_Rescue", "alias": "Windows PE & Recovery (Hiren's BootCD PE, WinPE, Recovery...)"},
         ]
         for iso_item in iso_files_to_copy:
             vtoy_path = "/" + str(iso_item["rel_path"]).replace("\\", "/")
@@ -2787,7 +2994,7 @@ def main() -> None:
     parser.add_argument("--select", "--select-distros", dest="select_distros", action="store_true", help="Interaktive Distributionsauswahl aufrufen.")
     parser.add_argument("--install-ventoy", action="store_true", help="Ventoy CLI Installation/Update auf USB-Stick ausführen.")
     parser.add_argument("--change-theme", action="store_true", help="Ventoy-Theme interaktiv oder via --theme ändern.")
-    parser.add_argument("--theme", type=str, help="Name oder Nummer des Ventoy-Themes (1-6 oder Name).")
+    parser.add_argument("--theme", type=str, help="Name oder Nummer des Ventoy-Themes (1-7 oder Name).")
     parser.add_argument("--target", type=str, help="Zielpfad oder Mountpoint für Ventoy.")
     parser.add_argument("--target-directory", type=str, help="Lokales ISO-Speicherverzeichnis (Standard: Skriptverzeichnis).")
     parser.add_argument("--log-file", type=str, default=DEFAULT_LOG_FILE, help="Name oder Pfad der Logdatei.")
@@ -2958,7 +3165,7 @@ def main() -> None:
                     continue
 
                 fn = latest_info.get("Filename", "")
-                if not fn.endswith(".iso") and not fn.endswith(".iso.bz2"):
+                if not (fn.endswith(".iso") or fn.endswith(".img")) and not fn.endswith(".iso.bz2"):
                     logger.log(f"[ÜBERSPRUNGEN] Format ist kein ISO ({fn}) für {name}", color=Colors.YELLOW, level="WARNUNG")
                     continue
 
@@ -2985,7 +3192,7 @@ def main() -> None:
                     for search_folder in [iso_dir, cat_dir]:
                         if not search_folder.exists():
                             continue
-                        for old_file in search_folder.glob("*.iso"):
+                        for old_file in [x for x in search_folder.glob("*") if x.is_file() and x.suffix.lower() in [".iso", ".img"]]:
                             if "Archiv" in str(old_file):
                                 continue
                             if re.search(match_pat, old_file.name) and old_file.name != effective_fn:
