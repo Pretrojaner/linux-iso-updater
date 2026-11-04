@@ -2541,6 +2541,22 @@ class VentoyLinuxDriveManager:
 # ==============================================================================
 # INTERAKTIVE DISTRIBUTIONS-AUSWAHL
 # ==============================================================================
+def get_local_iso_files(iso_dir: Path) -> List[Path]:
+    """Sucht gezielt nur in den bekannten Kategorieordnern nach ISO/IMG-Dateien (kein rekursives Durchwühlen fremder Verzeichnisse)."""
+    found: List[Path] = []
+    for cat in CATEGORY_ORDER:
+        cat_dir = iso_dir / cat
+        if cat_dir.exists() and cat_dir.is_dir():
+            for f in cat_dir.glob("*"):
+                if f.is_file() and not f.name.endswith(".part") and f.suffix.lower() in [".iso", ".img"]:
+                    try:
+                        if f.stat().st_size > 1024 * 1024:
+                            found.append(f)
+                    except Exception:
+                        pass
+    return found
+
+
 def select_distros_interactive(distros_list: List[Dict[str, Any]], iso_dir: Path, logger: Logger) -> None:
     """Interaktiver Start-Dialog zur Auswahl gewünschter Distributionen."""
     group_map: Dict[int, Dict[str, Any]] = {}
@@ -2559,12 +2575,8 @@ def select_distros_interactive(distros_list: List[Dict[str, Any]], iso_dir: Path
         group_map[group_idx] = {"Category": "Sonstige", "Items": leftovers}
         ordered_list.extend(leftovers)
 
-    # Vorab alle vorhandenen lokalen ISOs im Verzeichnis erfassen
-    existing_isos = [
-        p
-        for p in [x for x in iso_dir.rglob("*") if x.is_file() and x.suffix.lower() in [".iso", ".img"]]
-        if "Archiv" not in p.parts and not p.name.endswith(".part") and p.is_file() and p.stat().st_size > 1024 * 1024
-    ]
+    # Vorab alle vorhandenen lokalen ISOs gezielt in Kategorieordnern erfassen
+    existing_isos = get_local_iso_files(iso_dir)
 
     cols = shutil.get_terminal_size(fallback=(80, 24)).columns
     border_len = min(90, max(40, cols - 1))
@@ -2748,12 +2760,12 @@ def run_ventoy_sync(
         logger.log(f"Ziel-Laufwerk {target_root} existiert nicht oder ist nicht bereit!", color=Colors.RED, level="FEHLER")
         return
 
-    # Kategorien ermitteln
-    category_folders = [p for p in source_dir.iterdir() if p.is_dir() and not p.name.startswith((".", "Archiv", "scratch", "tools"))]
+    # Kategorien gezielt ermitteln (keine fremden Ordner wie MediCat.USB durchwuehlen)
+    category_folders = [source_dir / cat for cat in CATEGORY_ORDER if (source_dir / cat).is_dir()]
 
     iso_files_to_copy = []
     for folder in category_folders:
-        for iso in [x for x in folder.rglob("*") if x.is_file() and x.suffix.lower() in [".iso", ".img"]]:
+        for iso in [x for x in folder.glob("*") if x.is_file() and x.suffix.lower() in [".iso", ".img"]]:
             # Prüfen ob Distro aktiviert ist
             is_enabled = True
             for d in distro_patterns:

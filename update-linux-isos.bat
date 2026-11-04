@@ -1,11 +1,10 @@
 @echo off
 setlocal EnableDelayedExpansion
-title Linux ISO Auto-Updater v2.4.0
+title Linux ISO Auto-Updater v2.6.0
 
 :: Pruefen ob PowerShell 7 (pwsh.exe) verfuegbar ist
 where pwsh.exe >nul 2>&1
 if %ERRORLEVEL% EQU 0 (
-    echo -- Es wird nach verfuegbaren Modulen gesucht --
     pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0update-linux-isos.ps1" %*
     goto :end
 )

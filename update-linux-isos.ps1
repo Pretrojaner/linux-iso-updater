@@ -23,7 +23,7 @@ param(
     [string]$Theme
 )
 
-Write-Host "-- Es wird nach verfuegbaren Modulen gesucht --" -ForegroundColor DarkGray
+Write-Host "-- Initialisiere Linux ISO Auto-Updater v2.6.0 --" -ForegroundColor DarkGray
 $ProgressPreference = 'SilentlyContinue'
 if ($env:PSModulePath) {
     try {
@@ -496,6 +496,29 @@ function Get-PrettyIsoName {
     return "$clean"
 }
 
+function Get-LocalIsoFiles {
+    param([string]$BaseDir)
+    $categoryOrder = @(
+        "01_Desktop-Linux",
+        "02_Enterprise-Server",
+        "03_Security-Pentest",
+        "04_Rescue-Systeme",
+        "05_BSD-Unix",
+        "06_Windows-PE_Rescue"
+    )
+    $found = [System.Collections.Generic.List[System.IO.FileInfo]]::new()
+    foreach ($cat in $categoryOrder) {
+        $p = Join-Path $BaseDir $cat
+        if (Test-Path $p) {
+            $files = Get-ChildItem -Path $p -File -ErrorAction SilentlyContinue | Where-Object {
+                $_.Name -notlike "*.part" -and $_.Length -gt 1MB -and ($_.Extension -in '.iso', '.img')
+            }
+            if ($files) { $found.AddRange([System.IO.FileInfo[]]$files) }
+        }
+    }
+    return $found
+}
+
 function Select-DistrosInteractive {
     param(
         [array]$DistroList,
@@ -541,9 +564,7 @@ function Select-DistrosInteractive {
         }
     }
 
-    $existingIsos = Get-ChildItem -Path $IsoDirectory -Recurse -File -ErrorAction SilentlyContinue | Where-Object { 
-        $_.DirectoryName -notlike "*Archiv*" -and $_.Name -notlike "*.part" -and $_.Length -gt 1MB -and ($_.Extension -in '.iso', '.img') 
-    }
+    $existingIsos = Get-LocalIsoFiles -BaseDir $IsoDirectory
 
     Write-Host ""
     Write-Host "==========================================================================================" -ForegroundColor Cyan
@@ -1548,13 +1569,22 @@ function Start-VentoyCopyJob {
         } catch {}
     }
 
-    $categoryFolders = Get-ChildItem -Path $SourceDir -Directory | Where-Object {
-        $_.Name -notlike "*Archiv*" -and $_.Name -notlike "*scratch*" -and $_.Name -notlike ".*" -and $_.Name -notlike "*tools*"
+    $categoryOrder = @(
+        "01_Desktop-Linux",
+        "02_Enterprise-Server",
+        "03_Security-Pentest",
+        "04_Rescue-Systeme",
+        "05_BSD-Unix",
+        "06_Windows-PE_Rescue"
+    )
+    $categoryFolders = foreach ($cat in $categoryOrder) {
+        $p = Join-Path $SourceDir $cat
+        if (Test-Path $p) { Get-Item -Path $p }
     }
 
     $isoFilesToCopy = @()
     foreach ($folder in $categoryFolders) {
-        $isos = Get-ChildItem -Path $folder.FullName -Recurse -File | Where-Object { $_.Extension -in '.iso', '.img' }
+        $isos = Get-ChildItem -Path $folder.FullName -File -ErrorAction SilentlyContinue | Where-Object { $_.Extension -in '.iso', '.img' }
         foreach ($iso in $isos) {
             # Pruefen, ob die Distro in distros.json aktiviert ist
             $isDistroEnabled = $true
@@ -1979,7 +2009,7 @@ if (-not $SkipDownload) {
     $distroList = $null
     $script:jsonModified = $false
 
-    $existingIsosForCheck = Get-ChildItem -Path $IsoDirectory -Recurse -ErrorAction SilentlyContinue | Where-Object { $_.DirectoryName -notlike "*Archiv*" -and ($_.Extension -in '.iso', '.img') }
+    $existingIsosForCheck = Get-LocalIsoFiles -BaseDir $IsoDirectory
     $isInitialRun = ($null -eq $existingIsosForCheck -or $existingIsosForCheck.Count -eq 0)
 
     if (Test-Path $DistrosJsonFile) {
@@ -2091,7 +2121,7 @@ if (-not $SkipDownload) {
     }
     $freeGB = [math]::Round($freeBytes / 1GB, 2)
 
-    $existingIsos = Get-ChildItem -Path $IsoDirectory -Recurse -ErrorAction SilentlyContinue | Where-Object { $_.DirectoryName -notlike "*Archiv*" -and ($_.Extension -in '.iso', '.img') }
+    $existingIsos = Get-LocalIsoFiles -BaseDir $IsoDirectory
     $isInitialRun = ($null -eq $existingIsos -or $existingIsos.Count -eq 0)
 
     $totalAllDistrosBytes = 0
