@@ -2,7 +2,7 @@
 .SYNOPSIS
     All-in-One Linux ISO Auto-Updater & Ventoy Sync Tool
 .DESCRIPTION
-    Version: 2.4.0
+    Version: 2.5.0
     1. Prueft & laedt neueste Linux ISOs herunter, verifiziert SHA256/SHA512-Hashes & archiviert veraltete Dateien.
     2. Ermoeglicht interaktive Gruppenauswahl (Desktop, Server, Security, Rescue, BSD) mit Mehrfachwahl.
     3. Kopiert die ISO-Ordnerstruktur auf ein Ventoy-Ziel-Laufwerk, bereinigt abgewaehlte und veraltete Staende
@@ -439,10 +439,26 @@ function Get-PrettyIsoName {
     if ($Filename -match '(?i)livegui.*gentoo')  { return "Gentoo Live GUI" }
     if ($Filename -match '(?i)Mageia')           { return "Mageia Linux" }
     if ($Filename -match '(?i)omarchy')          { return "Omarchy Linux" }
+    if ($Filename -match '(?i)lubuntu')          { return "Lubuntu Desktop" }
+    if ($Filename -match '(?i)antix')            { return "antiX Linux Full" }
+    if ($Filename -match '(?i)cld.*x86_64')      { return "Calculate Linux Desktop KDE" }
+    if ($Filename -match '(?i)crux')             { return "CRUX Linux" }
+    if ($Filename -match '(?i)elementaryos')     { return "elementary OS" }
+    if ($Filename -match '(?i)linux-lite')       { return "Linux Lite" }
+    if ($Filename -match '(?i)manjaro')          { return "Manjaro Linux XFCE" }
+    if ($Filename -match '(?i)mx-.*xfce')        { return "MX Linux Xfce" }
+    if ($Filename -match '(?i)nixos.*graphical') { return "NixOS Graphical" }
+    if ($Filename -match '(?i)opensuse.*tumbleweed') { return "openSUSE Tumbleweed" }
+    if ($Filename -match '(?i)pop-os')           { return "Pop!_OS" }
+    if ($Filename -match '(?i)slackware')        { return "Slackware Linux DVD" }
+    if ($Filename -match '(?i)solus.*budgie')    { return "Solus Budgie" }
+    if ($Filename -match '(?i)void-live')        { return "Void Linux XFCE" }
+    if ($Filename -match '(?i)winux')            { return "Winux Desktop" }
     if ($Filename -match '(?i)ubuntucinnamon')   { return "Ubuntu Cinnamon" }
     if ($Filename -match '(?i)ubuntu.*live-server') { return "Ubuntu Server LTS" }
     if ($Filename -match '(?i)ubuntu')           { return "Ubuntu Desktop" }
     if ($Filename -match '(?i)Zorin')            { return "Zorin OS" }
+    if ($Filename -match '(?i)kodachi')          { return "Kodachi OS" }
     
     if ($Filename -match '(?i)AlmaLinux')        { return "AlmaLinux Enterprise" }
     if ($Filename -match '(?i)CentOS')           { return "CentOS Stream" }
