@@ -9,14 +9,14 @@ Ein PowerShell-basiertes All-in-One Automatisierungswerkzeug zum Herunterladen, 
 > [!IMPORTANT]
 > **Wichtiger Hinweis zu Speicherort & benötigtem Speicherplatz:**
 > - **Speicherort:** Alle ISO-Dateien werden standardmäßig direkt im **selben Verzeichnis abgelegt, in dem sich die Skripte befinden** (strukturiert in Unterordnern von `01_Desktop-Linux` bis `05_BSD-Unix`).
-> - **Speicherplatzbedarf:** Platziere das Skriptpaket daher unbedingt auf einem Laufwerk mit ausreichend freiem Speicherplatz! Für den vollständigen Download aller 46 vorkonfigurierten Distributionen werden ca. **156 GB** freier Speicherplatz empfohlen.
+> - **Speicherplatzbedarf:** Platziere das Skriptpaket daher unbedingt auf einem Laufwerk mit ausreichend freiem Speicherplatz! Für den vollständigen Download aller 59 vorkonfigurierten Distributionen werden ca. **190 GB** freier Speicherplatz empfohlen.
 > - **Flexible Auswahl:** Beim Start öffnet sich automatisch das interaktive Auswahlmenü. Du kannst mit `[ENTER]` direkt alle Distros laden (`all`) oder gezielt einzelne Gruppen (z. B. `G1, G4`) bzw. Nummern auswählen, um nur die gewünschten Systeme zu beziehen und Speicherplatz zu sparen.
 
 ---
 
 ## 🚀 Funktionen
 
-- **Versions- & Release-Scraping:** Prüft online automatisch die neuesten ISO-Releases für 46 Linux-Distributionen, Enterprise-Server, Rettungssysteme und BSD-Derivate.
+- **Versions- & Release-Scraping:** Prüft online automatisch die neuesten ISO-Releases für 59 Linux-Distributionen, Enterprise-Server, Rettungssysteme und BSD-Derivate.
 - **Interaktive Distributions-Auswahl (`-SelectDistros`):**
   - Übersichtliche Darstellung in 5 Gruppen (`G1` bis `G5`).
   - Mehrfachauswahl via Ziffern (`1, 3, 5-8`), Gruppen (`G1, G4`) oder `all`.
@@ -53,26 +53,39 @@ Ein PowerShell-basiertes All-in-One Automatisierungswerkzeug zum Herunterladen, 
 
 ---
 
-## 📂 Unterstützte Distributionen & Systeme (46 Betriebssysteme)
+## 📂 Unterstützte Distributionen & Systeme (59 Betriebssysteme)
 
-### 🖥️ 01_Desktop-Linux (17 Distros)
-- **CachyOS** – Performance- und Gaming-optimierte Arch-Linux-Distribution mit angepassten x86-64-v3/v4-Kerneln.
-- **Garuda Linux** – Visuell ansprechendes, Arch-basiertes Desktop-System mit BTRFS-Snapshots und Gaming-Fokus ("dr460nized").
-- **Linux Mint Cinnamon** – Äußerst anwenderfreundliche, elegante Desktop-Distribution auf Ubuntu-Basis mit vertrautem Desktop-Layout.
-- **Lubuntu** – Offizieller, extrem schlanker und ressourcenschonender Ubuntu-Flavor mit dem modernen, schnellen LXQt-Desktop.
-- **Omarchy** – Schlankes, modernes Arch-Derivat mit leichtgewichtiger Basis und schnellem Installer.
-- **Ubuntu Desktop** – Die weltweit meistgenutzte Standard-Linux-Desktop-Distribution mit GNOME-Arbeitsumgebung.
-- **Ubuntu Cinnamon** – Offizieller Ubuntu-Flavor mit dem modernen, flexiblen Cinnamon-Desktop.
-- **Winux** – Auf Ubuntu 24.04 LTS basierende Distribution mit modernem Windows-11-Look (KDE Plasma), vorkonfiguriertem Wine/Proton und hoher Einsteigerfreundlichkeit.
-- **Zorin OS Education** – Speziell für Schulen, Schüler und Bildung konzipierte Zorin-OS-Version mit vorinstallierter Lernsoftware.
+### 🖥️ 01_Desktop-Linux (30 Distros)
 - **Alpine Linux** – Extrem ressourcenschonende, hochsichere Mini-Distribution auf musl-libc- und busybox-Basis.
+- **antiX** – Extrem schnelles, leichtgewichtiges Debian-basiertes Live-System ohne systemd für ältere und moderne Hardware.
 - **Arch Linux** – Puristische, flexible Rolling-Release-Distribution nach dem KISS-Prinzip („Keep It Simple, Stupid“).
+- **CachyOS** – Performance- und Gaming-optimierte Arch-Linux-Distribution mit angepassten x86-64-v3/v4-Kerneln.
+- **Calculate Linux** – Schnelle, benutzerfreundliche Gentoo-basierte Rolling-Release-Distribution mit KDE-Desktop.
+- **CRUX** – Schlanke, quellcode- und ports-basierte x86-64-optimierte Distribution nach dem KISS-Prinzip.
 - **Debian** – Das universelle, extrem stabile Betriebssystem und Basis unzähliger moderner Linux-Distributionen.
 - **Devuan** – Solider Debian-Fork ohne systemd für Liebhaber klassischer Init-Systeme (SysVinit/OpenRC).
-- **Fedora Workstation** – Innovative, wegweisende Distribution des Red-Hat-Ökosystems mit neuesten Linux-Technologien.
-- **Gentoo LiveGUI** – Quellcode-basierte Meta-Distribution als sofort bootfähiges Live-System mit grafischer Oberfläche.
-- **Mageia** – Community-gestützter Mandriva-Nachfolger mit komfortablem Kontrollzentrum und hoher Stabilität.
+- **elementary OS** – Design-fokussiertes, elegantes Betriebssystem auf Ubuntu-LTS-Basis mit intuitivem Pantheon-Desktop.
 - **EndeavourOS** – Benutzerfreundlicher Arch-Linux-Installer mit aktiver Community und schlanker Standardkonfiguration.
+- **Fedora Workstation** – Innovative, wegweisende Distribution des Red-Hat-Ökosystems mit neuesten Linux-Technologien.
+- **Garuda Linux** – Visuell ansprechendes, Arch-basiertes Desktop-System mit BTRFS-Snapshots und Gaming-Fokus ("dr460nized").
+- **Gentoo LiveGUI** – Quellcode-basierte Meta-Distribution als sofort bootfähiges Live-System mit grafischer Oberfläche.
+- **Linux Lite** – Einsteigerfreundliche, ressourcenschonende Ubuntu-LTS-Distribution mit vertrautem XFCE-Desktop für ältere Hardware.
+- **Linux Mint Cinnamon** – Äußerst anwenderfreundliche, elegante Desktop-Distribution auf Ubuntu-Basis mit vertrautem Desktop-Layout.
+- **Lubuntu** – Offizieller, extrem schlanker und ressourcenschonender Ubuntu-Flavor mit dem modernen, schnellen LXQt-Desktop.
+- **Mageia** – Community-gestützter Mandriva-Nachfolger mit komfortablem Kontrollzentrum und hoher Stabilität.
+- **Manjaro Linux** – Zugängliches, hochgradig vorkonfiguriertes Arch-Derivat mit benutzerfreundlichem XFCE-Desktop.
+- **MX Linux** – Extrem populäre, hocheffiziente Desktop-Distribution auf Debian-Stable-Basis mit benutzerfreundlichen MX Tools.
+- **NixOS** – Revolutionäre, rein deklarative Linux-Distribution mit reproduzierbaren Konfigurationen und atomaren Rollbacks.
+- **Omarchy** – Schlankes, modernes Arch-Derivat mit leichtgewichtiger Basis und schnellem Installer.
+- **openSUSE Tumbleweed** – Zuverlässige, kontinuierlich getestete Rolling-Release-Distribution mit YaST-Kontrollzentrum.
+- **Pop!_OS** – Von System76 entwickelte Ubuntu-basierte Distribution für Kreative und Entwickler mit automatischem Tiling (Pop Shell).
+- **Slackware** – Die traditionsreichste aktive Linux-Distribution mit Unix-artiger Stabilität und maximaler Transparenz.
+- **Solus** – Unabhängige, eigenständig entwickelte Rolling-Release-Desktop-Distribution mit dem modernen Budgie-Desktop.
+- **Ubuntu Desktop** – Die weltweit meistgenutzte Standard-Linux-Desktop-Distribution mit GNOME-Arbeitsumgebung.
+- **Ubuntu Cinnamon** – Offizieller Ubuntu-Flavor mit dem modernen, flexiblen Cinnamon-Desktop.
+- **Void Linux** – Unabhängige Rolling-Release-Distribution mit dem blitzschnellen XBPS-Paketmanager und runit-Init.
+- **Winux** – Auf Ubuntu 24.04 LTS basierende Distribution mit modernem Windows-11-Look (KDE Plasma), vorkonfiguriertem Wine/Proton und hoher Einsteigerfreundlichkeit.
+- **Zorin OS Education** – Speziell für Schulen, Schüler und Bildung konzipierte Zorin-OS-Version mit vorinstallierter Lernsoftware.
 
 ### 🏢 02_Enterprise-Server & NAS (9 Distros)
 - **AlmaLinux** – Binärkompatibles 1:1 RHEL-Enterprise-Betriebssystem und stabiler Nachfolger von CentOS.
@@ -121,7 +134,7 @@ Ein PowerShell-basiertes All-in-One Automatisierungswerkzeug zum Herunterladen, 
 | `update-linux-isos.ps1` | Hauptskript für Windows (Downloads, Hash-Prüfung, Archivierung, Ventoy-Themes, Sync). |
 | `update-linux-isos.sh`  | Ausführbares Bash-Startskript für Linux (prüft Abhängigkeiten, richtet ggf. `.venv` ein). |
 | `update_linux_isos.py`  | Vollständige Linux-Portierung in Python 3 (PEP 8, Pillow, Requests, Streaming-Downloads). |
-| `distros.json`          | JSON-Konfigurationsdatei aller 46 Distributionen, Download-Quellen und Regex-Muster. |
+| `distros.json`          | JSON-Konfigurationsdatei aller 59 Distributionen, Download-Quellen und Regex-Muster. |
 | `.gitignore`            | Schließt ISO-Dateien, Logdateien und temporäre Ordner vom Git-Tracking aus. |
 | `GITHUB_ANLEITUNG.md`   | Dokumentation zur Verwaltung und Pflege des GitHub-Repositories. |
 

@@ -578,10 +578,10 @@ def decompress_bz2(bz2_path: Path, dest_iso_path: Path) -> bool:
 
 
 # ==============================================================================
-# DISTRIBUTIONS SCRAPING ENGINE (ALLE 45 DISTROS)
+# DISTRIBUTIONS SCRAPING ENGINE (ALLE 59 DISTROS)
 # ==============================================================================
 class DistroScraperEngine:
-    """Implementiert native Web-Scraper für alle 45 Distributionen."""
+    """Implementiert native Web-Scraper für alle 59 Distributionen."""
 
     def __init__(self, download_mgr: DownloadManager):
         self.dm = download_mgr
@@ -858,6 +858,201 @@ class DistroScraperEngine:
                 if matches:
                     latest = sorted(matches, key=lambda x: x[1], reverse=True)[0]
                     return {"Version": latest[1], "Url": f"{u}{latest[0]}", "Filename": latest[0]}
+        return None
+
+    def scrape_antix(self) -> Optional[Dict[str, Any]]:
+        base = "https://ftp.gwdg.de/pub/linux/mx/iso/ANTIX/Final/"
+        html = self.dm.get_web_content(base)
+        if html:
+            dirs = re.findall(r'href="(antiX-[0-9.]+)/?"', html)
+            if dirs:
+                latest = sorted(dirs)[-1]
+                sub = f"{base}{latest}/"
+                sub_html = self.dm.get_web_content(sub)
+                if sub_html:
+                    m = re.search(r'href="(antiX-([0-9.]+)_x64-full\.iso)"', sub_html)
+                    if m:
+                        return {
+                            "Version": m.group(2),
+                            "Url": f"{sub}{m.group(1)}",
+                            "Filename": m.group(1),
+                            "ChecksumUrl": f"{sub}{m.group(1)}.sha256",
+                        }
+        return None
+
+    def scrape_calculate_linux(self) -> Optional[Dict[str, Any]]:
+        base = "https://mirror.calculate-linux.org/release/"
+        html = self.dm.get_web_content(base)
+        if html:
+            dirs = [d for d in re.findall(r'href="(\d{8})/"', html)]
+            if dirs:
+                latest = sorted(dirs)[-1]
+                sub = f"{base}{latest}/"
+                sub_html = self.dm.get_web_content(sub)
+                if sub_html:
+                    m = re.search(r'href="(cld-(\d+)-x86_64\.iso)"', sub_html)
+                    if m:
+                        return {
+                            "Version": m.group(2),
+                            "Url": f"{sub}{m.group(1)}",
+                            "Filename": m.group(1),
+                            "ChecksumUrl": f"{sub}SHA256SUMS",
+                        }
+        return None
+
+    def scrape_crux(self) -> Optional[Dict[str, Any]]:
+        base = "https://ftp.spline.inf.fu-berlin.de/pub/crux/"
+        html = self.dm.get_web_content(base)
+        if html:
+            dirs = re.findall(r'href="(crux-([0-9.]+))/"', html)
+            if dirs:
+                latest_dir = sorted(dirs, key=lambda x: [int(p) for p in x[1].split('.')])[-1][0]
+                sub = f"{base}{latest_dir}/iso/"
+                sub_html = self.dm.get_web_content(sub)
+                if sub_html:
+                    m = re.search(r'href="(crux-([0-9.]+)\.iso)"', sub_html)
+                    if m:
+                        return {
+                            "Version": m.group(2),
+                            "Url": f"{sub}{m.group(1)}",
+                            "Filename": m.group(1),
+                            "ChecksumUrl": f"{sub}{m.group(1)}.sha256",
+                        }
+        return None
+
+    def scrape_elementary_os(self) -> Optional[Dict[str, Any]]:
+        html = self.dm.get_web_content("https://elementary.io/")
+        if html:
+            m = re.search(r'href="(https://dl\.elementaryos\.org/[^"]+/elementaryos-([0-9.]+)-stable-amd64\.([0-9]+)\.iso)"', html)
+            if m:
+                ver = f"{m.group(2)}.{m.group(3)}"
+                fn = Path(m.group(1)).name
+                return {"Version": ver, "Url": m.group(1), "Filename": fn}
+        return None
+
+    def scrape_linux_lite(self) -> Optional[Dict[str, Any]]:
+        raw = self.dm.get_web_content("https://sourceforge.net/projects/linux-lite/best_release.json")
+        if raw:
+            try:
+                data = json.loads(raw)
+                fn_path = data.get("release", {}).get("filename", "")
+                m = re.search(r"linux-lite-([0-9.]+)-64bit\.iso$", fn_path)
+                if m:
+                    ver = m.group(1)
+                    fn = Path(fn_path).name
+                    url = f"https://downloads.sourceforge.net/project/linux-lite{fn_path}"
+                    return {"Version": ver, "Url": url, "Filename": fn}
+            except Exception:
+                pass
+        return None
+
+    def scrape_manjaro_linux(self) -> Optional[Dict[str, Any]]:
+        rss = self.dm.get_web_content("https://sourceforge.net/projects/manjarolinux/rss?path=/xfce")
+        if rss:
+            m = re.search(r'<link>(https://sourceforge\.net/projects/manjarolinux/files/xfce/([0-9.]+)/(manjaro-xfce-[^<]+\.iso)/download)</link>', rss)
+            if m:
+                ver = m.group(2)
+                fn = m.group(3)
+                url = f"https://downloads.sourceforge.net/project/manjarolinux/xfce/{ver}/{fn}"
+                chk = f"https://downloads.sourceforge.net/project/manjarolinux/xfce/{ver}/{fn}.sha256"
+                return {"Version": ver, "Url": url, "Filename": fn, "ChecksumUrl": chk}
+        return None
+
+    def scrape_mx_linux(self) -> Optional[Dict[str, Any]]:
+        base = "https://ftp.gwdg.de/pub/linux/mx/iso/MX/Final/Xfce/"
+        html = self.dm.get_web_content(base)
+        if html:
+            m = re.findall(r'href="(MX-([0-9.]+)_Xfce_x64\.iso)"', html)
+            if m:
+                fn, ver = m[-1]
+                return {"Version": ver, "Url": f"{base}{fn}", "Filename": fn, "ChecksumUrl": f"{base}{fn}.sha256"}
+        return None
+
+    def scrape_nixos(self) -> Optional[Dict[str, Any]]:
+        html = self.dm.get_web_content("https://nixos.org/download/")
+        if html:
+            m = re.search(r'href="(https://channels\.nixos\.org/nixos-([0-9.]+)/latest-nixos-graphical-x86_64-linux\.iso)"', html)
+            if m:
+                channel_url = m.group(1)
+                ver = m.group(2)
+                chk_url = f"{channel_url}.sha256"
+                resp = self.dm.session.head(channel_url, allow_redirects=True, timeout=10)
+                final_url = resp.url if resp.status_code == 200 else channel_url
+                fn = Path(final_url).name
+                if not fn.endswith(".iso"):
+                    fn = f"nixos-graphical-{ver}-x86_64-linux.iso"
+                vm = re.search(r"nixos-graphical-([0-9.]+)\.", fn)
+                if vm:
+                    ver = vm.group(1)
+                return {"Version": ver, "Url": channel_url, "Filename": fn, "ChecksumUrl": chk_url}
+        return None
+
+    def scrape_opensuse_tumbleweed(self) -> Optional[Dict[str, Any]]:
+        base = "https://ftp.halifax.rwth-aachen.de/opensuse/tumbleweed/iso/"
+        html = self.dm.get_web_content(base)
+        if html:
+            m = re.search(r'href="(openSUSE-Tumbleweed-DVD-x86_64-Snapshot([0-9]+)-Media\.iso)"', html)
+            if m:
+                fn = m.group(1)
+                ver = m.group(2)
+                return {"Version": ver, "Url": f"{base}{fn}", "Filename": fn, "ChecksumUrl": f"{base}{fn}.sha256"}
+        return None
+
+    def scrape_pop_os(self) -> Optional[Dict[str, Any]]:
+        html = self.dm.get_web_content("https://system76.com/pop/download")
+        if html:
+            m = re.search(r"location\.href=\'(https://iso\.pop-os\.org/([0-9.]+)/amd64/intel/([0-9]+)/(pop-os_[^\']+\.iso))\'", html)
+            if m:
+                url = m.group(1)
+                ver = f"{m.group(2)}.{m.group(3)}"
+                fn = m.group(4)
+                chk = f"https://iso.pop-os.org/{m.group(2)}/amd64/intel/{m.group(3)}/SHA256SUMS"
+                return {"Version": ver, "Url": url, "Filename": fn, "ChecksumUrl": chk}
+        return None
+
+    def scrape_slackware(self) -> Optional[Dict[str, Any]]:
+        base = "https://ftp.gwdg.de/pub/linux/slackware/slackware-iso/"
+        html = self.dm.get_web_content(base)
+        if html:
+            dirs = re.findall(r'href="(slackware64-([0-9.]+)-iso)/?"', html)
+            if dirs:
+                latest_dir = sorted(dirs, key=lambda x: [int(p) for p in x[1].split('.')])[-1][0]
+                sub = f"{base}{latest_dir}/"
+                sub_html = self.dm.get_web_content(sub)
+                if sub_html:
+                    m = re.search(r'href="(slackware64-([0-9.]+)-install-dvd\.iso)"', sub_html)
+                    if m:
+                        return {
+                            "Version": m.group(2),
+                            "Url": f"{sub}{m.group(1)}",
+                            "Filename": m.group(1),
+                            "ChecksumUrl": f"{sub}{m.group(1)}.md5",
+                        }
+        return None
+
+    def scrape_solus(self) -> Optional[Dict[str, Any]]:
+        html = self.dm.get_web_content("https://getsol.us/download/")
+        if html:
+            m = re.search(r'(https://downloads\.getsol\.us/isos/([^/]+)/(Solus-Budgie-Release-([^\s\"\'&>]+)\.iso))', html)
+            if m:
+                url = m.group(1)
+                fn = m.group(3)
+                ver = m.group(4)
+                return {"Version": ver, "Url": url, "Filename": fn, "ChecksumUrl": f"{url}.sha256sum"}
+        return None
+
+    def scrape_void_linux(self) -> Optional[Dict[str, Any]]:
+        base = "https://repo-default.voidlinux.org/live/current/"
+        html = self.dm.get_web_content(base)
+        if html:
+            m = re.search(r'href="(void-live-x86_64-([0-9]+)-xfce\.iso)"', html)
+            if m:
+                return {
+                    "Version": m.group(2),
+                    "Url": f"{base}{m.group(1)}",
+                    "Filename": m.group(1),
+                    "ChecksumUrl": f"{base}sha256sum.txt",
+                }
         return None
 
     # --- 02 Enterprise Server ---
@@ -1313,6 +1508,19 @@ def get_pretty_iso_name(filename: str) -> str:
         ("mageia", "Mageia Linux"),
         ("omarchy", "Omarchy Linux"),
         ("lubuntu", "Lubuntu Desktop"),
+        ("antix", "antiX Linux Full"),
+        (r"cld.*x86_64", "Calculate Linux Desktop KDE"),
+        ("crux", "CRUX Linux"),
+        ("elementaryos", "elementary OS"),
+        ("linux-lite", "Linux Lite"),
+        ("manjaro", "Manjaro Linux XFCE"),
+        (r"mx-.*xfce", "MX Linux Xfce"),
+        (r"nixos.*graphical", "NixOS Graphical"),
+        (r"opensuse.*tumbleweed", "openSUSE Tumbleweed"),
+        ("pop-os", "Pop!_OS"),
+        ("slackware", "Slackware Linux DVD"),
+        (r"solus.*budgie", "Solus Budgie"),
+        ("void-live", "Void Linux XFCE"),
         ("ubuntucinnamon", "Ubuntu Cinnamon"),
         (r"ubuntu.*live-server", "Ubuntu Server LTS"),
         ("ubuntu", "Ubuntu Desktop"),

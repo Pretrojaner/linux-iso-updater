@@ -9,6 +9,14 @@
   },
   {
     "Enabled": true,
+    "Name": "antiX",
+    "MatchPattern": "antiX-(\\d+\\.\\d+)_x64-full",
+    "Script": "$baseUrl = 'https://ftp.gwdg.de/pub/linux/mx/iso/ANTIX/Final/'\n$html = Get-WebContent -Uri $baseUrl\nif ($html) {\n    $dirs = [regex]::Matches($html, 'href=\"(antiX-[0-9.]+)/?\"') | ForEach-Object { $_.Groups[1].Value } | Sort-Object | Select-Object -Last 1\n    if ($dirs) {\n        $subHtml = Get-WebContent -Uri \"$baseUrl$dirs/\"\n        if ($subHtml -and $subHtml -match 'href=\"(antiX-([0-9.]+)_x64-full\\.iso)\"') {\n            return @{ Version = $Matches[2]; Url = \"$baseUrl$dirs/$($Matches[1])\"; Filename = $Matches[1]; ChecksumUrl = \"$baseUrl$dirs/$($Matches[1]).sha256\" }\n        }\n    }\n}\nreturn $null",
+    "SizeBytes": 1845493760,
+    "Category": "01_Desktop-Linux"
+  },
+  {
+    "Enabled": true,
     "Name": "Arch Linux",
     "MatchPattern": "archlinux-(\\d{4}\\.\\d{2}\\.\\d{2})-x86_64",
     "Script": "$html = Get-WebContent -Uri 'https://geo.mirror.pkgbuild.com/iso/latest/'\nif ($html -and $html -match 'href=\"(archlinux-(\\d{4}\\.\\d{2}\\.\\d{2})-x86_64\\.iso)\"') {\n    return @{ Version = $Matches[2]; Url = \"https://geo.mirror.pkgbuild.com/iso/latest/$($Matches[1])\"; Filename = $Matches[1] }\n}\nreturn $null",
@@ -25,6 +33,22 @@
   },
   {
     "Enabled": true,
+    "Name": "Calculate Linux",
+    "MatchPattern": "cld-(\\d+)-x86_64",
+    "Script": "$baseUrl = 'https://mirror.calculate-linux.org/release/'\n$html = Get-WebContent -Uri $baseUrl\nif ($html) {\n    $dirs = [regex]::Matches($html, 'href=\"(\\d{8})/?\"') | ForEach-Object { $_.Groups[1].Value } | Sort-Object | Select-Object -Last 1\n    if ($dirs) {\n        $subHtml = Get-WebContent -Uri \"$baseUrl$dirs/\"\n        if ($subHtml -and $subHtml -match 'href=\"(cld-(\\d+)-x86_64\\.iso)\"') {\n            return @{ Version = $Matches[2]; Url = \"$baseUrl$dirs/$($Matches[1])\"; Filename = $Matches[1]; ChecksumUrl = \"$baseUrl$dirs/SHA256SUMS\" }\n        }\n    }\n}\nreturn $null",
+    "SizeBytes": 3435973836,
+    "Category": "01_Desktop-Linux"
+  },
+  {
+    "Enabled": true,
+    "Name": "CRUX",
+    "MatchPattern": "crux-(\\d+\\.\\d+)",
+    "Script": "$baseUrl = 'https://ftp.spline.inf.fu-berlin.de/pub/crux/'\n$html = Get-WebContent -Uri $baseUrl\nif ($html) {\n    $dirs = [regex]::Matches($html, 'href=\"(crux-([0-9.]+))/?\"') | ForEach-Object { $_.Groups[1].Value } | Sort-Object | Select-Object -Last 1\n    if ($dirs) {\n        $subHtml = Get-WebContent -Uri \"$baseUrl$dirs/iso/\"\n        if ($subHtml -and $subHtml -match 'href=\"(crux-([0-9.]+)\\.iso)\"') {\n            return @{ Version = $Matches[2]; Url = \"$baseUrl$dirs/iso/$($Matches[1])\"; Filename = $Matches[1]; ChecksumUrl = \"$baseUrl$dirs/iso/$($Matches[1]).sha256\" }\n        }\n    }\n}\nreturn $null",
+    "SizeBytes": 1048576000,
+    "Category": "01_Desktop-Linux"
+  },
+  {
+    "Enabled": true,
     "Name": "Debian",
     "MatchPattern": "debian-(\\d+\\.\\d+\\.\\d+)-amd64-netinst",
     "Script": "$baseUrl = 'https://ftp.halifax.rwth-aachen.de/debian-cd/current/amd64/iso-cd/'\n$html = Get-WebContent -Uri $baseUrl\nif (-not $html) {\n    $baseUrl = 'https://cdimage.debian.org/debian-cd/current/amd64/iso-cd/'\n    $html = Get-WebContent -Uri $baseUrl\n}\nif ($html -and $html -match 'href=\"(debian-(\\d+\\.\\d+\\.\\d+)-amd64-netinst\\.iso)\"') {\n    return @{ Version = $Matches[2]; Url = \"$baseUrl$($Matches[1])\"; Filename = $Matches[1] }\n}\nreturn $null",
@@ -37,6 +61,14 @@
     "MatchPattern": "devuan_daedalus_(\\d+\\.\\d+\\.\\d+)_amd64_cd2",
     "Script": "$html = Get-WebContent -Uri 'https://files.devuan.org/devuan_daedalus/installer-iso/'\nif ($html -and $html -match 'href=\"(devuan_daedalus_(\\d+\\.\\d+\\.\\d+)_amd64_cd2\\.iso)\"') {\n    return @{ Version = $Matches[2]; Url = \"https://files.devuan.org/devuan_daedalus/installer-iso/$($Matches[1])\"; Filename = $Matches[1] }\n}\nreturn $null",
     "SizeBytes": 601817088,
+    "Category": "01_Desktop-Linux"
+  },
+  {
+    "Enabled": true,
+    "Name": "elementary OS",
+    "MatchPattern": "elementaryos-(\\d+\\.\\d+)-stable-amd64",
+    "Script": "$html = Get-WebContent -Uri 'https://elementary.io/'\nif ($html -and $html -match 'href=\"(https://dl\\.elementaryos\\.org/[^\"]+/elementaryos-([0-9.]+)-stable-amd64\\.([0-9]+)\\.iso)\"') {\n    $fn = [System.IO.Path]::GetFileName($Matches[1])\n    return @{ Version = \"$($Matches[2]).$($Matches[3])\"; Url = $Matches[1]; Filename = $fn }\n}\nreturn $null",
+    "SizeBytes": 3328599654,
     "Category": "01_Desktop-Linux"
   },
   {
@@ -73,6 +105,14 @@
   },
   {
     "Enabled": true,
+    "Name": "Linux Lite",
+    "MatchPattern": "linux-lite-(\\d+\\.\\d+)-64bit",
+    "Script": "$json = Get-WebContent -Uri 'https://sourceforge.net/projects/linux-lite/best_release.json'\nif ($json) {\n    $obj = $json | ConvertFrom-Json\n    $fnPath = $obj.release.filename\n    if ($fnPath -match 'linux-lite-([0-9.]+)-64bit\\.iso$') {\n        $fn = [System.IO.Path]::GetFileName($fnPath)\n        return @{ Version = $Matches[1]; Url = \"https://downloads.sourceforge.net/project/linux-lite$fnPath\"; Filename = $fn }\n    }\n}\nreturn $null",
+    "SizeBytes": 2564407296,
+    "Category": "01_Desktop-Linux"
+  },
+  {
+    "Enabled": true,
     "Name": "Linux Mint Cinnamon",
     "MatchPattern": "linuxmint-(\\d+(\\.\\d+)?)",
     "Script": "$baseUrl = 'https://ftp.fau.de/mint/iso/stable/'\n$html = Get-WebContent -Uri $baseUrl\nif (-not $html) {\n    $baseUrl = 'https://mirror.netcologne.de/linuxmint/iso/stable/'\n    $html = Get-WebContent -Uri $baseUrl\n}\nif (-not $html) {\n    $baseUrl = 'https://mirrors.edge.kernel.org/linuxmint/stable/'\n    $html = Get-WebContent -Uri $baseUrl\n}\nif ($html) {\n    $rawVersions = [regex]::Matches($html, 'href=\"(\\d+(\\.\\d+)*)/\"') | ForEach-Object { $_.Groups[1].Value }\n    $sorted = $rawVersions | Sort-Object { [version](ConvertTo-VersionString $_) } -Descending | Select-Object -First 3\n    foreach ($ver in $sorted) {\n        $subHtml = Get-WebContent -Uri \"$baseUrl$ver/\"\n        if ($subHtml -and $subHtml -match 'href=\"(linuxmint-[^\"]+-cinnamon-64bit\\.iso)\"') {\n            $fn = $Matches[1]\n            return @{ Version = $ver; Url = \"$baseUrl$ver/$fn\"; Filename = $fn }\n        }\n    }\n}\nreturn $null",
@@ -97,11 +137,67 @@
   },
   {
     "Enabled": true,
+    "Name": "Manjaro Linux",
+    "MatchPattern": "manjaro-xfce-(\\d+\\.\\d+\\.\\d+)",
+    "Script": "$rss = Get-WebContent -Uri 'https://sourceforge.net/projects/manjarolinux/rss?path=/xfce'\nif ($rss -and $rss -match '<link>(https://sourceforge\\.net/projects/manjarolinux/files/xfce/([0-9.]+)/(manjaro-xfce-[^<]+\\.iso)/download)</link>') {\n    $ver = $Matches[2]\n    $fn = $Matches[3]\n    return @{ Version = $ver; Url = \"https://downloads.sourceforge.net/project/manjarolinux/xfce/$ver/$fn\"; Filename = $fn; ChecksumUrl = \"https://downloads.sourceforge.net/project/manjarolinux/xfce/$ver/$fn.sha256\" }\n}\nreturn $null",
+    "SizeBytes": 3865470566,
+    "Category": "01_Desktop-Linux"
+  },
+  {
+    "Enabled": true,
+    "Name": "MX Linux",
+    "MatchPattern": "MX-(\\d+\\.\\d+)_Xfce_x64",
+    "Script": "$baseUrl = 'https://ftp.gwdg.de/pub/linux/mx/iso/MX/Final/Xfce/'\n$html = Get-WebContent -Uri $baseUrl\nif ($html -and $html -match 'href=\"(MX-([0-9.]+)_Xfce_x64\\.iso)\"') {\n    return @{ Version = $Matches[2]; Url = \"$baseUrl$($Matches[1])\"; Filename = $Matches[1]; ChecksumUrl = \"$baseUrl$($Matches[1]).sha256\" }\n}\nreturn $null",
+    "SizeBytes": 2348810240,
+    "Category": "01_Desktop-Linux"
+  },
+  {
+    "Enabled": true,
+    "Name": "NixOS",
+    "MatchPattern": "nixos-graphical-(\\d+\\.\\d+)",
+    "Script": "$html = Get-WebContent -Uri 'https://nixos.org/download/'\nif ($html -and $html -match 'href=\"(https://channels\\.nixos\\.org/nixos-([0-9.]+)/latest-nixos-graphical-x86_64-linux\\.iso)\"') {\n    $channelUrl = $Matches[1]\n    $ver = $Matches[2]\n    return @{ Version = $ver; Url = $channelUrl; Filename = \"nixos-graphical-$ver-x86_64-linux.iso\"; ChecksumUrl = \"$channelUrl.sha256\" }\n}\nreturn $null",
+    "SizeBytes": 2936012800,
+    "Category": "01_Desktop-Linux"
+  },
+  {
+    "Enabled": true,
     "Name": "Omarchy",
     "MatchPattern": "omarchy-(\\d+\\.\\d+(\\.\\d+)?)",
     "Script": "$apiJson = Get-WebContent -Uri 'https://api.github.com/repos/omacom/omarchy/releases/latest'\nif ($apiJson) {\n    try {\n        $rel = $apiJson | ConvertFrom-Json\n        $tag = $rel.tag_name.TrimStart('v')\n        $isoUrl = \"https://iso.omarchy.org/omarchy-$tag.iso\"\n        $fn     = \"omarchy-$tag.iso\"\n        \n        $asset = $rel.assets | Where-Object { $_.name -like \"*.iso\" } | Select-Object -First 1\n        if ($asset) {\n            $isoUrl = $asset.browser_download_url\n            $fn     = $asset.name\n        }\n        return @{ Version = $tag; Url = $isoUrl; Filename = $fn }\n    } catch {}\n}\n$html = Get-WebContent -Uri 'https://github.com/omacom/omarchy/releases'\nif ($html -and $html -match 'omarchy-(\\d+\\.\\d+(\\.\\d+)?)\\.iso') {\n    $ver = $Matches[1]\n    return @{ Version = $ver; Url = \"https://iso.omarchy.org/omarchy-$ver.iso\"; Filename = \"omarchy-$ver.iso\" }\n}\nreturn $null",
     "Category": "01_Desktop-Linux",
     "SizeBytes": 6448529408
+  },
+  {
+    "Enabled": true,
+    "Name": "openSUSE Tumbleweed",
+    "MatchPattern": "openSUSE-Tumbleweed-DVD-x86_64-Snapshot(\\d+)-Media",
+    "Script": "$baseUrl = 'https://ftp.halifax.rwth-aachen.de/opensuse/tumbleweed/iso/'\n$html = Get-WebContent -Uri $baseUrl\nif ($html -and $html -match 'href=\"(openSUSE-Tumbleweed-DVD-x86_64-Snapshot([0-9]+)-Media\\.iso)\"') {\n    return @{ Version = $Matches[2]; Url = \"$baseUrl$($Matches[1])\"; Filename = $Matches[1]; ChecksumUrl = \"$baseUrl$($Matches[1]).sha256\" }\n}\nreturn $null",
+    "SizeBytes": 4718592000,
+    "Category": "01_Desktop-Linux"
+  },
+  {
+    "Enabled": true,
+    "Name": "Pop!_OS",
+    "MatchPattern": "pop-os_(\\d+\\.\\d+)_amd64_intel_(\\d+)",
+    "Script": "$html = Get-WebContent -Uri 'https://system76.com/pop/download'\nif ($html -and $html -match 'location\\.href=\\x27(https://iso\\.pop-os\\.org/([0-9.]+)/amd64/intel/([0-9]+)/(pop-os_[^\\x27]+\\.iso))\\x27') {\n    return @{ Version = \"$($Matches[2]).$($Matches[3])\"; Url = $Matches[1]; Filename = $Matches[4]; ChecksumUrl = \"https://iso.pop-os.org/$($Matches[2])/amd64/intel/$($Matches[3])/SHA256SUMS\" }\n}\nreturn $null",
+    "SizeBytes": 3435973836,
+    "Category": "01_Desktop-Linux"
+  },
+  {
+    "Enabled": true,
+    "Name": "Slackware",
+    "MatchPattern": "slackware64-(\\d+\\.\\d+)-install-dvd",
+    "Script": "$baseUrl = 'https://ftp.gwdg.de/pub/linux/slackware/slackware-iso/'\n$html = Get-WebContent -Uri $baseUrl\nif ($html) {\n    $dirs = [regex]::Matches($html, 'href=\"(slackware64-([0-9.]+)-iso)/?\"') | ForEach-Object { $_.Groups[1].Value } | Sort-Object | Select-Object -Last 1\n    if ($dirs) {\n        $subHtml = Get-WebContent -Uri \"$baseUrl$dirs/\"\n        if ($subHtml -and $subHtml -match 'href=\"(slackware64-([0-9.]+)-install-dvd\\.iso)\"') {\n            return @{ Version = $Matches[2]; Url = \"$baseUrl$dirs/$($Matches[1])\"; Filename = $Matches[1]; ChecksumUrl = \"$baseUrl$dirs/$($Matches[1]).md5\" }\n        }\n    }\n}\nreturn $null",
+    "SizeBytes": 3932160000,
+    "Category": "01_Desktop-Linux"
+  },
+  {
+    "Enabled": true,
+    "Name": "Solus",
+    "MatchPattern": "Solus-Budgie-Release-([\\d-]+)",
+    "Script": "$html = Get-WebContent -Uri 'https://getsol.us/download/'\nif ($html -and $html -match '(https://downloads\\.getsol\\.us/isos/([^/]+)/(Solus-Budgie-Release-([^\\s\\\"\\x27&>]+)\\.iso))') {\n    return @{ Version = $Matches[4]; Url = $Matches[1]; Filename = $Matches[3]; ChecksumUrl = \"$($Matches[1]).sha256sum\" }\n}\nreturn $null",
+    "SizeBytes": 4338690048,
+    "Category": "01_Desktop-Linux"
   },
   {
     "Enabled": true,
@@ -118,6 +214,14 @@
     "Script": "$baseUrl = 'https://ftp.halifax.rwth-aachen.de/ubuntu-releases/'\n$html = Get-WebContent -Uri $baseUrl\nif ($html) {\n    $versions = [regex]::Matches($html, 'href=\"(\\d+\\.\\d+(\\.\\d+)?)/\"') | ForEach-Object { $_.Groups[1].Value } | Sort-Object { [version](ConvertTo-VersionString $_) } -Descending | Select-Object -First 3\n    foreach ($latestVer in $versions) {\n        $subHtml = Get-WebContent -Uri \"$baseUrl$latestVer/\"\n        if ($subHtml -and $subHtml -match 'href=\"(ubuntu-\\d+\\.\\d+(\\.\\d+)?-desktop-amd64\\.iso)\"') {\n            return @{ Version = $latestVer; Url = \"$baseUrl$latestVer/$($Matches[1])\"; Filename = $Matches[1] }\n        }\n    }\n}\nreturn $null",
     "Category": "01_Desktop-Linux",
     "SizeBytes": 6615449600
+  },
+  {
+    "Enabled": true,
+    "Name": "Void Linux",
+    "MatchPattern": "void-live-x86_64-(\\d+)-xfce",
+    "Script": "$baseUrl = 'https://repo-default.voidlinux.org/live/current/'\n$html = Get-WebContent -Uri $baseUrl\nif ($html -and $html -match 'href=\"(void-live-x86_64-([0-9]+)-xfce\\.iso)\"') {\n    return @{ Version = $Matches[2]; Url = \"$baseUrl$($Matches[1])\"; Filename = $Matches[1]; ChecksumUrl = \"$baseUrl$sha256sum.txt\" }\n}\nreturn $null",
+    "SizeBytes": 1258291200,
+    "Category": "01_Desktop-Linux"
   },
   {
     "Enabled": true,
@@ -367,4 +471,4 @@
     "Script": "$html = Get-WebContent -Uri 'https://cdn.openbsd.org/pub/OpenBSD/'\nif ($html) {\n    $vers = [regex]::Matches($html, 'href=\"(\\d+\\.\\d+)/\"') | ForEach-Object { $_.Groups[1].Value } | Sort-Object { [version](ConvertTo-VersionString $_) } -Descending\n    foreach ($v in $vers) {\n        $sub = Get-WebContent -Uri \"https://cdn.openbsd.org/pub/OpenBSD/$v/amd64/\"\n        if ($sub -and $sub -match 'install(\\d+)\\.iso') {\n            $fn = $Matches[0]\n            return @{ Version = $v; Url = \"https://cdn.openbsd.org/pub/OpenBSD/$v/amd64/$fn\"; Filename = $fn; ChecksumUrl = \"https://cdn.openbsd.org/pub/OpenBSD/$v/amd64/SHA256\" }\n        }\n    }\n}\nreturn $null",
     "SizeBytes": 700000000
   }
-]
+]
