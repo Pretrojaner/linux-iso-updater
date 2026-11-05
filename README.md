@@ -41,7 +41,7 @@ Ein PowerShell- und Python-basiertes All-in-One Automatisierungswerkzeug zum Her
     4. `tuxamber` – Tux Classic Linux (Anthrazit-Carbon & warmes Tux-Gold)
     5. `crimson` – Crimson Security & Audit (Dark Carbon & Blood Crimson Red)
     6. `synthwave` – Synthwave Neon Retro (Midnight Purple & 80s Hot Pink/Cyan)
-    7. `medicatdark` – MediCat Dark Glass (Edles 9-Slice Rahmen-Design, transluzente Box & dunkler Anthrazit-Farbverlauf ohne Wallpaper)
+    7. `darkglass42` – Dark Glass 42 (Edles transluzentes 9-Slice Rahmen-Design, Deep Charcoal & Cyan-Akzente ohne Wallpaper)
   - Kann beim Kopieren interaktiv ausgewählt werden oder eigenständig per Schalter `-ChangeTheme` bzw. `-Theme <name/nr>` gewechselt werden.
 - **Intelligente Vorab-Speicherplatzprüfung:**
   - Berechnet vor dem Kopieren den exakten Speicherbedarf aller aktivierten ISOs.
@@ -182,7 +182,7 @@ chmod +x update-linux-isos.sh
 # Ventoy-Theme eigenständig wechseln:
 ./update-linux-isos.sh --change-theme
 # oder direkt ein bestimmtes Theme (1-7 oder Name) erzwingen:
-./update-linux-isos.sh --theme medicatdark
+./update-linux-isos.sh --theme darkglass42
 ```
 
 ### Parameter & Optionen unter Windows (PowerShell):
@@ -195,7 +195,7 @@ chmod +x update-linux-isos.sh
 
 # Ventoy-Theme wechseln (Themes 1 bis 7):
 .\update-linux-isos.ps1 -ChangeTheme
-.\update-linux-isos.ps1 -Theme medicatdark -SkipDownload
+.\update-linux-isos.ps1 -Theme darkglass42 -SkipDownload
 ```
 
 ---
@@ -204,4 +204,3 @@ chmod +x update-linux-isos.sh
 
 Entwickelt für IT-Administratoren, Techniker und Linux-Enthusiasten.
 Basiert auf den offiziellen Upstream-Quellen aller 64 Distributionen und dem herausragenden [Ventoy-Projekt](https://www.ventoy.net/).
-Theme-Inspiration für das MediCat Dark Glass Design stammt aus dem renommierten MediCat USB Toolkit (Jayro & MON5TERMATT).
