@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# Linux ISO Auto-Updater & Ventoy Sync Tool (Linux Bash Starter)
+# Linux ISO Auto-Updater & Ventoy Sync Tool (Linux Bash Starter v2.6.0)
 # ==============================================================================
 set -e
 
@@ -16,9 +16,21 @@ C_YELLOW="\033[93m"
 C_RED="\033[91m"
 C_GRAY="\033[90m"
 
-echo -e "${C_CYAN}===================================================================${C_RESET}"
-echo -e "${C_BOLD} Linux ISO Auto-Updater & Ventoy Sync Tool (Linux Edition v2.4.0)${C_RESET}"
-echo -e "${C_CYAN}===================================================================${C_RESET}"
+# Prüfen auf Hilfe-Schalter (--help, -h, /h, /help, /?, --halp etc.)
+IS_HELP=0
+for arg in "$@"; do
+    case "$arg" in
+        -h|--help|-help|/help|--h|/h|-?|/?|--halp|-halp|/halp|help|\?)
+            IS_HELP=1
+            ;;
+    esac
+done
+
+if [ "$IS_HELP" -eq 0 ]; then
+    echo -e "${C_CYAN}===================================================================${C_RESET}"
+    echo -e "${C_BOLD} Linux ISO Auto-Updater & Ventoy Sync Tool (Linux Edition v2.6.0)${C_RESET}"
+    echo -e "${C_CYAN}===================================================================${C_RESET}"
+fi
 
 # 1. Prüfen auf Python 3
 if ! command -v python3 &>/dev/null; then

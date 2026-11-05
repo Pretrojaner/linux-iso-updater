@@ -3,7 +3,7 @@
 
 """
 Linux ISO Auto-Updater & Ventoy Sync Tool (Linux Edition)
-Version: 2.4.0
+Version: 2.6.0
 
 Funktionen:
 1. Prüft & lädt neueste Linux ISOs herunter, verifiziert SHA256/SHA512/MD5-Hashes & archiviert veraltete Dateien.
@@ -50,7 +50,7 @@ except ImportError:
 # ==============================================================================
 # GLOBALE KONSTANTEN
 # ==============================================================================
-SCRIPT_VERSION = "2.4.0"
+SCRIPT_VERSION = "2.6.0"
 DEFAULT_LOG_FILE = "update-linux-isos.log"
 DEFAULT_LOCK_FILE = "/tmp/linux_iso_auto_updater.lock"
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
@@ -2995,7 +2995,121 @@ def run_ventoy_sync(
 # ==============================================================================
 # HAUPTPROGRAMM (MAIN)
 # ==============================================================================
+def show_help() -> None:
+    c_banner = Colors.CYAN
+    c_section = Colors.YELLOW
+    c_option = Colors.BOLD
+    c_desc = Colors.RESET
+    c_example = Colors.GREEN
+    c_code = Colors.CYAN
+    reset = Colors.RESET
+
+    print(f"""
+{c_banner}===================================================================================================={reset}
+{c_banner}  LINUX ISO AUTO-UPDATER & VENTOY MULTIBOOT SUITE{reset}
+{c_banner}===================================================================================================={reset}
+  Version:       v2.6.0 (Produktiv-Release)
+  Stand:         05. November 2026
+  Autor:         Pretrojaner & Community (Ingo)
+  Plattform:     Linux & macOS (Python 3.8+) / Windows (PowerShell 7+)
+  Umfang:        64 bootfähige Systeme in 6 Kategorien (inkl. Windows-PE Rescue)
+  Repository:    https://github.com/Pretrojaner/linux-iso-updater
+{c_banner}===================================================================================================={reset}
+
+{c_section}BESCHREIBUNG:{reset}
+  Automatisierte Komplettlösung zur Überprüfung, Hash-Verifikation (SHA256/SHA512)
+  und Archivierung von Linux-, Rescue- und Windows-PE Boot-Images sowie zur
+  vollständigen Synchronisation auf bootfähige Ventoy-USB-Datenträger inkl. 7 Themes.
+
+{c_section}AUFRUF-SYNTAX:{reset}
+  {c_code}Linux / macOS (Bash / Shell):{reset}
+    ./update-linux-isos.sh [Optionen]
+    python3 update_linux_isos.py [Optionen]
+  {c_code}Windows (CMD / PowerShell):{reset}
+    update-linux-isos.bat [Optionen]
+    pwsh .\\update-linux-isos.ps1 [Optionen]
+
+{c_section}VERFÜGBARE PARAMETER & SCHALTER:{reset}
+
+  {c_banner}1. WORKFLOW & STEUERUNG{reset}
+    {c_option}--dry-run, -DryRun{reset}
+        Simulationsmodus (Trockenlauf). Ermittelt neue Online-Versionen und prüft
+        lokale Prüfsummen, lädt jedoch keine Dateien herunter und ändert keine Datenträger.
+
+    {c_option}--skip-download, -SkipDownload{reset}
+        Überspringt den Download-Schritt. Ideal, um bereits vorhandene lokale ISOs
+        direkt auf den Ventoy-Datenträger zu synchronisieren.
+
+    {c_option}--skip-ventoy, -SkipVentoy{reset}
+        Überspringt die Ventoy-Synchronisation. Führt nur Prüfung, Download und
+        Archivierung im lokalen Verzeichnis aus.
+
+    {c_option}--select, --select-distros, -SelectDistros{reset}
+        Startet das interaktive Auswahlmenü vor dem Start. Ermöglicht die gezielte
+        Aktivierung/Deaktivierung bestimmter Kategorien [G1]-[G6] oder einzelner Systeme.
+
+  {c_banner}2. VENTOY-KONFIGURATION & THEMES{reset}
+    {c_option}--target <Pfad>, -TargetDrive <Pfad>{reset}
+        Ziel-Laufwerksbuchstabe (z. B. 'E:') oder Mountpoint (z. B. '/media/user/Ventoy').
+
+    {c_option}--change-theme, -ChangeTheme{reset}
+        Öffnet den interaktiven Auswahldialog zur Einrichtung des Bootloader-Designs.
+
+    {c_option}--theme <1-7|Name>, -Theme <1-7|Name>{reset}
+        Setzt das Ventoy-Theme direkt ohne interaktive Rückfrage:
+          [1] modern       - Minimalist Dark (Anthrazit / Slate)
+          [2] tux          - Classic Linux Tux (Puristisch, ohne Wallpaper)
+          [3] cyberpunk    - Neon Nightlife (Cyberpunk City, Cyan/Magenta)
+          [4] nord         - Arctic Frost (Kühles Nord-Theme, Ice-Blue)
+          [5] matrix       - Digital Rain (Klassisches grünes Terminal)
+          [6] synthwave    - Neon Retro Wave (80s Cyberpunk, Pink/Violett)
+          [7] darkglass42  - Project 42 (Transluzente 9-Slice Rahmenboxen)
+
+    {c_option}--install-ventoy, -InstallVentoy{reset}
+        Installiert bzw. aktualisiert Ventoy auf dem gewählten USB-Stick via CLI.
+
+  {c_banner}3. VERZEICHNISSE & PROTOKOLLIERUNG{reset}
+    {c_option}--target-directory <Pfad>, -TargetDirectory <Pfad>{reset}
+        Alternatives lokales Basis-/Download-Verzeichnis (Standard: Verzeichnis des Skripts).
+
+    {c_option}--log-file <Name/Pfad>, -LogFileName <Name>{reset}
+        Name oder absoluter Pfad der Logdatei (Standard: 'update-linux-isos.log').
+
+  {c_banner}4. HILFE & DOKUMENTATION{reset}
+    {c_option}-h, --help, -Help, /h, /help, /?, --halp{reset}
+        Gibt diese Hilfe- und Parameterübersicht aus.
+
+{c_section}PRAXIS-BEISPIELE:{reset}
+
+  {c_example}[Beispiel 1] Vollautomatischer Komplettlauf (Download + Sync auf /mnt/usb):{reset}
+    Linux:   python3 update_linux_isos.py --target /mnt/usb
+    Windows: update-linux-isos.bat -TargetDrive E:
+
+  {c_example}[Beispiel 2] Gezielte Systeme wählen & Theme 'Dark Glass 42' direkt setzen:{reset}
+    Linux:   python3 update_linux_isos.py --select --theme 7 --target /mnt/usb
+    Windows: pwsh .\\update-linux-isos.ps1 -SelectDistros -Theme darkglass42 -TargetDrive E:
+
+  {c_example}[Beispiel 3] Sicherer Simulationslauf (Nur Prüfen auf neue Versionen):{reset}
+    Linux:   python3 update_linux_isos.py --dry-run
+    Windows: update-linux-isos.bat -DryRun
+
+  {c_example}[Beispiel 4] Schnelle Synchronisation vorhandener ISOs (ohne Download):{reset}
+    Linux:   python3 update_linux_isos.py --skip-download --target /mnt/usb
+    Windows: pwsh .\\update-linux-isos.ps1 -SkipDownload -TargetDrive E:
+
+  {c_example}[Beispiel 5] Nur Ventoy-Theme wechseln:{reset}
+    Linux:   python3 update_linux_isos.py --change-theme
+    Windows: update-linux-isos.bat -ChangeTheme
+""")
+
+
 def main() -> None:
+    # Sofortige Hilfe-Prüfung für diverse Flags (-h, --help, /h, /help, /?, --halp etc.)
+    help_flags = {"-h", "--help", "-help", "/help", "--h", "/h", "-?", "/?", "--halp", "-halp", "/halp", "help", "?"}
+    if any(arg.strip().lower() in help_flags for arg in sys.argv[1:]):
+        show_help()
+        sys.exit(0)
+
     parser = argparse.ArgumentParser(
         description="Linux ISO Auto-Updater & Ventoy Sync Tool (Linux Edition)",
         formatter_class=argparse.RawTextHelpFormatter,

@@ -2,6 +2,34 @@
 setlocal EnableDelayedExpansion
 title Linux ISO Auto-Updater v2.6.0
 
+:: Pruefen auf Hilfe-Schalter (--help, -h, /h, /help, /?, --halp, etc.)
+set "IS_HELP=0"
+for %%a in (%*) do (
+    if /i "%%a"=="--help" set "IS_HELP=1"
+    if /i "%%a"=="-help" set "IS_HELP=1"
+    if /i "%%a"=="/help" set "IS_HELP=1"
+    if /i "%%a"=="-h" set "IS_HELP=1"
+    if /i "%%a"=="--h" set "IS_HELP=1"
+    if /i "%%a"=="/h" set "IS_HELP=1"
+    if /i "%%a"=="-?" set "IS_HELP=1"
+    if /i "%%a"=="/?" set "IS_HELP=1"
+    if /i "%%a"=="--halp" set "IS_HELP=1"
+    if /i "%%a"=="-halp" set "IS_HELP=1"
+    if /i "%%a"=="/halp" set "IS_HELP=1"
+    if /i "%%a"=="help" set "IS_HELP=1"
+    if /i "%%a"=="?" set "IS_HELP=1"
+)
+
+if "!IS_HELP!"=="1" (
+    where pwsh.exe >nul 2>&1
+    if !ERRORLEVEL! EQU 0 (
+        pwsh.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0update-linux-isos.ps1" -ShowHelp
+    ) else (
+        powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0update-linux-isos.ps1" -ShowHelp
+    )
+    exit /b 0
+)
+
 :: Pruefen ob PowerShell 7 (pwsh.exe) verfuegbar ist
 where pwsh.exe >nul 2>&1
 if %ERRORLEVEL% EQU 0 (

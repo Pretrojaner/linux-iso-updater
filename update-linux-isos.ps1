@@ -2,7 +2,7 @@
 .SYNOPSIS
     All-in-One Linux ISO Auto-Updater & Ventoy Sync Tool
 .DESCRIPTION
-    Version: 2.5.0
+    Version: 2.6.0
     1. Prueft & laedt neueste Linux ISOs herunter, verifiziert SHA256/SHA512-Hashes & archiviert veraltete Dateien.
     2. Ermoeglicht interaktive Gruppenauswahl (Desktop, Server, Security, Rescue, BSD) mit Mehrfachwahl.
     3. Kopiert die ISO-Ordnerstruktur auf ein Ventoy-Ziel-Laufwerk, bereinigt abgewaehlte und veraltete Staende
@@ -21,7 +21,137 @@ param(
     [switch]$InstallVentoy,
     [switch]$ChangeTheme,
     [string]$Theme
+,
+    [Alias("h", "help", "halp", "?")]
+    [switch]$ShowHelp,
+    [Parameter(ValueFromRemainingArguments = $true)]
+    [string[]]$RemainingArgs
 )
+
+function Show-Help {
+    $cBanner = [ConsoleColor]::Cyan
+    $cSection = [ConsoleColor]::Yellow
+    $cOption = [ConsoleColor]::White
+    $cDesc = [ConsoleColor]::Gray
+    $cExample = [ConsoleColor]::Green
+    $cCode = [ConsoleColor]::DarkCyan
+
+    Write-Host ""
+    Write-Host "====================================================================================================" -ForegroundColor $cBanner
+    Write-Host "  LINUX ISO AUTO-UPDATER & VENTOY MULTIBOOT SUITE" -ForegroundColor $cBanner
+    Write-Host "====================================================================================================" -ForegroundColor $cBanner
+    Write-Host "  Version:       v2.6.0 (Produktiv-Release)" -ForegroundColor $cOption
+    Write-Host "  Stand:         05. November 2026" -ForegroundColor $cOption
+    Write-Host "  Autor:         Pretrojaner & Community (Ingo)" -ForegroundColor $cOption
+    Write-Host "  Plattform:     Windows (PowerShell 7+) / Linux & macOS (Python 3.8+)" -ForegroundColor $cOption
+    Write-Host "  Umfang:        64 bootfaehige Systeme in 6 Kategorien (inkl. Windows-PE Rescue)" -ForegroundColor $cOption
+    Write-Host "  Repository:    https://github.com/Pretrojaner/linux-iso-updater" -ForegroundColor $cOption
+    Write-Host "====================================================================================================" -ForegroundColor $cBanner
+    Write-Host ""
+
+    Write-Host "BESCHREIBUNG:" -ForegroundColor $cSection
+    Write-Host "  Automatisierte Loesung zur Ueberpruefung, Hash-Verifikation (SHA256/SHA512) und" -ForegroundColor $cDesc
+    Write-Host "  Archivierung von Linux-, Rescue- und Windows-PE Boot-Images sowie zur vollstaendigen" -ForegroundColor $cDesc
+    Write-Host "  Synchronisation auf bootfaehige Ventoy-USB-Datentraeger inkl. 7 moderner Themes." -ForegroundColor $cDesc
+    Write-Host ""
+
+    Write-Host "AUFRUF-SYNTAX:" -ForegroundColor $cSection
+    Write-Host "  Windows (CMD / Batch):" -ForegroundColor $cCode
+    Write-Host "    update-linux-isos.bat [Optionen]" -ForegroundColor $cOption
+    Write-Host "  Windows (PowerShell 7):" -ForegroundColor $cCode
+    Write-Host "    pwsh .\update-linux-isos.ps1 [Optionen]" -ForegroundColor $cOption
+    Write-Host "  Linux / macOS (Bash / Python):" -ForegroundColor $cCode
+    Write-Host "    ./update-linux-isos.sh [Optionen]" -ForegroundColor $cOption
+    Write-Host "    python3 update_linux_isos.py [Optionen]" -ForegroundColor $cOption
+    Write-Host ""
+
+    Write-Host "VERFUEGBARE PARAMETER & SCHALTER:" -ForegroundColor $cSection
+    Write-Host ""
+    Write-Host "  1. WORKFLOW & STEUERUNG" -ForegroundColor $cBanner
+    Write-Host "    -DryRun, --dry-run" -ForegroundColor $cOption
+    Write-Host "        Simulationsmodus (Trockenlauf). Ermittelt neue Online-Versionen und prueft" -ForegroundColor $cDesc
+    Write-Host "        lokale Pruefsummen, laedt aber keine Dateien herunter und aendert keine USB-Sticks." -ForegroundColor $cDesc
+    Write-Host ""
+    Write-Host "    -SkipDownload, --skip-download" -ForegroundColor $cOption
+    Write-Host "        Ueberspringt den Download-Schritt. Ideal, um bereits lokal vorhandene ISOs" -ForegroundColor $cDesc
+    Write-Host "        direkt auf den Ventoy-Datentraeger zu synchronisieren." -ForegroundColor $cDesc
+    Write-Host ""
+    Write-Host "    -SkipVentoy, --skip-ventoy" -ForegroundColor $cOption
+    Write-Host "        Ueberspringt das Kopieren auf den Ventoy-Stick. Fuehrt nur Pruefung," -ForegroundColor $cDesc
+    Write-Host "        Download und Archivierung im lokalen Verzeichnis durch." -ForegroundColor $cDesc
+    Write-Host ""
+    Write-Host "    -SelectDistros, --select, --select-distros" -ForegroundColor $cOption
+    Write-Host "        Startet vorab das interaktive Menue. Ermoeglicht die gezielte Auswahl" -ForegroundColor $cDesc
+    Write-Host "        bestimmter Kategorien [G1]-[G6] oder einzelner Systeme." -ForegroundColor $cDesc
+    Write-Host ""
+
+    Write-Host "  2. VENTOY & THEMES" -ForegroundColor $cBanner
+    Write-Host "    -TargetDrive <Pfad>, --target <Pfad>" -ForegroundColor $cOption
+    Write-Host "        Ziel-Laufwerksbuchstabe (z. B. 'E:') oder Mountpoint des Ventoy-Sticks." -ForegroundColor $cDesc
+    Write-Host ""
+    Write-Host "    -ChangeTheme, --change-theme" -ForegroundColor $cOption
+    Write-Host "        Startet den interaktiven Auswahldialog zur Einrichtung des Boot-Designs." -ForegroundColor $cDesc
+    Write-Host ""
+    Write-Host "    -Theme <1-7|Name>, --theme <1-7|Name>" -ForegroundColor $cOption
+    Write-Host "        Setzt das Ventoy-Theme direkt ohne interaktive Abfrage:" -ForegroundColor $cDesc
+    Write-Host "          [1] modern       - Minimalist Dark (Anthrazit / Slate)" -ForegroundColor $cDesc
+    Write-Host "          [2] tux          - Classic Linux Tux (Puristisch, ohne Wallpaper)" -ForegroundColor $cDesc
+    Write-Host "          [3] cyberpunk    - Neon Nightlife (Cyberpunk City, Cyan/Magenta)" -ForegroundColor $cDesc
+    Write-Host "          [4] nord         - Arctic Frost (Kuehles Nord-Theme, Ice-Blue)" -ForegroundColor $cDesc
+    Write-Host "          [5] matrix       - Digital Rain (Klassisches gruenes Terminal)" -ForegroundColor $cDesc
+    Write-Host "          [6] synthwave    - Neon Retro Wave (80s Cyberpunk, Pink/Violett)" -ForegroundColor $cDesc
+    Write-Host "          [7] darkglass42  - Project 42 (Transluzente 9-Slice Rahmenboxen)" -ForegroundColor $cDesc
+    Write-Host ""
+    Write-Host "    -InstallVentoy, --install-ventoy" -ForegroundColor $cOption
+    Write-Host "        Installiert bzw. aktualisiert Ventoy auf dem gewaehlten USB-Stick via CLI." -ForegroundColor $cDesc
+    Write-Host ""
+
+    Write-Host "  3. VERZEICHNISSE & PROTOKOLL" -ForegroundColor $cBanner
+    Write-Host "    -TargetDirectory <Pfad>, --target-directory <Pfad>" -ForegroundColor $cOption
+    Write-Host "        Alternatives ISO-Speicherverzeichnis (Standard: Verzeichnis des Skripts)." -ForegroundColor $cDesc
+    Write-Host ""
+    Write-Host "    -LogFileName <Name>, --log-file <Name>" -ForegroundColor $cOption
+    Write-Host "        Name oder Pfad der Logdatei (Standard: 'update-linux-isos.log')." -ForegroundColor $cDesc
+    Write-Host ""
+
+    Write-Host "  4. HILFE & DOKUMENTATION" -ForegroundColor $cBanner
+    Write-Host "    -h, --help, -Help, /h, /help, /?, --halp" -ForegroundColor $cOption
+    Write-Host "        Gibt diese Hilfe- und Parameteruebersicht aus." -ForegroundColor $cDesc
+    Write-Host ""
+
+    Write-Host "PRAXIS-BEISPIELE:" -ForegroundColor $cSection
+    Write-Host ""
+    Write-Host "  [Beispiel 1] Vollautomatischer Komplettlauf (Download + Sync auf Stick E:):" -ForegroundColor $cExample
+    Write-Host "    Windows: update-linux-isos.bat -TargetDrive E:" -ForegroundColor $cOption
+    Write-Host "    Linux:   python3 update_linux_isos.py --target /media/user/VENTOY" -ForegroundColor $cOption
+    Write-Host ""
+    Write-Host "  [Beispiel 2] Gezielte Systeme waehlen & Theme 'Dark Glass 42' direkt setzen:" -ForegroundColor $cExample
+    Write-Host "    Windows: pwsh .\update-linux-isos.ps1 -SelectDistros -Theme darkglass42 -TargetDrive E:" -ForegroundColor $cOption
+    Write-Host "    Linux:   python3 update_linux_isos.py --select --theme 7 --target /mnt/usb" -ForegroundColor $cOption
+    Write-Host ""
+    Write-Host "  [Beispiel 3] Sicherer Simulationslauf (Nur Pruefen auf neue Versionen):" -ForegroundColor $cExample
+    Write-Host "    Windows: update-linux-isos.bat -DryRun" -ForegroundColor $cOption
+    Write-Host "    Linux:   python3 update_linux_isos.py --dry-run" -ForegroundColor $cOption
+    Write-Host ""
+    Write-Host "  [Beispiel 4] Schnelle Synchronisation vorhandener ISOs (ohne Download):" -ForegroundColor $cExample
+    Write-Host "    Windows: pwsh .\update-linux-isos.ps1 -SkipDownload -TargetDrive E:" -ForegroundColor $cOption
+    Write-Host "    Linux:   python3 update_linux_isos.py --skip-download --target /mnt/usb" -ForegroundColor $cOption
+    Write-Host ""
+    Write-Host "  [Beispiel 5] Nur Ventoy-Theme wechseln:" -ForegroundColor $cExample
+    Write-Host "    Windows: update-linux-isos.bat -ChangeTheme" -ForegroundColor $cOption
+    Write-Host "    Linux:   python3 update_linux_isos.py --change-theme" -ForegroundColor $cOption
+    Write-Host ""
+}
+
+# Sofortige Pruefung auf Hilfe-Schalter (noch vor Mutex, Logging und Scans)
+$isHelpRequested = $ShowHelp -or
+    ($TargetDrive -in @('/?', '/h', '/help', '/halp', '-?', '-h', '-help', '-halp', '--help', '--halp', '--h', 'help', '?')) -or
+    ($RemainingArgs -and ($RemainingArgs | Where-Object { $_ -match '^(/-?-?)(help|h|halp|\?)$' }))
+
+if ($isHelpRequested) {
+    Show-Help
+    return
+}
 
 Write-Host "-- Initialisiere Linux ISO Auto-Updater v2.6.0 --" -ForegroundColor DarkGray
 $ProgressPreference = 'SilentlyContinue'
@@ -65,7 +195,7 @@ $IsoDirectory = if (-not [string]::IsNullOrWhiteSpace($TargetDirectory)) {
 
 $LogFile = Join-Path $IsoDirectory $LogFileName
 $ArchiveDir = Join-Path $IsoDirectory "Archiv"
-$ScriptVersion = "2.4.0"
+$ScriptVersion = "2.6.0"
 $UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
 
 function ConvertTo-VersionString {
