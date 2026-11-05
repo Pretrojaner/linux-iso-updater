@@ -1,4 +1,4 @@
-﻿[
+[
   {
     "Enabled": true,
     "Name": "Alpine Linux",
@@ -468,7 +468,7 @@
     "Name": "Ultimate Boot CD (UBCD)",
     "Category": "04_Rescue-Systeme",
     "MatchPattern": "ubcd\\d+",
-    "Script": "return @{ Version = '5.3.9'; Url = 'https://archive.org/download/ubcd539_202306/ubcd539.iso'; Filename = 'ubcd539.iso' }",
+    "Script": "$mirrors = @(\n    'https://mirror.koddos.net/ubcd/ubcd539.iso',\n    'https://mirror.clientvps.com/ubcd/ubcd539.iso',\n    'https://mirror.vcu.edu/pub/windows/ubcd/ubcd539.iso',\n    'http://mirror.sysadminguide.net/ubcd/ubcd539.iso',\n    'https://archive.org/download/ubcd539_202306/ubcd539.iso'\n)\n$sha256 = '054c6d41cfe169de8ca93a084612793ecdacb401fb827b174d155966289f6f1b'\nforeach ($m in $mirrors) {\n    try {\n        $req = [System.Net.HttpWebRequest]::Create($m)\n        $req.Method = 'HEAD'\n        $req.Timeout = 4000\n        $res = $req.GetResponse()\n        if ([int]$res.StatusCode -eq 200) {\n            $res.Close()\n            return @{ Version = '5.3.9'; Url = $m; Filename = 'ubcd539.iso'; Sha256 = $sha256 }\n        }\n        $res.Close()\n    } catch {}\n}\nreturn @{ Version = '5.3.9'; Url = 'https://mirror.koddos.net/ubcd/ubcd539.iso'; Filename = 'ubcd539.iso'; Sha256 = $sha256 }",
     "SizeBytes": 842489856
   },
   {

@@ -1546,10 +1546,31 @@ class DistroScraperEngine:
         }
 
     def scrape_ultimate_boot_cd_ubcd(self) -> Optional[Dict[str, Any]]:
+        mirrors = [
+            "https://mirror.koddos.net/ubcd/ubcd539.iso",
+            "https://mirror.clientvps.com/ubcd/ubcd539.iso",
+            "https://mirror.vcu.edu/pub/windows/ubcd/ubcd539.iso",
+            "http://mirror.sysadminguide.net/ubcd/ubcd539.iso",
+            "https://archive.org/download/ubcd539_202306/ubcd539.iso",
+        ]
+        sha256 = "054c6d41cfe169de8ca93a084612793ecdacb401fb827b174d155966289f6f1b"
+        for m in mirrors:
+            try:
+                r = requests.head(m, headers={"User-Agent": self.dm.user_agent}, timeout=4, allow_redirects=True)
+                if r.status_code == 200 and int(r.headers.get("content-length", 0)) > 500_000_000:
+                    return {
+                        "Version": "5.3.9",
+                        "Url": m,
+                        "Filename": "ubcd539.iso",
+                        "Sha256": sha256,
+                    }
+            except Exception:
+                continue
         return {
             "Version": "5.3.9",
-            "Url": "https://archive.org/download/ubcd539_202306/ubcd539.iso",
-            "Filename": "ubcd539.iso"
+            "Url": "https://mirror.koddos.net/ubcd/ubcd539.iso",
+            "Filename": "ubcd539.iso",
+            "Sha256": sha256,
         }
 
     def scrape_shredos_disk_sanitizer(self) -> Optional[Dict[str, Any]]:
