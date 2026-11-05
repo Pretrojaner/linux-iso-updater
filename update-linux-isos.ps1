@@ -205,6 +205,80 @@ function ConvertTo-VersionString {
     return $ver
 }
 
+function Invoke-ArchiveCleanupPrompt {
+    param(
+        [string]$ArchiveDirectory,
+        [switch]$DryRunMode
+    )
+
+    if (-not (Test-Path -Path $ArchiveDirectory)) {
+        return
+    }
+
+    $archivedFiles = Get-ChildItem -Path $ArchiveDirectory -File -ErrorAction SilentlyContinue
+    if (-not $archivedFiles -or $archivedFiles.Count -eq 0) {
+        return
+    }
+
+    $totalBytes = ($archivedFiles | Measure-Object -Property Length -Sum).Sum
+    $totalMB = [math]::Round($totalBytes / 1MB, 2)
+    $totalGB = [math]::Round($totalBytes / 1GB, 2)
+    $totalSizeStr = if ($totalGB -ge 1.0) { "$totalGB GB" } else { "$totalMB MB" }
+
+    Write-Host ""
+    Write-Host "=================================================================================" -ForegroundColor Cyan
+    Write-Host "  [ARCHIV] INHALT DES ARCHIV-ORDNERS (Veraltete / ersetzte ISOs & Boot-Images)" -ForegroundColor Cyan
+    Write-Host "  Pfad: $ArchiveDirectory" -ForegroundColor DarkGray
+    Write-Host "=================================================================================" -ForegroundColor Cyan
+    Write-Host ("   {0,-52} | {1,14}" -f "Dateiname", "Groesse") -ForegroundColor Yellow
+    Write-Host ("   " + ("-" * 70)) -ForegroundColor DarkGray
+
+    foreach ($file in $archivedFiles | Sort-Object Name) {
+        $fBytes = $file.Length
+        $fMB = [math]::Round($fBytes / 1MB, 2)
+        $fGB = [math]::Round($fBytes / 1GB, 2)
+        $fSizeStr = if ($fGB -ge 1.0) { "$fGB GB" } else { "$fMB MB" }
+        Write-Host ("   {0,-52} | {1,14}" -f $file.Name, $fSizeStr) -ForegroundColor White
+    }
+
+    Write-Host ("   " + ("-" * 70)) -ForegroundColor DarkGray
+    Write-Host ("   {0,-52} | {1,14}" -f "GESAMTER SPEICHERBEDARF IM ARCHIV:", $totalSizeStr) -ForegroundColor Green
+    Write-Host "=================================================================================" -ForegroundColor Cyan
+    Write-Host ""
+
+    if ($DryRunMode) {
+        Write-Log -Message "[DRY-RUN] Archiv-Bereinigung uebersprungen ($($archivedFiles.Count) Dateien im Archiv: $totalSizeStr)." -Color Yellow -Level "DRY-RUN"
+        return
+    }
+
+    $choice = Read-Host "Moechtest du diese $($archivedFiles.Count) archivierten Dateien jetzt loeschen, um $totalSizeStr freizugeben? (j/N)"
+    if ($choice -in @('j', 'ja', 'y', 'yes')) {
+        $deletedCount = 0
+        $freedBytes = 0
+        foreach ($file in $archivedFiles) {
+            try {
+                $len = $file.Length
+                Remove-Item -Path $file.FullName -Force -ErrorAction Stop
+                $freedBytes += $len
+                $deletedCount++
+            } catch {
+                Write-Log -Message "Konnte Datei '$($file.Name)' nicht loeschen: $_" -Color Red -Level "WARNUNG"
+            }
+        }
+        $freedMB = [math]::Round($freedBytes / 1MB, 2)
+        $freedGB = [math]::Round($freedBytes / 1GB, 2)
+        $freedStr = if ($freedGB -ge 1.0) { "$freedGB GB" } else { "$freedMB MB" }
+
+        Write-Host ""
+        Write-Log -Message "[BEREINIGT] $deletedCount Dateien im Archiv geloescht. $freedStr Speicherplatz freigegeben!" -Color Green -Level "ERFOLG"
+        Write-Host ""
+    } else {
+        Write-Host ""
+        Write-Log -Message "[ARCHIV] Archivierte Dateien wurden beibehalten ($totalSizeStr in '$ArchiveDirectory')." -Color DarkGray -Level "INFO"
+        Write-Host ""
+    }
+}
+
 function Write-Log {
     param(
         [string]$Message,
@@ -2586,6 +2660,8 @@ if (-not $SkipDownload) {
         }
     }
     Write-Log -Message "=========================================================" -Color Cyan -Level "ENDE"
+    # Archiv-Bereinigung nach Download-Abschluss
+    Invoke-ArchiveCleanupPrompt -ArchiveDirectory $ArchiveDir -DryRunMode:$DryRun
 
     if ($script:jsonModified -and $distroList -and (Test-Path $DistrosJsonFile)) {
         try {

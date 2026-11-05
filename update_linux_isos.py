@@ -3016,6 +3016,72 @@ def run_ventoy_sync(
 # ==============================================================================
 # HAUPTPROGRAMM (MAIN)
 # ==============================================================================
+def check_and_clean_archive_interactive(archive_dir: Path, logger: Logger, dry_run: bool = False) -> None:
+    """Zeigt Inhalt des Archiv-Ordners an und fragt interaktiv nach Bereinigung."""
+    if not archive_dir.exists() or not archive_dir.is_dir():
+        return
+
+    archived_files = [f for f in archive_dir.iterdir() if f.is_file()]
+    if not archived_files:
+        return
+
+    total_bytes = sum(f.stat().st_size for f in archived_files)
+    total_mb = round(total_bytes / (1024 * 1024), 2)
+    total_gb = round(total_bytes / (1024 * 1024 * 1024), 2)
+    total_size_str = f"{total_gb} GB" if total_gb >= 1.0 else f"{total_mb} MB"
+
+    print(f"\n{Colors.CYAN}{'=' * 85}{Colors.RESET}")
+    print(f"{Colors.CYAN}  [ARCHIV] INHALT DES ARCHIV-ORDNERS (Veraltete / ersetzte ISOs & Boot-Images){Colors.RESET}")
+    print(f"{Colors.DARK_GRAY}  Pfad: {archive_dir}{Colors.RESET}")
+    print(f"{Colors.CYAN}{'=' * 85}{Colors.RESET}")
+    print(f"{Colors.YELLOW}   {'Dateiname':<54} | {'Größe':>14}{Colors.RESET}")
+    print(f"{Colors.DARK_GRAY}   {'-' * 71}{Colors.RESET}")
+
+    for f in sorted(archived_files, key=lambda x: x.name.lower()):
+        f_bytes = f.stat().st_size
+        f_mb = round(f_bytes / (1024 * 1024), 2)
+        f_gb = round(f_bytes / (1024 * 1024 * 1024), 2)
+        f_size_str = f"{f_gb} GB" if f_gb >= 1.0 else f"{f_mb} MB"
+        print(f"   {f.name:<54} | {f_size_str:>14}")
+
+    print(f"{Colors.DARK_GRAY}   {'-' * 71}{Colors.RESET}")
+    print(f"{Colors.GREEN}   {'GESAMTER SPEICHERBEDARF IM ARCHIV:':<54} | {total_size_str:>14}{Colors.RESET}")
+    print(f"{Colors.CYAN}{'=' * 85}{Colors.RESET}\n")
+
+    if dry_run:
+        logger.log(f"[DRY-RUN] Archiv-Bereinigung übersprungen ({len(archived_files)} Dateien im Archiv: {total_size_str}).", color=Colors.YELLOW, level="DRY-RUN")
+        return
+
+    try:
+        ans = input(f"Möchtest du diese {len(archived_files)} archivierten Dateien jetzt löschen, um {total_size_str} freizugeben? (j/N): ").strip().lower()
+    except (EOFError, KeyboardInterrupt):
+        ans = "n"
+
+    if ans in ["j", "ja", "y", "yes"]:
+        deleted_count = 0
+        freed_bytes = 0
+        for f in archived_files:
+            try:
+                sz = f.stat().st_size
+                f.unlink()
+                freed_bytes += sz
+                deleted_count += 1
+            except Exception as e:
+                logger.log(f"Konnte Datei '{f.name}' nicht löschen: {e}", color=Colors.RED, level="WARNUNG")
+
+        freed_mb = round(freed_bytes / (1024 * 1024), 2)
+        freed_gb = round(freed_bytes / (1024 * 1024 * 1024), 2)
+        freed_str = f"{freed_gb} GB" if freed_gb >= 1.0 else f"{freed_mb} MB"
+
+        print("")
+        logger.log(f"[BEREINIGT] {deleted_count} Dateien im Archiv gelöscht. {freed_str} Speicherplatz freigegeben!", color=Colors.GREEN, level="ERFOLG")
+        print("")
+    else:
+        print("")
+        logger.log(f"[ARCHIV] Archivierte Dateien wurden beibehalten ({total_size_str} in '{archive_dir}').", color=Colors.DARK_GRAY, level="INFO")
+        print("")
+
+
 def show_help() -> None:
     c_banner = Colors.CYAN
     c_section = Colors.YELLOW
@@ -3523,7 +3589,10 @@ def main() -> None:
 
             print(f"{Colors.DARK_GRAY}{tbl_border}{Colors.RESET}\n")
 
-        # SCHRITT 2: VENTOY SYNCHRONISIERUNG
+                # Archiv-Bereinigung nach Download-Abschluss
+        check_and_clean_archive_interactive(archive_dir, logger, dry_run=args.dry_run)
+
+# SCHRITT 2: VENTOY SYNCHRONISIERUNG
         if not args.skip_ventoy:
             target_mount = args.target
             if not target_mount:
