@@ -623,81 +623,111 @@ function Copy-FileWithProgress {
 
 function Get-PrettyIsoName {
     param([string]$Filename)
-    
+
+    # Rettungs-, Notfall- & Antiviren-Systeme
+    if ($Filename -match "(?i)desinfec'?t")      { return "c't Desinfec't (Antivirus & Notfallsystem)" }
     if ($Filename -match '(?i)clonezilla')       { return "Clonezilla Live Disk Backup" }
     if ($Filename -match '(?i)caine')            { return "CAINE Live Digital Forensics & TSK" }
     if ($Filename -match '(?i)drweb')            { return "Dr.Web LiveDisk Antivirus" }
-    if ($Filename -match '(?i)stresslinux')      { return "Stresslinux Hardware Load Test" }
-    if ($Filename -match '(?i)openbsd|install\d+\.iso') { return "OpenBSD Release" }
-    if ($Filename -match '(?i)NetBSD')           { return "NetBSD Release" }
-    if ($Filename -match '(?i)dfly|dragonfly')   { return "DragonFly BSD Release" }
-    if ($Filename -match '(?i)alpine')           { return "Alpine Linux Standard" }
-    if ($Filename -match '(?i)archlinux')        { return "Arch Linux" }
-    if ($Filename -match '(?i)cachyos')          { return "CachyOS Desktop Linux" }
-    if ($Filename -match '(?i)debian')           { return "Debian GNU/Linux" }
-    if ($Filename -match '(?i)devuan')           { return "Devuan GNU/Linux" }
-    if ($Filename -match '(?i)endeavouros')      { return "EndeavourOS Linux" }
-    if ($Filename -match '(?i)Fedora')           { return "Fedora Workstation Live" }
-    if ($Filename -match '(?i)garuda')           { return "Garuda Linux Dr460nized" }
-    if ($Filename -match '(?i)linuxmint')        { return "Linux Mint Cinnamon" }
-    if ($Filename -match '(?i)livegui.*gentoo')  { return "Gentoo Live GUI" }
-    if ($Filename -match '(?i)Mageia')           { return "Mageia Linux" }
-    if ($Filename -match '(?i)omarchy')          { return "Omarchy Linux" }
-    if ($Filename -match '(?i)lubuntu')          { return "Lubuntu Desktop" }
-    if ($Filename -match '(?i)antix')            { return "antiX Linux Full" }
-    if ($Filename -match '(?i)cld.*x86_64')      { return "Calculate Linux Desktop KDE" }
-    if ($Filename -match '(?i)crux')             { return "CRUX Linux" }
-    if ($Filename -match '(?i)elementaryos')     { return "elementary OS" }
-    if ($Filename -match '(?i)linux-lite')       { return "Linux Lite" }
-    if ($Filename -match '(?i)manjaro')          { return "Manjaro Linux XFCE" }
-    if ($Filename -match '(?i)mx-.*xfce')        { return "MX Linux Xfce" }
-    if ($Filename -match '(?i)nixos.*graphical') { return "NixOS Graphical" }
-    if ($Filename -match '(?i)opensuse.*tumbleweed') { return "openSUSE Tumbleweed" }
-    if ($Filename -match '(?i)pop-os')           { return "Pop!_OS" }
-    if ($Filename -match '(?i)slackware')        { return "Slackware Linux DVD" }
-    if ($Filename -match '(?i)solus.*budgie')    { return "Solus Budgie" }
-    if ($Filename -match '(?i)void-live')        { return "Void Linux XFCE" }
-    if ($Filename -match '(?i)winux')            { return "Winux Desktop" }
-    if ($Filename -match '(?i)ubuntucinnamon')   { return "Ubuntu Cinnamon" }
-    if ($Filename -match '(?i)ubuntu.*live-server') { return "Ubuntu Server LTS" }
-    if ($Filename -match '(?i)ubuntu')           { return "Ubuntu Desktop" }
-    if ($Filename -match '(?i)Zorin')            { return "Zorin OS" }
-    if ($Filename -match '(?i)kodachi')          { return "Kodachi OS" }
-    
-    if ($Filename -match '(?i)AlmaLinux')        { return "AlmaLinux Enterprise" }
-    if ($Filename -match '(?i)CentOS')           { return "CentOS Stream" }
-    if ($Filename -match '(?i)openmediavault')   { return "OpenMediaVault NAS" }
-    if ($Filename -match '(?i)zimaos')           { return "ZimaOS Storage & Cloud" }
-    if ($Filename -match '(?i)TrueNAS|FreeNAS')  { return "FreeNAS / TrueNAS SCALE" }
-    if ($Filename -match '(?i)proxmox')          { return "Proxmox VE Hypervisor" }
-    if ($Filename -match '(?i)Rocky')            { return "Rocky Linux" }
-    if ($Filename -match '(?i)Rockstor')         { return "Rockstor Btrfs NAS" }
-    
-    if ($Filename -match '(?i)blackarch')        { return "BlackArch Linux (Full)" }
-    if ($Filename -match '(?i)kali')             { return "Kali Linux Security" }
-    if ($Filename -match '(?i)Parrot')           { return "Parrot Security OS" }
-    
-    if ($Filename -match '(?i)CorePure64')       { return "Tiny Core Linux Pure64" }
-    if ($Filename -match '(?i)eset_sysrescue')   { return "ESET SysRescue Live" }
-    if ($Filename -match '(?i)fygoos')           { return "FygoOS PE Rescue" }
-    if ($Filename -match '(?i)gparted')          { return "GParted Live Partition Editor" }
     if ($Filename -match '(?i)krd')              { return "Kaspersky Rescue Disk" }
-    if ($Filename -match '(?i)netboot\.xyz')     { return "netboot.xyz Multi-Boot" }
-    if ($Filename -match '(?i)pts-desktop-live|phoronix') { return "Phoronix Test Suite Live" }
-    if ($Filename -match '(?i)rescatux')         { return "Rescatux Boot & GRUB Repair" }
-    if ($Filename -match '(?i)rescuezilla')      { return "Rescuezilla Recovery" }
-    if ($Filename -match '(?i)systemrescue')     { return "SystemRescue (ehem. SystemRescueCd)" }
-    
-    if ($Filename -match '(?i)FreeBSD')          { return "FreeBSD Release" }
-
+    if ($Filename -match '(?i)eset_sysrescue')   { return "ESET SysRescue Live" }
     if ($Filename -match '(?i)hbcd|hiren')       { return "Hiren's BootCD PE (Windows Recovery Environment)" }
     if ($Filename -match '(?i)boot-repair')      { return "Boot-Repair-Disk (GRUB & EFI Repair)" }
     if ($Filename -match '(?i)super_?grub')      { return "Super Grub2 Disk (Multi-Boot Rescue)" }
     if ($Filename -match '(?i)ubcd')             { return "Ultimate Boot CD (Diagnostic Suite)" }
     if ($Filename -match '(?i)shredos')          { return "ShredOS (Disk Sanitizer & DoD Wipe)" }
+    if ($Filename -match '(?i)rescatux')         { return "Rescatux Boot & GRUB Repair" }
+    if ($Filename -match '(?i)rescuezilla')      { return "Rescuezilla Recovery" }
+    if ($Filename -match '(?i)systemrescue')     { return "SystemRescue (ehem. SystemRescueCd)" }
+    if ($Filename -match '(?i)gparted')          { return "GParted Live Partition Editor" }
+    if ($Filename -match '(?i)fygoos')           { return "FygoOS PE Rescue" }
+    if ($Filename -match '(?i)netboot\.xyz')     { return "netboot.xyz Multi-Boot" }
+    if ($Filename -match '(?i)memtest|mt86plus') { return "MemTest86+ (RAM Diagnostic Tool)" }
+    if ($Filename -match '(?i)pts-desktop-live|phoronix') { return "Phoronix Test Suite Live" }
+    if ($Filename -match '(?i)acronis')          { return "Acronis Cyber Protect / True Image Rescue" }
+    if ($Filename -match '(?i)macrium|reflect')  { return "Macrium Reflect Rescue PE" }
+    if ($Filename -match '(?i)aomei')            { return "AOMEI Backupper & Partition Assistant" }
+    if ($Filename -match '(?i)easeus')           { return "EaseUS Partition Master / Todo Backup" }
+    if ($Filename -match '(?i)winpe|windows[-_ ]?pe') { return "Windows PE Recovery Environment" }
 
-    $clean = $Filename -replace '\.iso$', '' -replace '[-_]', ' '
-    return "$clean"
+    # BSD & Unix
+    if ($Filename -match '(?i)openbsd|install\d+\.iso') { return "OpenBSD Release" }
+    if ($Filename -match '(?i)NetBSD')           { return "NetBSD Release" }
+    if ($Filename -match '(?i)dfly|dragonfly')   { return "DragonFly BSD Release" }
+    if ($Filename -match '(?i)FreeBSD')          { return "FreeBSD Release" }
+
+    # Desktop Linux (Alle 30 Systeme)
+    if ($Filename -match '(?i)alpine')           { return "Alpine Linux Standard" }
+    if ($Filename -match '(?i)antix')            { return "antiX Linux Full" }
+    if ($Filename -match '(?i)archlinux')        { return "Arch Linux" }
+    if ($Filename -match '(?i)cachyos')          { return "CachyOS Desktop Linux" }
+    if ($Filename -match '(?i)cld.*x86_64')      { return "Calculate Linux Desktop KDE" }
+    if ($Filename -match '(?i)crux')             { return "CRUX Linux" }
+    if ($Filename -match '(?i)debian')           { return "Debian GNU/Linux" }
+    if ($Filename -match '(?i)devuan')           { return "Devuan GNU/Linux" }
+    if ($Filename -match '(?i)elementaryos')     { return "elementary OS" }
+    if ($Filename -match '(?i)endeavouros')      { return "EndeavourOS Linux" }
+    if ($Filename -match '(?i)Fedora')           { return "Fedora Workstation Live" }
+    if ($Filename -match '(?i)garuda')           { return "Garuda Linux Dr460nized" }
+    if ($Filename -match '(?i)livegui|gentoo')   { return "Gentoo Live GUI" }
+    if ($Filename -match '(?i)linux-lite')       { return "Linux Lite" }
+    if ($Filename -match '(?i)linuxmint')        { return "Linux Mint Cinnamon" }
+    if ($Filename -match '(?i)lubuntu')          { return "Lubuntu Desktop" }
+    if ($Filename -match '(?i)Mageia')           { return "Mageia Linux" }
+    if ($Filename -match '(?i)manjaro')          { return "Manjaro Linux XFCE" }
+    if ($Filename -match '(?i)mx-.*xfce')        { return "MX Linux Xfce" }
+    if ($Filename -match '(?i)nixos.*graphical') { return "NixOS Graphical" }
+    if ($Filename -match '(?i)omarchy')          { return "Omarchy Linux" }
+    if ($Filename -match '(?i)opensuse.*tumbleweed') { return "openSUSE Tumbleweed" }
+    if ($Filename -match '(?i)pop-os')           { return "Pop!_OS" }
+    if ($Filename -match '(?i)slackware')        { return "Slackware Linux DVD" }
+    if ($Filename -match '(?i)solus.*budgie')    { return "Solus Budgie" }
+    if ($Filename -match '(?i)ubuntucinnamon')   { return "Ubuntu Cinnamon" }
+    if ($Filename -match '(?i)ubuntu.*live-server') { return "Ubuntu Server LTS" }
+    if ($Filename -match '(?i)ubuntu')           { return "Ubuntu Desktop" }
+    if ($Filename -match '(?i)void-live')        { return "Void Linux XFCE" }
+    if ($Filename -match '(?i)winux')            { return "Winux (Windows 11 UI & Wine/Proton)" }
+    if ($Filename -match '(?i)Zorin')            { return "Zorin OS" }
+
+    # Enterprise Server & NAS
+    if ($Filename -match '(?i)AlmaLinux')        { return "AlmaLinux Enterprise" }
+    if ($Filename -match '(?i)CentOS')           { return "CentOS Stream" }
+    if ($Filename -match '(?i)openmediavault')   { return "OpenMediaVault NAS" }
+    if ($Filename -match '(?i)zimaos')           { return "ZimaOS Storage & Cloud" }
+    if ($Filename -match '(?i)TrueNAS|FreeNAS')  { return "FreeNAS / TrueNAS SCALE" }
+    if ($Filename -match '(?i)proxmox.*backup')  { return "Proxmox Backup Server (PBS)" }
+    if ($Filename -match '(?i)proxmox')          { return "Proxmox VE Hypervisor" }
+    if ($Filename -match '(?i)Rocky')            { return "Rocky Linux" }
+    if ($Filename -match '(?i)Rockstor')         { return "Rockstor Btrfs NAS" }
+
+    # Security & Pentest
+    if ($Filename -match '(?i)blackarch')        { return "BlackArch Linux (Full)" }
+    if ($Filename -match '(?i)kali')             { return "Kali Linux Security" }
+    if ($Filename -match '(?i)kodachi')          { return "Kodachi OS (Anonymous Anti-Forensic Live)" }
+    if ($Filename -match '(?i)Parrot')           { return "Parrot Security OS" }
+    if ($Filename -match '(?i)tails')            { return "Tails (The Amnesic Incognito Live System)" }
+    if ($Filename -match '(?i)qubes')            { return "Qubes OS (Security by Isolation)" }
+
+    # Spezial & Leichtgewichtig
+    if ($Filename -match '(?i)CorePure64')       { return "Tiny Core Linux Pure64" }
+    if ($Filename -match '(?i)knoppix')          { return "Knoppix Live Linux" }
+    if ($Filename -match '(?i)pup(py)?64|fossapup|bionicpup|bookwormpup') { return "Puppy Linux (Ultra-Lightweight)" }
+    if ($Filename -match '(?i)opnsense')         { return "OPNsense Firewall & Security Platform" }
+    if ($Filename -match '(?i)pfsense')          { return "pfSense Community Edition Firewall" }
+    if ($Filename -match '(?i)win(dows)?[-_ ]?(10|11|server)') { return "Windows Setup & Installation" }
+
+    # Intelligenter Fallback fuer unbekannte oder benutzerdefinierte ISOs
+    $clean = $Filename -replace '\.(iso|img)$', ''
+    $clean = $clean -replace '(?i)[-_](x86[-_]64|amd64|x64|x86|i386|i686)', ''
+    $clean = $clean -replace '(?i)[-_](dvd\d*|disc\d*|cd\d*|live|desktop|release|install)', ''
+    $clean = $clean -replace '[-_]', ' '
+    $clean = ($clean -replace '\s+', ' ').Trim()
+
+    $textInfo = (Get-Culture).TextInfo
+    $words = $clean -split ' ' | ForEach-Object {
+        if ($_ -match '^[A-Z0-9]+$' -or $_ -match '\d') { $_ } else { $textInfo.ToTitleCase($_) }
+    }
+    return ($words -join ' ')
 }
 
 function Get-LocalIsoFiles {
@@ -1990,7 +2020,12 @@ function Start-VentoyCopyJob {
 
                 # Bereinigung veralteter ISOs auf dem Ziel-Laufwerk
                 $distroMatch = $distroPatterns | Where-Object { $iso.Filename -match $_.MatchPattern }
-                $patternToUse = if ($distroMatch) { $distroMatch.MatchPattern } else { ($iso.Filename -replace '[-_\d\.]+\.iso$', '') }
+                $patternToUse = if ($distroMatch) {
+                    $distroMatch.MatchPattern
+                } else {
+                    $baseCand = $iso.Filename -replace '(?i)[-_\d\.]+\.(iso|img)$', ''
+                    if ($baseCand.Length -ge 3) { "^" + [regex]::Escape($baseCand) + "[-_\d\.]+\.(iso|img)$" } else { $null }
+                }
 
                 if ($patternToUse) {
                     $oldTargetIsos = Get-ChildItem -Path $dstCatDir -File -ErrorAction SilentlyContinue | Where-Object { ($_.Extension -in '.iso', '.img') -and
@@ -2136,11 +2171,30 @@ function Start-VentoyCopyJob {
                     @{ "image" = "/06_Windows-PE_Rescue"; "alias" = "Windows PE & Recovery (Hiren's BootCD PE, WinPE, Recovery...)" }
                 )
 
+                # Alle ISO-/IMG-Dateien auf dem Ziel-Laufwerk und aus der Kopierliste fuer Menue-Aliase erfassen
+                $allTargetImages = @{}
+                $categoryOrder = @("01_Desktop-Linux", "02_Enterprise-Server", "03_Security-Pentest", "04_Rescue-Systeme", "05_BSD-Unix", "06_Windows-PE_Rescue")
+                foreach ($cat in $categoryOrder) {
+                    $catDir = Join-Path $TargetDriveRoot $cat
+                    if (Test-Path $catDir) {
+                        $catFiles = Get-ChildItem -Path $catDir -File -ErrorAction SilentlyContinue | Where-Object { $_.Extension -in '.iso', '.img' }
+                        foreach ($f in $catFiles) {
+                            $vpath = "/$cat/$($f.Name)"
+                            $allTargetImages[$vpath] = $f.Name
+                        }
+                    }
+                }
+
                 foreach ($iso in $isoFilesToCopy) {
-                    $vtoyImagePath = "/" + $iso.RelPath.Replace('\', '/')
-                    $prettyTitle   = Get-PrettyIsoName -Filename $iso.Filename
+                    $vtoyPath = "/" + $iso.RelPath.Replace('\', '/')
+                    $allTargetImages[$vtoyPath] = $iso.Filename
+                }
+
+                foreach ($vpath in ($allTargetImages.Keys | Sort-Object)) {
+                    $fn = $allTargetImages[$vpath]
+                    $prettyTitle = Get-PrettyIsoName -Filename $fn
                     $menuAliases += @{
-                        "image" = $vtoyImagePath
+                        "image" = $vpath
                         "alias" = $prettyTitle
                     }
                 }
