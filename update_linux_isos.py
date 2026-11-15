@@ -1603,77 +1603,110 @@ def get_pretty_iso_name(filename: str) -> str:
     """Erzeugt formatierte Anzeigenamen für das Ventoy-Menü."""
     fn_lower = filename.lower()
     mapping = [
+        # Rettungs-, Notfall- & Antiviren-Systeme
+        (r"desinfec'?t", "c't Desinfec't (Antivirus & Notfallsystem)"),
         ("clonezilla", "Clonezilla Live Disk Backup"),
         ("caine", "CAINE Live Digital Forensics & TSK"),
         ("drweb", "Dr.Web LiveDisk Antivirus"),
+        ("krd", "Kaspersky Rescue Disk"),
+        ("eset_sysrescue", "ESET SysRescue Live"),
+        (r"hbcd|hiren", "Hiren's BootCD PE (Windows Recovery Environment)"),
+        (r"boot-repair", "Boot-Repair-Disk (GRUB & EFI Repair)"),
+        (r"super_?grub", "Super Grub2 Disk (Multi-Boot Rescue)"),
+        (r"ubcd", "Ultimate Boot CD (Diagnostic Suite)"),
+        (r"shredos", "ShredOS (Disk Sanitizer & DoD Wipe)"),
+        ("rescatux", "Rescatux Boot & GRUB Repair"),
+        ("rescuezilla", "Rescuezilla Recovery"),
+        ("systemrescue", "SystemRescue (ehem. SystemRescueCd)"),
+        ("gparted", "GParted Live Partition Editor"),
+        ("fygoos", "FygoOS PE Rescue"),
+        (r"netboot\.xyz", "netboot.xyz Multi-Boot"),
+        (r"memtest|mt86plus", "MemTest86+ (RAM Diagnostic Tool)"),
+        (r"pts-desktop-live|phoronix", "Phoronix Test Suite Live"),
+        (r"acronis", "Acronis Cyber Protect / True Image Rescue"),
+        (r"macrium|reflect", "Macrium Reflect Rescue PE"),
+        (r"aomei", "AOMEI Backupper & Partition Assistant"),
+        (r"easeus", "EaseUS Partition Master / Todo Backup"),
+        (r"winpe|windows[-_ ]?pe", "Windows PE Recovery Environment"),
+
+        # BSD & Unix
         (r"openbsd|install\d+\.iso", "OpenBSD Release"),
         ("netbsd", "NetBSD Release"),
         (r"dfly|dragonfly", "DragonFly BSD Release"),
+        ("freebsd", "FreeBSD Release"),
+
+        # Desktop Linux (Alle 30 Systeme)
         ("alpine", "Alpine Linux Standard"),
+        ("antix", "antiX Linux Full"),
         ("archlinux", "Arch Linux"),
         ("cachyos", "CachyOS Desktop Linux"),
+        (r"cld.*x86_64", "Calculate Linux Desktop KDE"),
+        ("crux", "CRUX Linux"),
         ("debian", "Debian GNU/Linux"),
         ("devuan", "Devuan GNU/Linux"),
+        ("elementaryos", "elementary OS"),
         ("endeavouros", "EndeavourOS Linux"),
         ("fedora", "Fedora Workstation Live"),
         ("garuda", "Garuda Linux Dr460nized"),
-        ("linuxmint", "Linux Mint Cinnamon"),
-        (r"livegui.*gentoo", "Gentoo Live GUI"),
-        ("mageia", "Mageia Linux"),
-        ("omarchy", "Omarchy Linux"),
-        ("lubuntu", "Lubuntu Desktop"),
-        ("antix", "antiX Linux Full"),
-        (r"cld.*x86_64", "Calculate Linux Desktop KDE"),
-        ("crux", "CRUX Linux"),
-        ("elementaryos", "elementary OS"),
+        (r"livegui|gentoo", "Gentoo Live GUI"),
         ("linux-lite", "Linux Lite"),
+        ("linuxmint", "Linux Mint Cinnamon"),
+        ("lubuntu", "Lubuntu Desktop"),
+        ("mageia", "Mageia Linux"),
         ("manjaro", "Manjaro Linux XFCE"),
         (r"mx-.*xfce", "MX Linux Xfce"),
         (r"nixos.*graphical", "NixOS Graphical"),
+        ("omarchy", "Omarchy Linux"),
         (r"opensuse.*tumbleweed", "openSUSE Tumbleweed"),
         ("pop-os", "Pop!_OS"),
         ("slackware", "Slackware Linux DVD"),
         (r"solus.*budgie", "Solus Budgie"),
-        ("void-live", "Void Linux XFCE"),
         ("ubuntucinnamon", "Ubuntu Cinnamon"),
         (r"ubuntu.*live-server", "Ubuntu Server LTS"),
         ("ubuntu", "Ubuntu Desktop"),
+        ("void-live", "Void Linux XFCE"),
+        ("winux", "Winux (Windows 11 UI & Wine/Proton)"),
         ("zorin", "Zorin OS"),
+
+        # Enterprise Server & NAS
         ("almalinux", "AlmaLinux Enterprise"),
         ("centos", "CentOS Stream"),
         ("openmediavault", "OpenMediaVault NAS"),
         ("zimaos", "ZimaOS Storage & Cloud"),
         (r"truenas|freenas", "FreeNAS / TrueNAS SCALE"),
         ("proxmox", "Proxmox VE Hypervisor"),
+        (r"proxmox.*backup", "Proxmox Backup Server (PBS)"),
         ("rocky", "Rocky Linux"),
         ("rockstor", "Rockstor Btrfs NAS"),
+
+        # Security & Pentest
         ("blackarch", "BlackArch Linux (Full)"),
         ("kali", "Kali Linux Security"),
+        ("kodachi", "Kodachi OS (Anonymous Anti-Forensic Live)"),
         ("parrot", "Parrot Security OS"),
+        ("tails", "Tails (The Amnesic Incognito Live System)"),
+        ("qubes", "Qubes OS (Security by Isolation)"),
+
+        # Spezial & Leichtgewichtig
         ("corepure64", "Tiny Core Linux Pure64"),
-        ("eset_sysrescue", "ESET SysRescue Live"),
-        ("fygoos", "FygoOS PE Rescue"),
-        ("gparted", "GParted Live Partition Editor"),
-        ("krd", "Kaspersky Rescue Disk"),
-        (r"netboot\.xyz", "netboot.xyz Multi-Boot"),
-        (r"pts-desktop-live|phoronix", "Phoronix Test Suite Live"),
-        ("rescatux", "Rescatux Boot & GRUB Repair"),
-        ("rescuezilla", "Rescuezilla Recovery"),
-        ("systemrescue", "SystemRescue (ehem. SystemRescueCd)"),
-        ("freebsd", "FreeBSD Release"),
-        (r"hbcd|hiren", "Hiren's BootCD PE (Windows Recovery Environment)"),
-        (r"boot-repair", "Boot-Repair-Disk (GRUB & EFI Repair)"),
-        (r"super_?grub", "Super Grub2 Disk (Multi-Boot Rescue)"),
-        (r"ubcd", "Ultimate Boot CD (Diagnostic Suite)"),
-        (r"shredos", "ShredOS (Disk Sanitizer & DoD Wipe)"),
+        ("knoppix", "Knoppix Live Linux"),
+        (r"pup(py)?64|fossapup|bionicpup|bookwormpup", "Puppy Linux (Ultra-Lightweight)"),
+        ("opnsense", "OPNsense Firewall & Security Platform"),
+        ("pfsense", "pfSense Community Edition Firewall"),
+        (r"win(dows)?[-_ ]?(10|11|server)", "Windows Setup & Installation"),
     ]
     for pattern, pretty in mapping:
         if re.search(pattern, fn_lower):
             return pretty
 
+    # Intelligenter Fallback für unbekannte oder benutzerdefinierte ISOs
     clean = re.sub(r"\.(iso|img)$", "", filename, flags=re.IGNORECASE)
+    clean = re.sub(r"[-_](x86[-_]64|amd64|x64|x86|i386|i686)", "", clean, flags=re.IGNORECASE)
+    clean = re.sub(r"[-_](dvd\d*|disc\d*|cd\d*|live|desktop|release|install)", "", clean, flags=re.IGNORECASE)
     clean = re.sub(r"[-_]", " ", clean)
-    return clean.strip()
+    clean = re.sub(r"\s+", " ", clean).strip()
+    words = [w.capitalize() if not (w.isupper() or any(c.isdigit() for c in w)) else w for w in clean.split(" ")]
+    return " ".join(words)
 
 
 def get_ventoy_theme_definitions() -> Dict[str, Dict[str, Any]]:
@@ -2910,7 +2943,9 @@ def run_ventoy_sync(
                 pat_to_use = d["MatchPattern"]
                 break
         if not pat_to_use:
-            pat_to_use = re.sub(r"[-_\d\.]+\.iso$", "", item["filename"])
+            base_cand = re.sub(r"[-_\d\.]+\.(iso|img)$", "", item["filename"], flags=re.I)
+            if len(base_cand) >= 3:
+                pat_to_use = rf"^{re.escape(base_cand)}[-_\d\.]+\.(iso|img)$"
 
         if dst_cat_dir.exists() and pat_to_use:
             for old_target in [x for x in dst_cat_dir.glob("*") if x.is_file() and x.suffix.lower() in [".iso", ".img"]]:
@@ -2998,9 +3033,23 @@ def run_ventoy_sync(
             {"image": "/05_BSD-Unix", "alias": "BSD & Unix (FreeBSD, OpenBSD, NetBSD, DragonFly...)"},
             {"image": "/06_Windows-PE_Rescue", "alias": "Windows PE & Recovery (Hiren's BootCD PE, WinPE, Recovery...)"},
         ]
+        # Alle ISO-/IMG-Dateien auf dem Ziel-Laufwerk und aus der Kopierliste für Menü-Aliase erfassen
+        all_target_images: Dict[str, str] = {}
+        for cat in CATEGORY_ORDER:
+            cat_dir = target_root / cat
+            if cat_dir.is_dir():
+                for f in cat_dir.glob("*"):
+                    if f.is_file() and f.suffix.lower() in [".iso", ".img"]:
+                        vpath = f"/{cat}/{f.name}"
+                        all_target_images[vpath] = f.name
+
         for iso_item in iso_files_to_copy:
             vtoy_path = "/" + str(iso_item["rel_path"]).replace("\\", "/")
-            pretty = get_pretty_iso_name(iso_item["filename"])
+            all_target_images[vtoy_path] = iso_item["filename"]
+
+        for vtoy_path in sorted(all_target_images.keys()):
+            fn = all_target_images[vtoy_path]
+            pretty = get_pretty_iso_name(fn)
             menu_aliases.append({"image": vtoy_path, "alias": pretty})
 
         config["menu_alias"] = menu_aliases
