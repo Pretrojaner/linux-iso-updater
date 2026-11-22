@@ -35,3 +35,8 @@ __pycache__/
 *.py[cod]
 .venv/
 venv/
+
+# Antigravity conversation backups and databases
+Konversationen/brain_backup/
+Konversationen/sqlite_db/
+

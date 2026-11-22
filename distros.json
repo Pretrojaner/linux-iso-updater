@@ -1,4 +1,4 @@
-﻿[
+[
   {
     "Enabled": true,
     "Name": "Alpine Linux",
@@ -251,7 +251,7 @@
     "Enabled": true,
     "Name": "Azure Linux",
     "MatchPattern": "AzureLinux-[^\"]*?-x86_64",
-    "Script": "$url = 'https://aka.ms/azurelinux-3.0-x86_64.iso'\nreturn @{ Version = '3.0'; Url = $url; Filename = 'AzureLinux-3.0-x86_64.iso' }",
+    "Script": "$url = 'https://aka.ms/azurelinux-3.0-x86_64.iso'\nreturn @{ Version = '3.0'; Url = $url; Filename = 'AzureLinux-3.0-x86_64.iso'; ChecksumUrl = 'https://aka.ms/azurelinux-3.0-x86_64-iso-checksum' }",
     "Category": "02_Enterprise-Server",
     "SizeBytes": 780576768
   },

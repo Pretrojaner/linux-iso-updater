@@ -3170,7 +3170,7 @@ def show_help() -> None:
   Stand:         05. November 2026
   Autor:         Pretrojaner & Community (Ingo)
   Plattform:     Linux & macOS (Python 3.8+) / Windows (PowerShell 7+)
-  Umfang:        64 bootfähige Systeme in 6 Kategorien (inkl. Windows-PE Rescue)
+  Umfang:        65 bootfähige Systeme in 6 Kategorien (inkl. Windows-PE Rescue)
   Repository:    https://github.com/Pretrojaner/linux-iso-updater
 {c_banner}===================================================================================================={reset}
 
