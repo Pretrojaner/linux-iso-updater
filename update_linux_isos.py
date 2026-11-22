@@ -582,7 +582,7 @@ def decompress_bz2(bz2_path: Path, dest_iso_path: Path) -> bool:
 # DISTRIBUTIONS SCRAPING ENGINE (ALLE 59 DISTROS)
 # ==============================================================================
 class DistroScraperEngine:
-    """Implementiert native Web-Scraper für alle 64 Distributionen."""
+    """Implementiert native Web-Scraper für alle 65 Distributionen."""
 
     def __init__(self, download_mgr: DownloadManager):
         self.dm = download_mgr
@@ -1079,6 +1079,27 @@ class DistroScraperEngine:
                     ver = f"9.{vm.group(1)}" if vm else "9"
                     return {"Version": ver, "Url": f"{base}{fn}", "Filename": fn}
         return None
+
+    def scrape_azure_linux(self) -> Optional[Dict[str, Any]]:
+        # Azure Linux (vormals CBL-Mariner) von Microsoft
+        ver = "3.0"
+        api = self.dm.get_web_content("https://api.github.com/repos/microsoft/azurelinux/releases/latest")
+        if api:
+            try:
+                rel = json.loads(api)
+                name = rel.get("name") or rel.get("tag_name", "")
+                tag = name.split("-")[0].lstrip("v")
+                if tag:
+                    ver = tag
+            except Exception:
+                pass
+
+        return {
+            "Version": ver,
+            "Url": "https://aka.ms/azurelinux-3.0-x86_64.iso",
+            "Filename": "AzureLinux-3.0-x86_64.iso",
+            "ChecksumUrl": "https://aka.ms/azurelinux-3.0-x86_64-iso-checksum",
+        }
 
     def scrape_centos_stream_9(self) -> Optional[Dict[str, Any]]:
         mirrors = [
@@ -1670,6 +1691,7 @@ def get_pretty_iso_name(filename: str) -> str:
 
         # Enterprise Server & NAS
         ("almalinux", "AlmaLinux Enterprise"),
+        (r"azurelinux|azure-linux|mariner", "Azure Linux (Microsoft Cloud & Edge)"),
         ("centos", "CentOS Stream"),
         ("openmediavault", "OpenMediaVault NAS"),
         ("zimaos", "ZimaOS Storage & Cloud"),

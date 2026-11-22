@@ -9,14 +9,14 @@ Ein PowerShell- und Python-basiertes All-in-One Automatisierungswerkzeug zum Her
 > [!IMPORTANT]
 > **Wichtiger Hinweis zu Speicherort & benötigtem Speicherplatz:**
 > - **Speicherort:** Alle ISO- und Boot-Image-Dateien werden standardmäßig direkt im **selben Verzeichnis abgelegt, in dem sich die Skripte befinden** (strukturiert in Unterordnern von `01_Desktop-Linux` bis `06_Windows-PE_Rescue`).
-> - **Speicherplatzbedarf:** Platziere das Skriptpaket daher unbedingt auf einem Laufwerk mit ausreichend freiem Speicherplatz! Für den vollständigen Download aller 64 vorkonfigurierten Distributionen werden ca. **195 GB** freier Speicherplatz empfohlen.
+> - **Speicherplatzbedarf:** Platziere das Skriptpaket daher unbedingt auf einem Laufwerk mit ausreichend freiem Speicherplatz! Für den vollständigen Download aller 65 vorkonfigurierten Distributionen werden ca. **196 GB** freier Speicherplatz empfohlen.
 > - **Flexible Auswahl:** Beim Start öffnet sich automatisch das interaktive Auswahlmenü. Du kannst mit `[ENTER]` direkt alle Distros laden (`all`) oder gezielt einzelne Gruppen (z. B. `G1, G4, G6`) bzw. Nummern auswählen, um nur die gewünschten Systeme zu beziehen und Speicherplatz zu sparen.
 
 ---
 
 ## 🚀 Funktionen
 
-- **Versions- & Release-Scraping:** Prüft online automatisch die neuesten Releases für 64 Linux-Distributionen, Enterprise-Server, Rettungssysteme, BSD-Derivate und Windows-PE-Notfallumgebungen.
+- **Versions- & Release-Scraping:** Prüft online automatisch die neuesten Releases für 65 Linux-Distributionen, Enterprise-Server, Rettungssysteme, BSD-Derivate und Windows-PE-Notfallumgebungen.
 - **Interaktive Distributions-Auswahl (`-SelectDistros`):**
   - Übersichtliche Darstellung in 6 Gruppen (`G1` bis `G6`).
   - Mehrfachauswahl via Ziffern (`1, 3, 5-8`), Gruppen (`G1, G4, G6`) oder `all`.
@@ -56,7 +56,7 @@ Ein PowerShell- und Python-basiertes All-in-One Automatisierungswerkzeug zum Her
 
 ---
 
-## 📂 Unterstützte Distributionen & Systeme (64 Betriebssysteme & Tools)
+## 📂 Unterstützte Distributionen & Systeme (65 Betriebssysteme & Tools)
 
 ### 🖥️ 01_Desktop-Linux (30 Distros)
 - **Alpine Linux** – Extrem ressourcenschonende, hochsichere Mini-Distribution auf musl-libc- und busybox-Basis.
@@ -90,8 +90,9 @@ Ein PowerShell- und Python-basiertes All-in-One Automatisierungswerkzeug zum Her
 - **Winux** – Auf Ubuntu 24.04 LTS basierende Distribution mit modernem Windows-11-Look (KDE Plasma), vorkonfiguriertem Wine/Proton und hoher Einsteigerfreundlichkeit.
 - **Zorin OS Education** – Speziell für Schulen, Schüler und Bildung konzipierte Zorin-OS-Version mit vorinstallierter Lernsoftware.
 
-### 🏢 02_Enterprise-Server & NAS (9 Distros)
+### 🏢 02_Enterprise-Server & NAS (10 Distros)
 - **AlmaLinux** – Binärkompatibles 1:1 RHEL-Enterprise-Betriebssystem und stabiler Nachfolger von CentOS.
+- **Azure Linux** – Microsofts gehärtete Linux-Distribution (vormals CBL-Mariner) für Cloud-Infrastruktur, Edge-Devices und Container-Hosts.
 - **CentOS Stream 9** – Die kontinuierlich aktualisierte Upstream-Entwicklungsplattform für Red Hat Enterprise Linux (RHEL).
 - **Proxmox VE** – Führende Open-Source-Virtualisierungsplattform für KVM-VMs, LXC-Container und Software-Defined Storage.
 - **Rocky Linux** – Community-getriebenes, hochstabiles Enterprise-Betriebssystem mit 100%iger RHEL-Kompatibilität.
@@ -144,7 +145,7 @@ Ein PowerShell- und Python-basiertes All-in-One Automatisierungswerkzeug zum Her
 | `update-linux-isos.ps1` | Hauptskript für Windows (Downloads, Hash-Prüfung, Archivierung, Ventoy-Themes, Sync). |
 | `update-linux-isos.sh`  | Ausführbares Bash-Startskript für Linux (prüft Abhängigkeiten, richtet ggf. `.venv` ein). |
 | `update_linux_isos.py`  | Vollständige Linux-Portierung in Python 3 (PEP 8, Pillow, Requests, Streaming-Downloads). |
-| `distros.json`          | JSON-Konfigurationsdatei aller 64 Distributionen, Download-Quellen und Regex-Muster. |
+| `distros.json`          | JSON-Konfigurationsdatei aller 65 Distributionen, Download-Quellen und Regex-Muster. |
 | `.gitignore`            | Schließt ISO-Dateien, Logdateien und temporäre Ordner vom Git-Tracking aus. |
 | `GITHUB_ANLEITUNG.md`   | Dokumentation zur Verwaltung und Pflege des GitHub-Repositories. |
 
@@ -203,4 +204,4 @@ chmod +x update-linux-isos.sh
 ## 📄 Lizenz & Danksagung
 
 Entwickelt für IT-Administratoren, Techniker und Linux-Enthusiasten.
-Basiert auf den offiziellen Upstream-Quellen aller 64 Distributionen und dem herausragenden [Ventoy-Projekt](https://www.ventoy.net/).
+Basiert auf den offiziellen Upstream-Quellen aller 65 Distributionen und dem herausragenden [Ventoy-Projekt](https://www.ventoy.net/).

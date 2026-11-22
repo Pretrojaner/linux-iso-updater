@@ -1,4 +1,4 @@
-[
+﻿[
   {
     "Enabled": true,
     "Name": "Alpine Linux",
@@ -246,6 +246,14 @@
     "Script": "$baseUrls = @('https://ftp.halifax.rwth-aachen.de/almalinux/9/isos/x86_64/', 'https://ftp.fau.de/almalinux/9/isos/x86_64/', 'https://repo.almalinux.org/almalinux/9/isos/x86_64/')\nforeach ($baseUrl in $baseUrls) {\n    $html = Get-WebContent -Uri $baseUrl\n    if ($html -and $html -match 'href=\"(AlmaLinux-9[^\"]*?-x86_64-dvd\\.iso)\"') {\n        $fn  = $Matches[1]\n        $ver = if ($fn -match 'AlmaLinux-9\\.(\\d+)') { \"9.$($Matches[1])\" } else { \"9\" }\n        return @{ Version = $ver; Url = \"$baseUrl$fn\"; Filename = $fn }\n    }\n}\nreturn $null",
     "Category": "02_Enterprise-Server",
     "SizeBytes": 15151923200
+  },
+  {
+    "Enabled": true,
+    "Name": "Azure Linux",
+    "MatchPattern": "AzureLinux-[^\"]*?-x86_64",
+    "Script": "$url = 'https://aka.ms/azurelinux-3.0-x86_64.iso'\nreturn @{ Version = '3.0'; Url = $url; Filename = 'AzureLinux-3.0-x86_64.iso' }",
+    "Category": "02_Enterprise-Server",
+    "SizeBytes": 780576768
   },
   {
     "Enabled": true,
