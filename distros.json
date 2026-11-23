@@ -555,7 +555,7 @@
     "Enabled": true,
     "Name": "Q4OS",
     "MatchPattern": "q4os-([0-9.]+)-x64(\\.r\\d+)?\\.iso",
-    "Script": "$html = Get-WebContent -Uri 'https://q4os.org/downloads1.html'\nif ($html -and $html -match 'href=\"([^\"]*?(q4os-([0-9.]+)-x64(\\.r\\d+)?\\.iso)/download)\"') {\n    $url = $Matches[1]\n    $fn  = $Matches[2]\n    $ver = $Matches[3]\n    return @{ Version = $ver; Url = $url; Filename = $fn }\n}\nreturn @{ Version = '6.11'; Url = 'https://sourceforge.net/projects/q4os/files/stable/q4os-6.11-x64.r1.iso/download'; Filename = 'q4os-6.11-x64.r1.iso' }",
+    "Script": "$json = Get-WebContent -Uri 'https://sourceforge.net/projects/q4os/best_release.json'\nif ($json) {\n    try {\n        $rel = $json | ConvertFrom-Json\n        if ($rel.release -and $rel.release.url) {\n            $fn = [System.IO.Path]::GetFileName($rel.release.filename)\n            $ver = if ($fn -match 'q4os-([0-9.]+)-x64') { $Matches[1] } else { '6.11' }\n            return @{ Version = $ver; Url = $rel.release.url; Filename = $fn }\n        }\n    } catch {}\n}\nreturn @{ Version = '6.11'; Url = 'https://sourceforge.net/projects/q4os/files/stable/q4os-6.11-x64.r1.iso/download'; Filename = 'q4os-6.11-x64.r1.iso' }",
     "Category": "01_Desktop-Linux",
     "SizeBytes": 1540000000
   },
@@ -563,7 +563,7 @@
     "Enabled": true,
     "Name": "KDE neon",
     "MatchPattern": "neon-user-[^\\\"]*?\\.iso",
-    "Script": "$html = Get-WebContent -Uri 'https://neon.kde.org/download'\nif ($html -and $html -match 'href=\"([^\"]*?(neon-user-([0-9-]+)\\.iso))\"') {\n    $url = $Matches[1]\n    $fn = $Matches[2]\n    $ver = $Matches[3]\n    return @{ Version = $ver; Url = $url; Filename = $fn; ChecksumUrl = \"$url.sha256sum\" }\n}\nreturn @{ Version = 'user'; Url = 'https://files.kde.org/neon/images/user/current/neon-user-current.iso'; Filename = 'neon-user-current.iso'; ChecksumUrl = 'https://files.kde.org/neon/images/user/current/neon-user-current.iso.sha256sum' }",
+    "Script": "$html = Get-WebContent -Uri 'https://neon.kde.org/download'\nif ($html -and $html -match 'href=\"(https://files\\.kde\\.org/neon/images/desk/user/([0-9-]+)/(neon-user-desk-([0-9-]+)\\.iso))\"') {\n    return @{ Version = $Matches[4]; Url = $Matches[1]; Filename = $Matches[3]; ChecksumUrl = \"$($Matches[1]).sha256sum\" }\n}\nreturn @{ Version = '20261025-1825'; Url = 'https://files.kde.org/neon/images/desk/user/20261025-1825/neon-user-desk-20261025-1825.iso'; Filename = 'neon-user-desk-20261025-1825.iso'; ChecksumUrl = 'https://files.kde.org/neon/images/desk/user/20261025-1825/neon-user-desk-20261025-1825.iso.sha256sum' }",
     "Category": "01_Desktop-Linux",
     "SizeBytes": 2700000000
   },
@@ -619,7 +619,7 @@
     "Enabled": true,
     "Name": "Redo Rescue",
     "MatchPattern": "redorescue-(\\d+\\.\\d+(\\.\\d+)?)\\.iso",
-    "Script": "$html = Get-WebContent -Uri 'https://sourceforge.net/projects/redobackup/files/'\nif ($html -and $html -match 'href=\"([^\"]*?(redorescue-([0-9.]+)\\.iso)/download)\"') {\n    return @{ Version = $Matches[3]; Url = $Matches[1]; Filename = $Matches[2] }\n}\nreturn @{ Version = '4.0.0'; Url = 'https://sourceforge.net/projects/redobackup/files/redorescue-4.0.0.iso/download'; Filename = 'redorescue-4.0.0.iso' }",
+    "Script": "$json = Get-WebContent -Uri 'https://sourceforge.net/projects/redobackup/best_release.json'\nif ($json) {\n    try {\n        $rel = $json | ConvertFrom-Json\n        if ($rel.release -and $rel.release.url) {\n            $fn = $rel.release.filename.TrimStart('/')\n            $ver = if ($fn -match 'redorescue-([0-9.]+)\\.iso') { $Matches[1] } else { '4.0.0' }\n            return @{ Version = $ver; Url = $rel.release.url; Filename = $fn }\n        }\n    } catch {}\n}\nreturn @{ Version = '4.0.0'; Url = 'https://sourceforge.net/projects/redobackup/files/redorescue-4.0.0.iso/download'; Filename = 'redorescue-4.0.0.iso' }",
     "Category": "04_Rescue-Systeme",
     "SizeBytes": 620000000
   },
