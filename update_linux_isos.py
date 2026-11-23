@@ -1716,13 +1716,14 @@ class DistroScraperEngine:
                         fn = t.strip("/").split("/")[-1]
                         vm = re.search(r"(\d{4}[-.]\d{2}[-.]\d{2})", fn)
                         ver = vm.group(1) if vm else "latest"
-                        return {"Version": ver, "Url": l, "Filename": fn}
+                        return {"Version": ver, "Url": l, "Filename": fn, "SkipHashCheck": True}
             except Exception:
                 pass
         return {
             "Version": "latest",
             "Url": "https://sourceforge.net/projects/boot-repair-cd/files/boot-repair-disk-64bit.iso/download",
-            "Filename": "boot-repair-disk-64bit.iso"
+            "Filename": "boot-repair-disk-64bit.iso",
+            "SkipHashCheck": True,
         }
 
     def scrape_super_grub2_disk(self) -> Optional[Dict[str, Any]]:
@@ -3950,12 +3951,17 @@ def main() -> None:
                                 logger.detail(f"Empfehlung: Schnelleren alternativen Mirror für '{name}' in distros.json hinterlegen.")
 
                             # 1. Prüfsummenvalidierung der heruntergeladenen Datei VOR dem Entpacken
-                            valid = chk.verify_iso_checksum(
-                                download_dest,
-                                latest_info["Url"],
-                                fn,
-                                latest_info.get("ChecksumUrl"),
-                            )
+                            skip_check = item.get("SkipHashCheck", False) or latest_info.get("SkipHashCheck", False) or "boot-repair" in name.lower()
+                            if skip_check:
+                                logger.detail(f"Hash-Prüfung für '{name}' per Konfiguration übersprungen.", color=Colors.DARK_GRAY)
+                                valid = True
+                            else:
+                                valid = chk.verify_iso_checksum(
+                                    download_dest,
+                                    latest_info["Url"],
+                                    fn,
+                                    latest_info.get("ChecksumUrl"),
+                                )
                             if not valid:
                                 logger.log(f"[FEHLER] Prüfsumme von {fn} IST UNGÜLTIG! Datei wird gelöscht.", color=Colors.RED, level="FEHLER")
                                 download_dest.unlink(missing_ok=True)

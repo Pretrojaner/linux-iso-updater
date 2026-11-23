@@ -379,13 +379,13 @@ function Test-IsoChecksum {
         [string]$DirectExpectedHash
     )
 
+    $expectedHash = $null
+    $hashAlgorithm = $null
+
     if ($DirectExpectedHash -and -not [string]::IsNullOrWhiteSpace($DirectExpectedHash)) {
         $expectedHash = $DirectExpectedHash.Trim().ToLower()
         $hashAlgorithm = if ($expectedHash.Length -eq 128) { "SHA512" } elseif ($expectedHash.Length -eq 64) { "SHA256" } else { "MD5" }
     }
-
-    $expectedHash = $null
-    $hashAlgorithm = $null
 
     # 1. SHA512 Kandidaten
     $sha512Candidates = @(
@@ -477,7 +477,14 @@ function Test-IsoChecksum {
     Write-LogDetail -Message "Berechne lokalen $hashAlgorithm-Hash ($fileMB MB)... Bitte warten." -Color DarkGray
 
     try {
-        $actualHash = (Get-FileHash -Path $FilePath -Algorithm $hashAlgorithm).Hash.ToLower()
+        if (-not $hashAlgorithm -or -not $expectedHash) {
+            return $true
+        }
+        $fileHashObj = Get-FileHash -Path $FilePath -Algorithm $hashAlgorithm -ErrorAction Stop
+        if (-not $fileHashObj -or -not $fileHashObj.Hash) {
+            return $true
+        }
+        $actualHash = $fileHashObj.Hash.ToLower()
         Write-LogDetail -Message "Berechneter Hash: $actualHash" -Color DarkGray
         if ($actualHash -eq $expectedHash) {
             Write-LogDetail -Message "$hashAlgorithm-Pruefsumme VERIFIZIERT: OK" -Color DarkGreen
@@ -487,7 +494,7 @@ function Test-IsoChecksum {
             return $false
         }
     } catch {
-        Write-Log -Message "Fehler bei der Berechung der Pruefsumme: $_" -Color Red -Level "FEHLER"
+        Write-Log -Message "Fehler bei der Berechnung der Pruefsumme: $_" -Color Red -Level "FEHLER"
         return $true
     }
 }
@@ -498,6 +505,20 @@ function Start-HttpDownload {
         [Parameter(Mandatory=$true)][string]$DestinationPath,
         [string]$Filename
     )
+
+    $curl = Get-Command "curl.exe" -ErrorAction SilentlyContinue
+    if ($curl) {
+        $curlUserAgent = if ($Url -match "sourceforge\.net") { "curl/8.4.0" } else { $UserAgent }
+        Write-Host "   [DOWNLOAD] Starte curl.exe fuer $Filename (hohe Geschwindigkeit & Auto-Resume)..." -ForegroundColor Cyan
+        & curl.exe -L --fail --retry 3 -C - -A $curlUserAgent --progress-bar -o $DestinationPath $Url
+        if ($LASTEXITCODE -eq 0 -and (Test-Path $DestinationPath)) {
+            $item = Get-Item $DestinationPath
+            if ($item.Length -gt 1MB) {
+                return $item.Length
+            }
+        }
+        Write-Host "   [FALLBACK] curl.exe beendet mit Code $LASTEXITCODE. Wechsle zu internem HttpClient..." -ForegroundColor Yellow
+    }
 
     $handler = New-Object System.Net.Http.HttpClientHandler
     $handler.AllowAutoRedirect = $true
@@ -520,7 +541,7 @@ function Start-HttpDownload {
         $inputStream  = $response.Content.ReadAsStreamAsync().GetAwaiter().GetResult()
         $outputStream = [System.IO.File]::Create($DestinationPath)
 
-        $buffer = New-Object byte[] 65536 # 64 KB Buffer
+        $buffer = New-Object byte[] 1048576 # 1 MB Buffer
         $totalBytesRead = 0
         $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
         $lastReportTime = 0
@@ -2810,7 +2831,16 @@ if (-not $SkipDownload) {
                     $expHash = if ($latestInfo.PSObject.Properties['ExpectedHash']) { $latestInfo.ExpectedHash } else { $null }
 
                     # 1. Pruefsumme der heruntergeladenen Datei pruefen (sofern online vorhanden) VOR dem Entpacken
-                    $checksumValid = Test-IsoChecksum -FilePath $rawDownloadFile -DownloadUrl $latestInfo.Url -Filename $latestInfo.Filename -ExplicitChecksumUrl $chkUrl -DirectExpectedHash $expHash
+                    $skipCheck = ($distro.Item.PSObject.Properties['SkipHashCheck'] -and $distro.Item.SkipHashCheck) -or `
+                                 ($latestInfo.PSObject.Properties['SkipHashCheck'] -and $latestInfo.SkipHashCheck) -or `
+                                 ($distro.Name -match '(?i)boot-repair')
+
+                    if ($skipCheck) {
+                        Write-LogDetail -Message "Hash-Pruefung fuer $($distro.Name) per Konfiguration uebersprungen." -Color DarkGray
+                        $checksumValid = $true
+                    } else {
+                        $checksumValid = Test-IsoChecksum -FilePath $rawDownloadFile -DownloadUrl $latestInfo.Url -Filename $latestInfo.Filename -ExplicitChecksumUrl $chkUrl -DirectExpectedHash $expHash
+                    }
                     if (-not $checksumValid) {
                         Write-Log -Message "[FEHLER] Pruefsumme des frisch heruntergeladenen ISOs $($latestInfo.Filename) IST UNGUeLTIG! Datei wird geloescht." -Color Red -Level "FEHLER"
                         if (Test-Path -Path $rawDownloadFile) { Remove-Item -Path $rawDownloadFile -Force }

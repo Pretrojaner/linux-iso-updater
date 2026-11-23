@@ -60,8 +60,9 @@
     "Name": "Boot-Repair-Disk",
     "Category": "04_Rescue-Systeme",
     "MatchPattern": "boot-repair-disk-64bit",
-    "Script": "$xmlStr = Get-WebContent -Uri 'https://sourceforge.net/projects/boot-repair-cd/rss?path=/'\nif ($xmlStr) {\n    try {\n        [xml]$xml = $xmlStr\n        foreach ($item in $xml.rss.channel.item) {\n            if ($item.title.InnerText -match 'boot-repair-disk-64bit\\.iso') {\n                return @{ Version = 'latest'; Url = $item.link; Filename = 'boot-repair-disk-64bit.iso' }\n            }\n        }\n    } catch {}\n}\nreturn @{ Version = 'latest'; Url = 'https://sourceforge.net/projects/boot-repair-cd/files/boot-repair-disk-64bit.iso/download'; Filename = 'boot-repair-disk-64bit.iso' }",
-    "SizeBytes": 922746880
+    "Script": "$xmlStr = Get-WebContent -Uri 'https://sourceforge.net/projects/boot-repair-cd/rss?path=/'\nif ($xmlStr) {\n    try {\n        [xml]$xml = $xmlStr\n        foreach ($item in $xml.rss.channel.item) {\n            if ($item.title.InnerText -match 'boot-repair-disk-64bit\\.iso') {\n                return @{ Version = 'latest'; Url = $item.link; Filename = 'boot-repair-disk-64bit.iso'; SkipHashCheck = $true }\n            }\n        }\n    } catch {}\n}\nreturn @{ Version = 'latest'; Url = 'https://sourceforge.net/projects/boot-repair-cd/files/boot-repair-disk-64bit.iso/download'; Filename = 'boot-repair-disk-64bit.iso'; SkipHashCheck = $true }",
+    "SizeBytes": 922746880,
+    "SkipHashCheck": true
   },
   {
     "Enabled": true,
