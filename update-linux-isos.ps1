@@ -44,7 +44,7 @@ function Show-Help {
     Write-Host "  Stand:         05. November 2026" -ForegroundColor $cOption
     Write-Host "  Autor:         Pretrojaner & Community (Ingo)" -ForegroundColor $cOption
     Write-Host "  Plattform:     Windows (PowerShell 7+) / Linux & macOS (Python 3.8+)" -ForegroundColor $cOption
-    Write-Host "  Umfang:        65 bootfaehige Systeme in 6 Kategorien (inkl. Windows-PE Rescue)" -ForegroundColor $cOption
+    Write-Host "  Umfang:        80 bootfaehige Systeme in 6 Kategorien (inkl. Windows-PE Rescue)" -ForegroundColor $cOption
     Write-Host "  Repository:    https://github.com/Pretrojaner/linux-iso-updater" -ForegroundColor $cOption
     Write-Host "====================================================================================================" -ForegroundColor $cBanner
     Write-Host ""
@@ -654,17 +654,20 @@ function Get-PrettyIsoName {
     if ($Filename -match '(?i)aomei')            { return "AOMEI Backupper & Partition Assistant" }
     if ($Filename -match '(?i)easeus')           { return "EaseUS Partition Master / Todo Backup" }
     if ($Filename -match '(?i)winpe|windows[-_ ]?pe') { return "Windows PE Recovery Environment" }
+    if ($Filename -match '(?i)redorescue')       { return "Redo Rescue (Point & Click Backup & Restore)" }
 
     # BSD & Unix
     if ($Filename -match '(?i)openbsd|install\d+\.iso') { return "OpenBSD Release" }
     if ($Filename -match '(?i)NetBSD')           { return "NetBSD Release" }
     if ($Filename -match '(?i)dfly|dragonfly')   { return "DragonFly BSD Release" }
     if ($Filename -match '(?i)FreeBSD')          { return "FreeBSD Release" }
+    if ($Filename -match '(?i)ghostbsd')         { return "GhostBSD (FreeBSD Desktop & MATE)" }
 
-    # Desktop Linux (Alle 30 Systeme)
+    # Desktop Linux (Alle 36 Systeme)
     if ($Filename -match '(?i)alpine')           { return "Alpine Linux Standard" }
     if ($Filename -match '(?i)antix')            { return "antiX Linux Full" }
     if ($Filename -match '(?i)archlinux')        { return "Arch Linux" }
+    if ($Filename -match '(?i)bazzite')          { return "Bazzite (SteamOS Gaming Platform)" }
     if ($Filename -match '(?i)cachyos')          { return "CachyOS Desktop Linux" }
     if ($Filename -match '(?i)cld.*x86_64')      { return "Calculate Linux Desktop KDE" }
     if ($Filename -match '(?i)crux')             { return "CRUX Linux" }
@@ -675,6 +678,8 @@ function Get-PrettyIsoName {
     if ($Filename -match '(?i)Fedora')           { return "Fedora Workstation Live" }
     if ($Filename -match '(?i)garuda')           { return "Garuda Linux Dr460nized" }
     if ($Filename -match '(?i)livegui|gentoo')   { return "Gentoo Live GUI" }
+    if ($Filename -match '(?i)neon-user')        { return "KDE neon (Bleeding Edge Plasma Desktop)" }
+    if ($Filename -match '(?i)kubuntu')          { return "Kubuntu Desktop (KDE Plasma)" }
     if ($Filename -match '(?i)linux-lite')       { return "Linux Lite" }
     if ($Filename -match '(?i)linuxmint')        { return "Linux Mint Cinnamon" }
     if ($Filename -match '(?i)lubuntu')          { return "Lubuntu Desktop" }
@@ -682,11 +687,14 @@ function Get-PrettyIsoName {
     if ($Filename -match '(?i)manjaro')          { return "Manjaro Linux XFCE" }
     if ($Filename -match '(?i)mx-.*xfce')        { return "MX Linux Xfce" }
     if ($Filename -match '(?i)nixos.*graphical') { return "NixOS Graphical" }
+    if ($Filename -match '(?i)nobara')           { return "Nobara Project (Gaming & Multimedia)" }
     if ($Filename -match '(?i)omarchy')          { return "Omarchy Linux" }
     if ($Filename -match '(?i)opensuse.*tumbleweed') { return "openSUSE Tumbleweed" }
     if ($Filename -match '(?i)pop-os')           { return "Pop!_OS" }
+    if ($Filename -match '(?i)q4os')             { return "Q4OS Desktop (Debian Fast & Lightweight)" }
     if ($Filename -match '(?i)slackware')        { return "Slackware Linux DVD" }
     if ($Filename -match '(?i)solus.*budgie')    { return "Solus Budgie" }
+    if ($Filename -match '(?i)tuxedo')           { return "TUXEDO OS (KDE Plasma & Hardware Tuning)" }
     if ($Filename -match '(?i)ubuntucinnamon')   { return "Ubuntu Cinnamon" }
     if ($Filename -match '(?i)ubuntu.*live-server') { return "Ubuntu Server LTS" }
     if ($Filename -match '(?i)ubuntu')           { return "Ubuntu Desktop" }
@@ -699,14 +707,17 @@ function Get-PrettyIsoName {
     if ($Filename -match '(?i)azurelinux|azure-linux|mariner') { return "Azure Linux (Microsoft Cloud & Edge)" }
     if ($Filename -match '(?i)CentOS')           { return "CentOS Stream" }
     if ($Filename -match '(?i)openmediavault')   { return "OpenMediaVault NAS" }
+    if ($Filename -match '(?i)oraclelinux|oracle[-_ ]?linux') { return "Oracle Linux Enterprise (UEK)" }
     if ($Filename -match '(?i)zimaos')           { return "ZimaOS Storage & Cloud" }
     if ($Filename -match '(?i)TrueNAS|FreeNAS')  { return "FreeNAS / TrueNAS SCALE" }
     if ($Filename -match '(?i)proxmox.*backup')  { return "Proxmox Backup Server (PBS)" }
     if ($Filename -match '(?i)proxmox')          { return "Proxmox VE Hypervisor" }
     if ($Filename -match '(?i)Rocky')            { return "Rocky Linux" }
     if ($Filename -match '(?i)Rockstor')         { return "Rockstor Btrfs NAS" }
+    if ($Filename -match '(?i)xcp-ng')           { return "XCP-ng Hypervisor (Enterprise Virtualization)" }
 
     # Security & Pentest
+    if ($Filename -match '(?i)athenaos|athena[-_ ]?os') { return "Athena OS (Cybersecurity & Pentesting)" }
     if ($Filename -match '(?i)blackarch')        { return "BlackArch Linux (Full)" }
     if ($Filename -match '(?i)kali')             { return "Kali Linux Security" }
     if ($Filename -match '(?i)kodachi')          { return "Kodachi OS (Anonymous Anti-Forensic Live)" }
@@ -2646,7 +2657,21 @@ if (-not $SkipDownload) {
                     if ($latestInfo.PSObject.Properties['ExtractTo'] -and $latestInfo.ExtractTo) {
                         $extractedIsoPath = Join-Path $categoryDir $latestInfo.ExtractTo
                         Write-Log -Message "[ENTPACKEN] Entpacke $($latestInfo.Filename) nach $($latestInfo.ExtractTo)..." -Color Cyan -Level "INFO"
-                        $extractedOk = Expand-Bz2Archive -Bz2Path $targetPath -DestinationIsoPath $extractedIsoPath
+                        $extractedOk = $false
+                        if ($targetPath.EndsWith(".bz2")) {
+                            $extractedOk = Expand-Bz2Archive -Bz2Path $targetPath -DestinationIsoPath $extractedIsoPath
+                        } elseif ($targetPath.EndsWith(".zip")) {
+                            try {
+                                Add-Type -AssemblyName System.IO.Compression.FileSystem
+                                $zip = [System.IO.Compression.ZipFile]::OpenRead($targetPath)
+                                $entry = $zip.Entries | Where-Object { $_.Name -like "*.iso" } | Select-Object -First 1
+                                if ($entry) {
+                                    [System.IO.Compression.ZipFileExtensions]::ExtractToFile($entry, $extractedIsoPath, $true)
+                                    $extractedOk = $true
+                                }
+                                $zip.Dispose()
+                            } catch {}
+                        }
                         if ($extractedOk -and (Test-Path $extractedIsoPath)) {
                             Remove-Item -Path $targetPath -Force -ErrorAction SilentlyContinue
                             $targetPath = $extractedIsoPath

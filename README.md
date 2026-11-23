@@ -9,14 +9,14 @@ Ein PowerShell- und Python-basiertes All-in-One Automatisierungswerkzeug zum Her
 > [!IMPORTANT]
 > **Wichtiger Hinweis zu Speicherort & benötigtem Speicherplatz:**
 > - **Speicherort:** Alle ISO- und Boot-Image-Dateien werden standardmäßig direkt im **selben Verzeichnis abgelegt, in dem sich die Skripte befinden** (strukturiert in Unterordnern von `01_Desktop-Linux` bis `06_Windows-PE_Rescue`).
-> - **Speicherplatzbedarf:** Platziere das Skriptpaket daher unbedingt auf einem Laufwerk mit ausreichend freiem Speicherplatz! Für den vollständigen Download aller 65 vorkonfigurierten Distributionen werden ca. **196 GB** freier Speicherplatz empfohlen.
+> - **Speicherplatzbedarf:** Platziere das Skriptpaket daher unbedingt auf einem Laufwerk mit ausreichend freiem Speicherplatz! Für den vollständigen Download aller 80 vorkonfigurierten Distributionen werden ca. **235 GB** freier Speicherplatz empfohlen.
 > - **Flexible Auswahl:** Beim Start öffnet sich automatisch das interaktive Auswahlmenü. Du kannst mit `[ENTER]` direkt alle Distros laden (`all`) oder gezielt einzelne Gruppen (z. B. `G1, G4, G6`) bzw. Nummern auswählen, um nur die gewünschten Systeme zu beziehen und Speicherplatz zu sparen.
 
 ---
 
 ## 🚀 Funktionen
 
-- **Versions- & Release-Scraping:** Prüft online automatisch die neuesten Releases für 65 Linux-Distributionen, Enterprise-Server, Rettungssysteme, BSD-Derivate und Windows-PE-Notfallumgebungen.
+- **Versions- & Release-Scraping:** Prüft online automatisch die neuesten Releases für 80 Linux-Distributionen, Enterprise-Server, Rettungssysteme, BSD-Derivate und Windows-PE-Notfallumgebungen.
 - **Interaktive Distributions-Auswahl (`-SelectDistros`):**
   - Übersichtliche Darstellung in 6 Gruppen (`G1` bis `G6`).
   - Mehrfachauswahl via Ziffern (`1, 3, 5-8`), Gruppen (`G1, G4, G6`) oder `all`.
@@ -56,9 +56,9 @@ Ein PowerShell- und Python-basiertes All-in-One Automatisierungswerkzeug zum Her
 
 ---
 
-## 📂 Unterstützte Distributionen & Systeme (65 Betriebssysteme & Tools)
+## 📂 Unterstützte Distributionen & Systeme (80 Betriebssysteme & Tools)
 
-### 🖥️ 01_Desktop-Linux (30 Distros)
+### 🖥️ 01_Desktop-Linux (36 Distros)
 - **Alpine Linux** – Extrem ressourcenschonende, hochsichere Mini-Distribution auf musl-libc- und busybox-Basis.
 - **antiX** – Extrem schnelles, leichtgewichtiges Debian-basiertes Live-System ohne systemd für ältere und moderne Hardware.
 - **Arch Linux** – Puristische, flexible Rolling-Release-Distribution nach dem KISS-Prinzip („Keep It Simple, Stupid“).
@@ -87,29 +87,40 @@ Ein PowerShell- und Python-basiertes All-in-One Automatisierungswerkzeug zum Her
 - **Ubuntu Desktop** – Die weltweit meistgenutzte Standard-Linux-Desktop-Distribution mit GNOME-Arbeitsumgebung.
 - **Ubuntu Cinnamon** – Offizieller Ubuntu-Flavor mit dem modernen, flexiblen Cinnamon-Desktop.
 - **Void Linux** – Unabhängige Rolling-Release-Distribution mit dem blitzschnellen XBPS-Paketmanager und runit-Init.
+- **Bazzite** – Moderner SteamOS-Klon auf Fedora-Atomic-Basis (Universal Blue) für Handhelds, Konsolen und Desktop-Gaming.
+- **KDE neon** – Kontinuierlich aktualisierte Plattform von KDE auf Ubuntu-LTS-Basis mit neuester KDE-Plasma-Desktop-Software.
+- **Kubuntu** – Offizieller, eleganter Ubuntu-Flavor mit dem modernen KDE-Plasma-Desktop.
+- **Nobara Project** – Performance- und Gaming-optimierte Fedora-Distribution von GloriousEggroll mit Kernel-Patches und vorkonfiguriertem Treiber-Stack.
+- **Q4OS** – Extrem schnelles, ressourcenschonendes Desktop-System auf Debian-Basis mit wahlweise Trinity- (TDE) oder KDE-Plasma-Desktop.
+- **TUXEDO OS** – Optimiertes Ubuntu-Derivat mit aktuellem Mainline-Kernel, KDE Plasma 6 und umfassendem Hardware-Tuning.
 - **Winux** – Auf Ubuntu 24.04 LTS basierende Distribution mit modernem Windows-11-Look (KDE Plasma), vorkonfiguriertem Wine/Proton und hoher Einsteigerfreundlichkeit.
 - **Zorin OS Education** – Speziell für Schulen, Schüler und Bildung konzipierte Zorin-OS-Version mit vorinstallierter Lernsoftware.
 
-### 🏢 02_Enterprise-Server & NAS (10 Distros)
+### 🏢 02_Enterprise-Server & NAS (13 Distros)
 - **AlmaLinux** – Binärkompatibles 1:1 RHEL-Enterprise-Betriebssystem und stabiler Nachfolger von CentOS.
 - **Azure Linux** – Microsofts gehärtete Linux-Distribution (vormals CBL-Mariner) für Cloud-Infrastruktur, Edge-Devices und Container-Hosts.
 - **CentOS Stream 9** – Die kontinuierlich aktualisierte Upstream-Entwicklungsplattform für Red Hat Enterprise Linux (RHEL).
 - **Proxmox VE** – Führende Open-Source-Virtualisierungsplattform für KVM-VMs, LXC-Container und Software-Defined Storage.
 - **Rocky Linux** – Community-getriebenes, hochstabiles Enterprise-Betriebssystem mit 100%iger RHEL-Kompatibilität.
 - **OpenMediaVault** – Modulare, webbasierte Network Attached Storage (NAS)-Lösung auf Debian-Basis.
+- **Oracle Linux** – Kostenloses, hochstabiles 100% RHEL-kompatibles Enterprise-Betriebssystem mit dem Unbreakable Enterprise Kernel (UEK).
+- **Proxmox Backup Server (PBS)** – Dedizierte Bare-Metal-Backup-Appliance zur unternehmensweiten Deduplizierung und inkrementellen VM/Container-Sicherung.
+- **XCP-ng** – Leistungsfähiger Open-Source Enterprise-Hypervisor auf Xen-Basis als führende Alternative zu VMware und Proxmox.
 - **ZimaOS** – Modernes, einsteigerfreundliches Cloud- & NAS-Betriebssystem für Home-Server und Personal-Cloud.
 - **FreeNAS (TrueNAS SCALE)** – Leistungsstarkes Enterprise-Storage- und NAS-System mit ZFS-Dateisystem und Docker/Apps-Support.
 - **Ubuntu Server LTS** – Die bewährte Long-Term-Support-Plattform für Cloud-, Rechenzentrums- und Server-Workloads.
 - **Rockstor** – BTRFS-fokussierte NAS- und Speicher-Distribution mit flexiblen „Rock-ons“ (Docker-Apps) und Web-Verwaltung.
 
-### 🛡️ 03_Security- & Penetration-Testing (5 Distros)
+### 🛡️ 03_Security- & Penetration-Testing (7 Distros)
 - **Kali Linux** – Die weltweite Standard-Distribution für professionelle Penetrationstests, Ethical Hacking und Security-Audits.
 - **BlackArch Linux** – Auf Arch basierende Sicherheits-Distribution mit über 2.800 vorinstallierten Pentesting-Werkzeugen.
 - **Parrot Security** – All-in-One-Umgebung für Cyber-Security, Penetration-Testing, Reverse Engineering und digitale Privatsphäre.
 - **Kodachi OS** – Extrem fokussiertes Anonymitäts- und Anti-Forensic-Betriebssystem (basiert auf XFCE) mit automatischem VPN, Tor-Routing, DNSCrypt und Panic-Wipe-Tools.
+- **Athena OS** – Hochmoderne Cybersecurity- und Pentesting-Distribution auf Arch-Basis mit themenbasierten Rollen-Modi.
+- **Tails** – The Amnesic Incognito Live System: Das weltweit führende Privacy- und Anti-Überwachungs-System mit durchgehendem Tor-Routing.
 - **CAINE Live (Forensic & Autopsy)** – Professionelle italienische Forensik-Live-Distribution mit The Sleuth Kit, Autopsy und schreibgeschütztem Block-Device-Zugriff.
 
-### 🧰 04_Rescue-, Diagnose- & Notfall-Systeme (15 Distros & Tools)
+### 🧰 04_Rescue-, Diagnose- & Notfall-Systeme (17 Distros & Tools)
 - **Boot-Repair-Disk** – Offizielles 64-Bit Rettungswerkzeug zur Ein-Klick-Reparatur beschädigter GRUB- und EFI-Bootloader.
 - **Clonezilla Live** – Die bewährte, weltbekannte Festplattenklon- und Image-Backup-Lösung für Bare-Metal-Restore.
 - **Dr.Web LiveDisk** – Zuverlässige Antiviren-Rettungsumgebung von Doctor Web zur Säuberung infizierter Windows-Installationen.
@@ -124,12 +135,16 @@ Ein PowerShell- und Python-basiertes All-in-One Automatisierungswerkzeug zum Her
 - **Super Grub2 Disk** – Universeller Multi-Boot-Rettungsbootloader zum Starten installierter Systeme bei defektem Bootloader.
 - **SystemRescue (ehem. SystemRescueCd)** – Das klassische Notfall- und Rettungssystem für Linux- und Windows-Administratoren mit CLI/GUI-Tools und vorinstalliertem ClamAV-Antivirus.
 - **Tiny Core Linux** – Winziges, modulares Mini-Linux-System (nur wenige Megabytes groß), das komplett im RAM läuft.
+- **MemTest86+** – Das weltweit führende Open-Source Standalone-RAM-Diagnose-Werkzeug (Version 9.x) für DDR4/DDR5 und UEFI/BIOS.
+- **Redo Rescue** – Benutzerfreundliche, intuitive grafische Point-and-Click Bare-Metal Backup- und Wiederherstellungslösung.
 - **Ultimate Boot CD (UBCD)** – Die legendäre Diagnosesuite mit zahllosen Hardware-, CPU-, RAM- und Datenträger-Testwerkzeugen.
 
-### 🌐 05_BSD & Unix (4 Distros)
+### 🌐 05_BSD & Unix (6 Distros)
 - **DragonFly BSD** – Hochperformantes BSD-Derivat mit dem revolutionären HAMMER2-Cluster- und Snapshot-Dateisystem.
 - **FreeBSD** – Hochentwickeltes, hochsicheres UNIX-Betriebssystem mit nativer ZFS-Unterstützung, Jails und legendärem Netzwerk-Stack.
 - **NetBSD** – Extrem portables, sauberes BSD-Betriebssystem ("Of course it runs NetBSD") mit hoher Code-Integrität.
+- **GhostBSD** – Benutzerfreundliche FreeBSD-Desktop-Distribution mit vorkonfiguriertem MATE-Desktop und grafischem Installer.
+- **OPNsense** – Führende Open-Source-Firewall- und Routing-Plattform auf FreeBSD-Basis für professionelle Netzwerksicherheit.
 - **OpenBSD** – Das auf maximale Sicherheit, Korrektheit und Kryptographie fokussierte BSD-Betriebssystem.
 
 ### 🪟 06_Windows-PE & Recovery (1 System)
@@ -145,7 +160,7 @@ Ein PowerShell- und Python-basiertes All-in-One Automatisierungswerkzeug zum Her
 | `update-linux-isos.ps1` | Hauptskript für Windows (Downloads, Hash-Prüfung, Archivierung, Ventoy-Themes, Sync). |
 | `update-linux-isos.sh`  | Ausführbares Bash-Startskript für Linux (prüft Abhängigkeiten, richtet ggf. `.venv` ein). |
 | `update_linux_isos.py`  | Vollständige Linux-Portierung in Python 3 (PEP 8, Pillow, Requests, Streaming-Downloads). |
-| `distros.json`          | JSON-Konfigurationsdatei aller 65 Distributionen, Download-Quellen und Regex-Muster. |
+| `distros.json`          | JSON-Konfigurationsdatei aller 80 Distributionen, Download-Quellen und Regex-Muster. |
 | `.gitignore`            | Schließt ISO-Dateien, Logdateien und temporäre Ordner vom Git-Tracking aus. |
 | `GITHUB_ANLEITUNG.md`   | Dokumentation zur Verwaltung und Pflege des GitHub-Repositories. |
 
@@ -204,4 +219,4 @@ chmod +x update-linux-isos.sh
 ## 📄 Lizenz & Danksagung
 
 Entwickelt für IT-Administratoren, Techniker und Linux-Enthusiasten.
-Basiert auf den offiziellen Upstream-Quellen aller 65 Distributionen und dem herausragenden [Ventoy-Projekt](https://www.ventoy.net/).
+Basiert auf den offiziellen Upstream-Quellen aller 80 Distributionen und dem herausragenden [Ventoy-Projekt](https://www.ventoy.net/).

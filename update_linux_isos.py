@@ -1102,6 +1102,153 @@ class DistroScraperEngine:
             "ChecksumUrl": "https://aka.ms/azurelinux-3.0-x86_64-iso-checksum",
         }
 
+
+    # --- 15 Neue Distributionen (v2.7.0 Parität) ---
+    def scrape_nobara_project(self) -> Optional[Dict[str, Any]]:
+        html = self.dm.get_web_content("https://nobaraproject.org/download-nobara/")
+        if html:
+            m = re.search(r'href="([^"]*?(Nobara-(\d+)-Official-([0-9-]+)\.iso))\.sha256sum"', html)
+            if m:
+                iso_url, fn, ver_num, date_part = m.group(1), m.group(2), m.group(3), m.group(4)
+                return {"Version": f"{ver_num} ({date_part})", "Url": iso_url, "Filename": fn, "ChecksumUrl": f"{iso_url}.sha256sum"}
+        return {"Version": "44", "Url": "https://nobara-images.nobaraproject.org/Nobara-44-Official-2026-10-13.iso", "Filename": "Nobara-44-Official-2026-10-13.iso", "ChecksumUrl": "https://nobara-images.nobaraproject.org/Nobara-44-Official-2026-10-13.iso.sha256sum"}
+
+    def scrape_bazzite(self) -> Optional[Dict[str, Any]]:
+        return {"Version": "stable", "Url": "https://download.bazzite.gg/bazzite-stable-live-amd64.iso", "Filename": "bazzite-stable-live-amd64.iso", "ChecksumUrl": "https://download.bazzite.gg/bazzite-stable-live-amd64.iso-CHECKSUM"}
+
+    def scrape_tuxedo_os(self) -> Optional[Dict[str, Any]]:
+        html = self.dm.get_web_content("https://os.tuxedocomputers.com/")
+        if html:
+            m = re.search(r'href="(TUXEDO-OS-([0-9]+)\.iso)"', html)
+            if m:
+                fn, ver = m.group(1), m.group(2)
+                return {"Version": ver, "Url": f"https://os.tuxedocomputers.com/{fn}", "Filename": fn, "ChecksumUrl": f"https://os.tuxedocomputers.com/{fn}.sha256"}
+        return {"Version": "3", "Url": "https://os.tuxedocomputers.com/TUXEDO-OS-202610191505.iso", "Filename": "TUXEDO-OS-202610191505.iso", "ChecksumUrl": "https://os.tuxedocomputers.com/TUXEDO-OS-202610191505.iso.sha256"}
+
+    def scrape_kubuntu(self) -> Optional[Dict[str, Any]]:
+        html = self.dm.get_web_content("https://cdimage.ubuntu.com/kubuntu/releases/")
+        if html:
+            vers = re.findall(r'href="(\d+\.\d+(\.\d+)?)/"', html)
+            if vers:
+                latest_ver = sorted(list(set(v[0] for v in vers)), key=lambda s: [int(x) for x in s.split(".")])[-1]
+                sub = self.dm.get_web_content(f"https://cdimage.ubuntu.com/kubuntu/releases/{latest_ver}/release/")
+                if sub:
+                    m = re.search(rf'(kubuntu-{re.escape(latest_ver)}-desktop-amd64\.iso)', sub)
+                    if m:
+                        fn = m.group(1)
+                        return {"Version": latest_ver, "Url": f"https://cdimage.ubuntu.com/kubuntu/releases/{latest_ver}/release/{fn}", "Filename": fn, "ChecksumUrl": f"https://cdimage.ubuntu.com/kubuntu/releases/{latest_ver}/release/SHA256SUMS"}
+        return {"Version": "26.10", "Url": "https://cdimage.ubuntu.com/kubuntu/releases/26.10/release/kubuntu-26.10-desktop-amd64.iso", "Filename": "kubuntu-26.10-desktop-amd64.iso", "ChecksumUrl": "https://cdimage.ubuntu.com/kubuntu/releases/26.10/release/SHA256SUMS"}
+
+    def scrape_q4os(self) -> Optional[Dict[str, Any]]:
+        html = self.dm.get_web_content("https://q4os.org/downloads1.html")
+        if html:
+            m = re.search(r'href="([^"]*?(q4os-([0-9.]+)-x64(\.r\d+)?\.iso)/download)"', html)
+            if m:
+                return {"Version": m.group(3), "Url": m.group(1), "Filename": m.group(2)}
+        return {"Version": "6.11", "Url": "https://sourceforge.net/projects/q4os/files/stable/q4os-6.11-x64.r1.iso/download", "Filename": "q4os-6.11-x64.r1.iso"}
+
+    def scrape_kde_neon(self) -> Optional[Dict[str, Any]]:
+        html = self.dm.get_web_content("https://neon.kde.org/download")
+        if html:
+            m = re.search(r'href="([^"]*?(neon-user-([0-9-]+)\.iso))"', html)
+            if m:
+                url, fn, ver = m.group(1), m.group(2), m.group(3)
+                return {"Version": ver, "Url": url, "Filename": fn, "ChecksumUrl": f"{url}.sha256sum"}
+        return {"Version": "user", "Url": "https://files.kde.org/neon/images/user/current/neon-user-current.iso", "Filename": "neon-user-current.iso", "ChecksumUrl": "https://files.kde.org/neon/images/user/current/neon-user-current.iso.sha256sum"}
+
+    def scrape_proxmox_backup_server_pbs(self) -> Optional[Dict[str, Any]]:
+        html = self.dm.get_web_content("https://enterprise.proxmox.com/iso/")
+        if html:
+            matches = re.findall(r'href="(proxmox-backup-server_([0-9.-]+)\.iso)"', html)
+            if matches:
+                latest = matches[-1]
+                fn, ver = latest[0], latest[1]
+                url = f"https://enterprise.proxmox.com/iso/{fn}"
+                return {"Version": ver, "Url": url, "Filename": fn, "ChecksumUrl": f"{url}.sha256"}
+        return {"Version": "4.2-1", "Url": "https://enterprise.proxmox.com/iso/proxmox-backup-server_4.2-1.iso", "Filename": "proxmox-backup-server_4.2-1.iso", "ChecksumUrl": "https://enterprise.proxmox.com/iso/proxmox-backup-server_4.2-1.iso.sha256"}
+
+    def scrape_oracle_linux(self) -> Optional[Dict[str, Any]]:
+        html = self.dm.get_web_content("https://yum.oracle.com/oracle-linux-isos.html")
+        if html:
+            m = re.search(r'href="([^"]*?(OracleLinux-R(\d+)-U(\d+)-x86_64-(dvd|boot)\.iso))"', html)
+            if m:
+                url, fn, maj, rel = m.group(1), m.group(2), m.group(3), m.group(4)
+                return {"Version": f"{maj}.{rel}", "Url": url, "Filename": fn}
+        return {"Version": "9.9", "Url": "https://yum.oracle.com/ISOS/OracleLinux/OL9/u9/x86_64/OracleLinux-R9-U9-x86_64-dvd.iso", "Filename": "OracleLinux-R9-U9-x86_64-dvd.iso"}
+
+    def scrape_xcpng(self) -> Optional[Dict[str, Any]]:
+        html = self.dm.get_web_content("https://updates.xcp-ng.org/isos/8.3/")
+        if html:
+            matches = re.findall(r'href="(xcp-ng-([0-9.]+-[0-9]+)\.iso)"', html)
+            if matches:
+                fn, ver = matches[-1][0], matches[-1][1]
+                return {"Version": ver, "Url": f"https://updates.xcp-ng.org/isos/8.3/{fn}", "Filename": fn, "ChecksumUrl": "https://updates.xcp-ng.org/isos/8.3/SHA256SUMS"}
+        return {"Version": "8.3.0", "Url": "https://updates.xcp-ng.org/isos/8.3/xcp-ng-8.3.0-20260806.iso", "Filename": "xcp-ng-8.3.0-20260806.iso", "ChecksumUrl": "https://updates.xcp-ng.org/isos/8.3/SHA256SUMS"}
+
+    def scrape_tails(self) -> Optional[Dict[str, Any]]:
+        raw = self.dm.get_web_content("https://tails.net/install/v2/Tails/amd64/stable/latest.json")
+        if raw:
+            try:
+                data = json.loads(raw)
+                paths = data.get("installations", [{}])[0].get("installation-paths", [])
+                for p in paths:
+                    for t in p.get("target-files", []):
+                        if t.get("url", "").endswith(".iso"):
+                            url = t["url"]
+                            fn = Path(url).name
+                            m = re.search(r"tails-amd64-([0-9.]+)", fn)
+                            ver = m.group(1) if m else "latest"
+                            return {"Version": ver, "Url": url, "Filename": fn}
+            except Exception:
+                pass
+        return {"Version": "7.17.1", "Url": "https://download.tails.net/tails/stable/tails-amd64-7.17.1/tails-amd64-7.17.1.iso", "Filename": "tails-amd64-7.17.1.iso"}
+
+    def scrape_athena_os(self) -> Optional[Dict[str, Any]]:
+        return {"Version": "latest", "Url": "https://hub.athenaos.org/iso/athenaos-live-x86_64.iso", "Filename": "athenaos-live-x86_64.iso", "ChecksumUrl": "https://hub.athenaos.org/iso/athenaos-live-x86_64.iso.sha256"}
+
+    def scrape_memtest86(self) -> Optional[Dict[str, Any]]:
+        html = self.dm.get_web_content("https://www.memtest.org/")
+        if html:
+            m = re.search(r'href="([^"]*?(mt86plus_([0-9.]+)_x86_64\.iso\.zip))"', html)
+            if m:
+                path_part, ver = m.group(1), m.group(3)
+                url = f"https://www.memtest.org{path_part}"
+                return {"Version": ver, "Url": url, "Filename": f"mt86plus_{ver}.iso.zip", "ExtractTo": f"mt86plus-{ver}-x86_64.iso"}
+        return {"Version": "9.00", "Url": "https://www.memtest.org/download/v9.00/mt86plus_9.00_x86_64.iso.zip", "Filename": "mt86plus_9.00.iso.zip", "ExtractTo": "mt86plus-9.00-x86_64.iso"}
+
+    def scrape_redo_rescue(self) -> Optional[Dict[str, Any]]:
+        html = self.dm.get_web_content("https://sourceforge.net/projects/redobackup/files/")
+        if html:
+            m = re.search(r'href="([^"]*?(redorescue-([0-9.]+)\.iso)/download)"', html)
+            if m:
+                return {"Version": m.group(3), "Url": m.group(1), "Filename": m.group(2)}
+        return {"Version": "4.0.0", "Url": "https://sourceforge.net/projects/redobackup/files/redorescue-4.0.0.iso/download", "Filename": "redorescue-4.0.0.iso"}
+
+    def scrape_ghostbsd(self) -> Optional[Dict[str, Any]]:
+        html = self.dm.get_web_content("https://ghostbsd.org/download")
+        if html:
+            m = re.search(r'href="(https://download\.ghostbsd\.org/releases/amd64/([0-9.a-zA-Z]+)/(GhostBSD-[0-9.a-zA-Z-]+\.iso))"', html)
+            if m:
+                url, ver, fn = m.group(1), m.group(2), m.group(3)
+                return {"Version": ver, "Url": url, "Filename": fn, "ChecksumUrl": f"{url}.sha256"}
+        return {"Version": "26.3", "Url": "https://download.ghostbsd.org/releases/amd64/26.3.R15.1p6/GhostBSD-26.3.R15.1p6.iso", "Filename": "GhostBSD-26.3.R15.1p6.iso", "ChecksumUrl": "https://download.ghostbsd.org/releases/amd64/26.3.R15.1p6/GhostBSD-26.3.R15.1p6.iso.sha256"}
+
+    def scrape_opnsense(self) -> Optional[Dict[str, Any]]:
+        base = "https://mirror.ams1.nl.leaseweb.net/opnsense/releases/"
+        html = self.dm.get_web_content(base)
+        if html:
+            vers = re.findall(r'href="(\d+\.\d+)/"', html)
+            if vers:
+                latest = sorted(vers, key=lambda s: [int(x) for x in s.split(".")])[-1]
+                sub = self.dm.get_web_content(f"{base}{latest}/")
+                if sub:
+                    m = re.search(rf'(OPNsense-{re.escape(latest)}-dvd-amd64\.iso\.bz2)', sub)
+                    if m:
+                        fn = m.group(1)
+                        ext_to = fn.replace(".bz2", "")
+                        return {"Version": latest, "Url": f"{base}{latest}/{fn}", "Filename": fn, "ExtractTo": ext_to, "ChecksumUrl": f"{base}{latest}/OPNsense-{latest}-checksums-amd64.sha256"}
+        return {"Version": "26.7", "Url": "https://mirror.ams1.nl.leaseweb.net/opnsense/releases/26.7/OPNsense-26.7-dvd-amd64.iso.bz2", "Filename": "OPNsense-26.7-dvd-amd64.iso.bz2", "ExtractTo": "OPNsense-26.7-dvd-amd64.iso", "ChecksumUrl": "https://mirror.ams1.nl.leaseweb.net/opnsense/releases/26.7/OPNsense-26.7-checksums-amd64.sha256"}
+
     def scrape_centos_stream_9(self) -> Optional[Dict[str, Any]]:
         mirrors = [
             "https://ftp.halifax.rwth-aachen.de/centos-stream/9-stream/BaseOS/x86_64/iso/",
@@ -1654,17 +1801,21 @@ def get_pretty_iso_name(filename: str) -> str:
         (r"aomei", "AOMEI Backupper & Partition Assistant"),
         (r"easeus", "EaseUS Partition Master / Todo Backup"),
         (r"winpe|windows[-_ ]?pe", "Windows PE Recovery Environment"),
+        ("redorescue", "Redo Rescue (Point & Click Backup & Restore)"),
 
         # BSD & Unix
         (r"openbsd|install\d+\.iso", "OpenBSD Release"),
         ("netbsd", "NetBSD Release"),
         (r"dfly|dragonfly", "DragonFly BSD Release"),
         ("freebsd", "FreeBSD Release"),
+        ("ghostbsd", "GhostBSD (FreeBSD Desktop & MATE)"),
+        ("opnsense", "OPNsense Firewall & Security Platform"),
 
-        # Desktop Linux (Alle 30 Systeme)
+        # Desktop Linux (Alle 36 Systeme)
         ("alpine", "Alpine Linux Standard"),
         ("antix", "antiX Linux Full"),
         ("archlinux", "Arch Linux"),
+        ("bazzite", "Bazzite (SteamOS Gaming Platform)"),
         ("cachyos", "CachyOS Desktop Linux"),
         (r"cld.*x86_64", "Calculate Linux Desktop KDE"),
         ("crux", "CRUX Linux"),
@@ -1675,6 +1826,8 @@ def get_pretty_iso_name(filename: str) -> str:
         ("fedora", "Fedora Workstation Live"),
         ("garuda", "Garuda Linux Dr460nized"),
         (r"livegui|gentoo", "Gentoo Live GUI"),
+        ("neon-user", "KDE neon (Bleeding Edge Plasma Desktop)"),
+        ("kubuntu", "Kubuntu Desktop (KDE Plasma)"),
         ("linux-lite", "Linux Lite"),
         ("linuxmint", "Linux Mint Cinnamon"),
         ("lubuntu", "Lubuntu Desktop"),
@@ -1682,11 +1835,14 @@ def get_pretty_iso_name(filename: str) -> str:
         ("manjaro", "Manjaro Linux XFCE"),
         (r"mx-.*xfce", "MX Linux Xfce"),
         (r"nixos.*graphical", "NixOS Graphical"),
+        ("nobara", "Nobara Project (Gaming & Multimedia)"),
         ("omarchy", "Omarchy Linux"),
         (r"opensuse.*tumbleweed", "openSUSE Tumbleweed"),
         ("pop-os", "Pop!_OS"),
+        ("q4os", "Q4OS Desktop (Debian Fast & Lightweight)"),
         ("slackware", "Slackware Linux DVD"),
         (r"solus.*budgie", "Solus Budgie"),
+        ("tuxedo", "TUXEDO OS (KDE Plasma & Hardware Tuning)"),
         ("ubuntucinnamon", "Ubuntu Cinnamon"),
         (r"ubuntu.*live-server", "Ubuntu Server LTS"),
         ("ubuntu", "Ubuntu Desktop"),
@@ -1699,18 +1855,23 @@ def get_pretty_iso_name(filename: str) -> str:
         (r"azurelinux|azure-linux|mariner", "Azure Linux (Microsoft Cloud & Edge)"),
         ("centos", "CentOS Stream"),
         ("openmediavault", "OpenMediaVault NAS"),
+        ("oraclelinux", "Oracle Linux Enterprise (UEK)"),
         ("zimaos", "ZimaOS Storage & Cloud"),
         (r"truenas|freenas", "FreeNAS / TrueNAS SCALE"),
-        ("proxmox", "Proxmox VE Hypervisor"),
         (r"proxmox.*backup", "Proxmox Backup Server (PBS)"),
+        ("proxmox", "Proxmox VE Hypervisor"),
         ("rocky", "Rocky Linux"),
         ("rockstor", "Rockstor Btrfs NAS"),
+        ("xcp-ng", "XCP-ng Hypervisor (Enterprise Virtualization)"),
 
         # Security & Pentest
+        ("athenaos", "Athena OS (Cybersecurity & Pentesting)"),
         ("blackarch", "BlackArch Linux (Full)"),
         ("kali", "Kali Linux Security"),
         ("kodachi", "Kodachi OS (Anonymous Anti-Forensic Live)"),
         ("parrot", "Parrot Security OS"),
+        ("tails", "Tails (The Amnesic Incognito Live System)"),
+        ("qubes", "Qubes OS (Security by Isolation)"),
         ("tails", "Tails (The Amnesic Incognito Live System)"),
         ("qubes", "Qubes OS (Security by Isolation)"),
 
@@ -3175,7 +3336,7 @@ def show_help() -> None:
   Stand:         05. November 2026
   Autor:         Pretrojaner & Community (Ingo)
   Plattform:     Linux & macOS (Python 3.8+) / Windows (PowerShell 7+)
-  Umfang:        65 bootfähige Systeme in 6 Kategorien (inkl. Windows-PE Rescue)
+  Umfang:        80 bootfähige Systeme in 6 Kategorien (inkl. Windows-PE Rescue)
   Repository:    https://github.com/Pretrojaner/linux-iso-updater
 {c_banner}===================================================================================================={reset}
 
@@ -3454,7 +3615,7 @@ def main() -> None:
                     continue
 
                 fn = latest_info.get("Filename", "")
-                if not (fn.endswith(".iso") or fn.endswith(".img")) and not fn.endswith(".iso.bz2"):
+                if not (fn.endswith(".iso") or fn.endswith(".img")) and not fn.endswith(".iso.bz2") and not fn.endswith(".zip"):
                     logger.log(f"[ÜBERSPRUNGEN] Format ist kein ISO ({fn}) für {name}", color=Colors.YELLOW, level="WARNUNG")
                     continue
 
@@ -3574,11 +3735,26 @@ def main() -> None:
                                 logger.detail(f"Aktuelle Quelle: {latest_info['Url']}")
                                 logger.detail(f"Empfehlung: Schnelleren alternativen Mirror für '{name}' in distros.json hinterlegen.")
 
-                            # BZ2 Dekomprimierung falls nötig
+                            # Dekomprimierung (BZ2 oder ZIP) falls nötig
                             if latest_info.get("ExtractTo"):
                                 extracted_iso = cat_dir / latest_info["ExtractTo"]
-                                logger.log(f"[ENTPACKEN] Dekomprimiere {fn} nach {latest_info['ExtractTo']}...", color=Colors.CYAN, level="INFO")
-                                if decompress_bz2(download_dest, extracted_iso):
+                                logger.log(f"[ENTPACKEN] Entpacke {fn} nach {latest_info['ExtractTo']}...", color=Colors.CYAN, level="INFO")
+                                extracted_ok = False
+                                if fn.endswith(".bz2"):
+                                    extracted_ok = decompress_bz2(download_dest, extracted_iso)
+                                elif fn.endswith(".zip"):
+                                    try:
+                                        import zipfile
+                                        with zipfile.ZipFile(download_dest, "r") as z:
+                                            for z_name in z.namelist():
+                                                if z_name.endswith(".iso"):
+                                                    with z.open(z_name) as z_src, open(extracted_iso, "wb") as z_dst:
+                                                        shutil.copyfileobj(z_src, z_dst)
+                                                    extracted_ok = True
+                                                    break
+                                    except Exception as e:
+                                        logger.log(f"Fehler beim Entpacken der Zip-Datei: {e}", color=Colors.RED, level="WARNUNG")
+                                if extracted_ok:
                                     download_dest.unlink(missing_ok=True)
                                     target_path = extracted_iso
                                     logger.log(f"[ENTPACKT] {latest_info['ExtractTo']} erfolgreich entpackt!", color=Colors.GREEN, level="ERFOLG")
