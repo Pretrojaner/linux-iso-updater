@@ -1149,10 +1149,11 @@ class DistroScraperEngine:
                     fn = Path(rel.get("filename", "")).name
                     vm = re.search(r'q4os-([0-9.]+)-x64', fn)
                     ver = vm.group(1) if vm else "6.11"
-                    return {"Version": ver, "Url": rel["url"], "Filename": fn}
+                    exp = rel.get("sha256sum")
+                    return {"Version": ver, "Url": rel["url"], "Filename": fn, "ExpectedHash": exp}
             except Exception:
                 pass
-        return {"Version": "6.11", "Url": "https://sourceforge.net/projects/q4os/files/stable/q4os-6.11-x64.r1.iso/download", "Filename": "q4os-6.11-x64.r1.iso"}
+        return {"Version": "6.11", "Url": "https://sourceforge.net/projects/q4os/files/stable/q4os-6.11-x64.r1.iso/download", "Filename": "q4os-6.11-x64.r1.iso", "ExpectedHash": "e29032193ac73f97184e520935ce6af24dbb2cd3bbf813fe25d4c33b89775463"}
 
     def scrape_kde_neon(self) -> Optional[Dict[str, Any]]:
         html = self.dm.get_web_content("https://neon.kde.org/download")
@@ -3890,43 +3891,44 @@ def main() -> None:
                                 logger.detail(f"Aktuelle Quelle: {latest_info['Url']}")
                                 logger.detail(f"Empfehlung: Schnelleren alternativen Mirror für '{name}' in distros.json hinterlegen.")
 
-                            # Dekomprimierung (BZ2 oder ZIP) falls nötig
-                            if latest_info.get("ExtractTo"):
-                                extracted_iso = cat_dir / latest_info["ExtractTo"]
-                                logger.log(f"[ENTPACKEN] Entpacke {fn} nach {latest_info['ExtractTo']}...", color=Colors.CYAN, level="INFO")
-                                extracted_ok = False
-                                if fn.endswith(".bz2"):
-                                    extracted_ok = decompress_bz2(download_dest, extracted_iso)
-                                elif fn.endswith(".zip"):
-                                    try:
-                                        import zipfile
-                                        with zipfile.ZipFile(download_dest, "r") as z:
-                                            for z_name in z.namelist():
-                                                if z_name.endswith(".iso"):
-                                                    with z.open(z_name) as z_src, open(extracted_iso, "wb") as z_dst:
-                                                        shutil.copyfileobj(z_src, z_dst)
-                                                    extracted_ok = True
-                                                    break
-                                    except Exception as e:
-                                        logger.log(f"Fehler beim Entpacken der Zip-Datei: {e}", color=Colors.RED, level="WARNUNG")
-                                if extracted_ok:
-                                    download_dest.unlink(missing_ok=True)
-                                    target_path = extracted_iso
-                                    logger.log(f"[ENTPACKT] {latest_info['ExtractTo']} erfolgreich entpackt!", color=Colors.GREEN, level="ERFOLG")
-                                else:
-                                    logger.log(f"[WARNUNG] Entpacken von {fn} fehlgeschlagen.", color=Colors.YELLOW, level="WARNUNG")
-
-                            # Prüfsummenvalidierung
+                            # 1. Prüfsummenvalidierung der heruntergeladenen Datei VOR dem Entpacken
                             valid = chk.verify_iso_checksum(
-                                target_path,
+                                download_dest,
                                 latest_info["Url"],
-                                latest_info.get("ExtractTo", fn),
+                                fn,
                                 latest_info.get("ChecksumUrl"),
                             )
                             if not valid:
-                                logger.log(f"[FEHLER] Prüfsumme von {target_path.name} IST UNGÜLTIG! Datei wird gelöscht.", color=Colors.RED, level="FEHLER")
-                                target_path.unlink(missing_ok=True)
+                                logger.log(f"[FEHLER] Prüfsumme von {fn} IST UNGÜLTIG! Datei wird gelöscht.", color=Colors.RED, level="FEHLER")
+                                download_dest.unlink(missing_ok=True)
                             else:
+                                # 2. Dekomprimierung (BZ2 oder ZIP) falls nötig
+                                if latest_info.get("ExtractTo"):
+                                    extracted_iso = cat_dir / latest_info["ExtractTo"]
+                                    logger.log(f"[ENTPACKEN] Entpacke {fn} nach {latest_info['ExtractTo']}...", color=Colors.CYAN, level="INFO")
+                                    extracted_ok = False
+                                    if fn.endswith(".bz2"):
+                                        extracted_ok = decompress_bz2(download_dest, extracted_iso)
+                                    elif fn.endswith(".zip"):
+                                        try:
+                                            import zipfile
+                                            with zipfile.ZipFile(download_dest, "r") as z:
+                                                for z_name in z.namelist():
+                                                    if z_name.endswith(".iso"):
+                                                        with z.open(z_name) as z_src, open(extracted_iso, "wb") as z_dst:
+                                                            shutil.copyfileobj(z_src, z_dst)
+                                                        extracted_ok = True
+                                                        break
+                                        except Exception as e:
+                                            logger.log(f"Fehler beim Entpacken der Zip-Datei: {e}", color=Colors.RED, level="WARNUNG")
+                                    if extracted_ok:
+                                        download_dest.unlink(missing_ok=True)
+                                        target_path = extracted_iso
+                                        logger.log(f"[ENTPACKT] {latest_info['ExtractTo']} erfolgreich entpackt!", color=Colors.GREEN, level="ERFOLG")
+                                    else:
+                                        logger.log(f"[WARNUNG] Entpacken von {fn} fehlgeschlagen.", color=Colors.YELLOW, level="WARNUNG")
+                                else:
+                                    target_path = download_dest
                                 total_downloaded_bytes += downloaded_bytes
                                 summary_items.append(
                                     {

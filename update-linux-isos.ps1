@@ -375,8 +375,14 @@ function Test-IsoChecksum {
         [string]$FilePath,
         [string]$DownloadUrl,
         [string]$Filename,
-        [string]$ExplicitChecksumUrl
+        [string]$ExplicitChecksumUrl,
+        [string]$DirectExpectedHash
     )
+
+    if ($DirectExpectedHash -and -not [string]::IsNullOrWhiteSpace($DirectExpectedHash)) {
+        $expectedHash = $DirectExpectedHash.Trim().ToLower()
+        $hashAlgorithm = if ($expectedHash.Length -eq 128) { "SHA512" } elseif ($expectedHash.Length -eq 64) { "SHA256" } else { "MD5" }
+    }
 
     $expectedHash = $null
     $hashAlgorithm = $null
@@ -2791,39 +2797,45 @@ if (-not $SkipDownload) {
 
                     Write-Log -Message "[DOWNLOAD ERFOLGREICH] Dateiname: $($latestInfo.Filename) | Version: $($latestInfo.Version) | Groesse: $downloadedMB MB" -Color Green -Level "ERFOLG"
 
-                    if ($latestInfo.PSObject.Properties['ExtractTo'] -and $latestInfo.ExtractTo) {
-                        $extractedIsoPath = Join-Path $categoryDir $latestInfo.ExtractTo
-                        Write-Log -Message "[ENTPACKEN] Entpacke $($latestInfo.Filename) nach $($latestInfo.ExtractTo)..." -Color Cyan -Level "INFO"
-                        $extractedOk = $false
-                        if ($targetPath.EndsWith(".bz2")) {
-                            $extractedOk = Expand-Bz2Archive -Bz2Path $targetPath -DestinationIsoPath $extractedIsoPath
-                        } elseif ($targetPath.EndsWith(".zip")) {
-                            try {
-                                Add-Type -AssemblyName System.IO.Compression.FileSystem
-                                $zip = [System.IO.Compression.ZipFile]::OpenRead($targetPath)
-                                $entry = $zip.Entries | Where-Object { $_.Name -like "*.iso" } | Select-Object -First 1
-                                if ($entry) {
-                                    [System.IO.Compression.ZipFileExtensions]::ExtractToFile($entry, $extractedIsoPath, $true)
-                                    $extractedOk = $true
-                                }
-                                $zip.Dispose()
-                            } catch {}
-                        }
-                        if ($extractedOk -and (Test-Path $extractedIsoPath)) {
-                            Remove-Item -Path $targetPath -Force -ErrorAction SilentlyContinue
-                            $targetPath = $extractedIsoPath
-                            $latestInfo.Filename = $latestInfo.ExtractTo
-                            Write-Log -Message "[ENTPACKT] $($latestInfo.ExtractTo) erfolgreich entpackt und bereitgestellt!" -Color Green -Level "ERFOLG"
-                        } else {
-                            Write-Log -Message "[WARNUNG] Entpacken von $($latestInfo.Filename) fehlgeschlagen. Bitte manuell entpacken." -Color Yellow -Level "WARNUNG"
-                        }
-                    }
+                    $rawDownloadFile = $targetPath
+                    $chkUrl = if ($latestInfo.PSObject.Properties['ChecksumUrl']) { $latestInfo.ChecksumUrl } else { $null }
+                    $expHash = if ($latestInfo.PSObject.Properties['ExpectedHash']) { $latestInfo.ExpectedHash } else { $null }
 
-                    $checksumValid = Test-IsoChecksum -FilePath $targetPath -DownloadUrl $latestInfo.Url -Filename $latestInfo.Filename -ExplicitChecksumUrl $latestInfo.ChecksumUrl
+                    # 1. Pruefsumme der heruntergeladenen Datei pruefen (sofern online vorhanden) VOR dem Entpacken
+                    $checksumValid = Test-IsoChecksum -FilePath $rawDownloadFile -DownloadUrl $latestInfo.Url -Filename $latestInfo.Filename -ExplicitChecksumUrl $chkUrl -DirectExpectedHash $expHash
                     if (-not $checksumValid) {
                         Write-Log -Message "[FEHLER] Pruefsumme des frisch heruntergeladenen ISOs $($latestInfo.Filename) IST UNGUeLTIG! Datei wird geloescht." -Color Red -Level "FEHLER"
-                        if (Test-Path -Path $targetPath) { Remove-Item -Path $targetPath -Force }
+                        if (Test-Path -Path $rawDownloadFile) { Remove-Item -Path $rawDownloadFile -Force }
                     } else {
+                        # 2. Dekomprimierung (BZ2 oder ZIP), falls ExtractTo definiert ist
+                        if ($latestInfo.PSObject.Properties['ExtractTo'] -and $latestInfo.ExtractTo) {
+                            $extractedIsoPath = Join-Path $categoryDir $latestInfo.ExtractTo
+                            Write-Log -Message "[ENTPACKEN] Entpacke $($latestInfo.Filename) nach $($latestInfo.ExtractTo)..." -Color Cyan -Level "INFO"
+                            $extractedOk = $false
+                            $rawLower = $rawDownloadFile.ToLower()
+                            if ($rawLower.EndsWith(".bz2")) {
+                                $extractedOk = Expand-Bz2Archive -Bz2Path $rawDownloadFile -DestinationIsoPath $extractedIsoPath
+                            } elseif ($rawLower.EndsWith(".zip")) {
+                                try {
+                                    Add-Type -AssemblyName System.IO.Compression.FileSystem
+                                    $zip = [System.IO.Compression.ZipFile]::OpenRead($rawDownloadFile)
+                                    $entry = $zip.Entries | Where-Object { $_.Name -like "*.iso" } | Select-Object -First 1
+                                    if ($entry) {
+                                        [System.IO.Compression.ZipFileExtensions]::ExtractToFile($entry, $extractedIsoPath, $true)
+                                        $extractedOk = $true
+                                    }
+                                    $zip.Dispose()
+                                } catch {}
+                            }
+                            if ($extractedOk -and (Test-Path $extractedIsoPath)) {
+                                Remove-Item -Path $rawDownloadFile -Force -ErrorAction SilentlyContinue
+                                $targetPath = $extractedIsoPath
+                                $latestInfo.Filename = $latestInfo.ExtractTo
+                                Write-Log -Message "[ENTPACKT] $($latestInfo.ExtractTo) erfolgreich entpackt und bereitgestellt!" -Color Green -Level "ERFOLG"
+                            } else {
+                                Write-Log -Message "[WARNUNG] Entpacken von $($latestInfo.Filename) fehlgeschlagen. Bitte manuell entpacken." -Color Yellow -Level "WARNUNG"
+                            }
+                        }
                         $totalDownloadedBytesAll += $bytesDownloaded
                         $summaryItems += [PSCustomObject]@{
                             Distribution = $distro.Name
