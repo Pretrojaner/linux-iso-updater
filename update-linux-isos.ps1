@@ -566,6 +566,8 @@ function Start-HttpDownload {
         return $totalBytesRead
     }
     catch {
+        if ($outputStream) { $outputStream.Close(); $outputStream.Dispose(); $outputStream = $null }
+        if ($inputStream)  { $inputStream.Close();  $inputStream.Dispose();  $inputStream = $null }
         $curl = Get-Command "curl.exe" -ErrorAction SilentlyContinue
         if ($curl) {
             Write-Host "`n   [DOWNLOAD FALLBACK] Nutze curl.exe fuer $Filename..." -ForegroundColor Yellow
