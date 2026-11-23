@@ -955,16 +955,12 @@ class DistroScraperEngine:
         return None
 
     def scrape_manjaro_linux(self) -> Optional[Dict[str, Any]]:
-        rss = self.dm.get_web_content("https://sourceforge.net/projects/manjarolinux/rss?path=/xfce")
-        if rss:
-            m = re.search(r'<link>(https://sourceforge\.net/projects/manjarolinux/files/xfce/([0-9.]+)/(manjaro-xfce-[^<]+\.iso)/download)</link>', rss)
-            if m:
-                ver = m.group(2)
-                fn = m.group(3)
-                url = f"https://downloads.sourceforge.net/project/manjarolinux/xfce/{ver}/{fn}"
-                chk = f"https://downloads.sourceforge.net/project/manjarolinux/xfce/{ver}/{fn}.sha256"
-                return {"Version": ver, "Url": url, "Filename": fn, "ChecksumUrl": chk}
-        return None
+        # Aktuell auf stabile 26.1.3 gepinnt, da SourceForge Release 27.0 extrem gedrosselt wird
+        return {
+            "Version": "26.1.3",
+            "Url": "https://downloads.sourceforge.net/project/manjarolinux/xfce/26.1.3/manjaro-xfce-26.1.3-261028-linux72.iso",
+            "Filename": "manjaro-xfce-26.1.3-261028-linux72.iso",
+        }
 
     def scrape_mx_linux(self) -> Optional[Dict[str, Any]]:
         base = "https://ftp.gwdg.de/pub/linux/mx/iso/MX/Final/Xfce/"

@@ -506,20 +506,6 @@ function Start-HttpDownload {
         [string]$Filename
     )
 
-    $curl = Get-Command "curl.exe" -ErrorAction SilentlyContinue
-    if ($curl) {
-        $curlUserAgent = if ($Url -match "sourceforge\.net") { "curl/8.4.0" } else { $UserAgent }
-        Write-Host "   [DOWNLOAD] Starte curl.exe fuer $Filename (hohe Geschwindigkeit & Auto-Resume)..." -ForegroundColor Cyan
-        & curl.exe -L --fail --retry 3 -C - -A $curlUserAgent --progress-bar -o $DestinationPath $Url
-        if ($LASTEXITCODE -eq 0 -and (Test-Path $DestinationPath)) {
-            $item = Get-Item $DestinationPath
-            if ($item.Length -gt 1MB) {
-                return $item.Length
-            }
-        }
-        Write-Host "   [FALLBACK] curl.exe beendet mit Code $LASTEXITCODE. Wechsle zu internem HttpClient..." -ForegroundColor Yellow
-    }
-
     $handler = New-Object System.Net.Http.HttpClientHandler
     $handler.AllowAutoRedirect = $true
 
