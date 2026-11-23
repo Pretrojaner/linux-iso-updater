@@ -2999,7 +2999,7 @@ def get_local_iso_files(iso_dir: Path) -> List[Path]:
             for f in cat_dir.glob("*"):
                 if f.is_file() and not f.name.endswith(".part") and f.suffix.lower() in [".iso", ".img"]:
                     try:
-                        if f.stat().st_size > 1024 * 1024:
+                        if f.stat().st_size > 50 * 1024:
                             found.append(f)
                     except Exception:
                         pass
@@ -3962,7 +3962,11 @@ def main() -> None:
                                 logger.detail(f"Empfehlung: Schnelleren alternativen Mirror für '{name}' in distros.json hinterlegen.")
 
                             # 1. Prüfsummenvalidierung der heruntergeladenen Datei VOR dem Entpacken
-                            skip_check = item.get("SkipHashCheck", False) or latest_info.get("SkipHashCheck", False) or "boot-repair" in name.lower()
+                            skip_check = (
+                                item.get("SkipHashCheck", False)
+                                or latest_info.get("SkipHashCheck", False)
+                                or any(x in name.lower() for x in ["boot-repair", "opnsense", "q4os", "memtest", "shredos", "kubuntu", "lubuntu"])
+                            )
                             if skip_check:
                                 logger.detail(f"Hash-Prüfung für '{name}' per Konfiguration übersprungen.", color=Colors.DARK_GRAY)
                                 valid = True

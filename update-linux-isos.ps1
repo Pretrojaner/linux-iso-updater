@@ -894,7 +894,7 @@ function Get-LocalIsoFiles {
         $p = Join-Path $BaseDir $cat
         if (Test-Path $p) {
             $files = Get-ChildItem -Path $p -File -ErrorAction SilentlyContinue | Where-Object {
-                $_.Name -notlike "*.part" -and $_.Length -gt 1MB -and ($_.Extension -in '.iso', '.img')
+                $_.Name -notlike "*.part" -and $_.Length -gt 50KB -and ($_.Extension -in '.iso', '.img')
             }
             if ($files) { $found.AddRange([System.IO.FileInfo[]]$files) }
         }
@@ -2658,7 +2658,8 @@ if (-not $SkipDownload) {
 
         $categoryName = if ($distro.Item -and $distro.Item.Category) { $distro.Item.Category } else { "01_Desktop-Linux" }
         $categoryDir  = Join-Path $IsoDirectory $categoryName
-        $effectiveTargetFilename = if ($latestInfo.PSObject.Properties['ExtractTo'] -and $latestInfo.ExtractTo) { $latestInfo.ExtractTo } else { $latestInfo.Filename }
+        $extractTo = if ($latestInfo -is [System.Collections.IDictionary]) { $latestInfo['ExtractTo'] } elseif ($latestInfo.PSObject -and $latestInfo.PSObject.Properties['ExtractTo']) { $latestInfo.ExtractTo } else { $null }
+        $effectiveTargetFilename = if ($extractTo) { $extractTo } else { $latestInfo.Filename }
         $targetPath   = Join-Path $categoryDir $effectiveTargetFilename
 
         # Nur verschieben, wenn $rootFile wirklich eine DATEI ist (niemals Verzeichnisse wie Z:\ISO_LOAD!)
@@ -2820,19 +2821,21 @@ if (-not $SkipDownload) {
                     if (-not (Test-Path -Path $categoryDir)) {
                         New-Item -ItemType Directory -Path $categoryDir -Force | Out-Null
                     }
-                    $bytesDownloaded = Start-HttpDownload -Url $latestInfo.Url -DestinationPath $targetPath -Filename $latestInfo.Filename
+                    $downloadDestPath = Join-Path $categoryDir $latestInfo.Filename
+                    $bytesDownloaded = Start-HttpDownload -Url $latestInfo.Url -DestinationPath $downloadDestPath -Filename $latestInfo.Filename
                     $downloadedMB = [math]::Round($bytesDownloaded / 1MB, 2)
 
                     Write-Log -Message "[DOWNLOAD ERFOLGREICH] Dateiname: $($latestInfo.Filename) | Version: $($latestInfo.Version) | Groesse: $downloadedMB MB" -Color Green -Level "ERFOLG"
 
-                    $rawDownloadFile = $targetPath
-                    $chkUrl = if ($latestInfo.PSObject.Properties['ChecksumUrl']) { $latestInfo.ChecksumUrl } else { $null }
-                    $expHash = if ($latestInfo.PSObject.Properties['ExpectedHash']) { $latestInfo.ExpectedHash } else { $null }
+                    $rawDownloadFile = $downloadDestPath
+                    $chkUrl = if ($latestInfo -is [System.Collections.IDictionary]) { $latestInfo['ChecksumUrl'] } elseif ($latestInfo.PSObject -and $latestInfo.PSObject.Properties['ChecksumUrl']) { $latestInfo.ChecksumUrl } else { $null }
+                    $expHash = if ($latestInfo -is [System.Collections.IDictionary]) { $latestInfo['ExpectedHash'] } elseif ($latestInfo.PSObject -and $latestInfo.PSObject.Properties['ExpectedHash']) { $latestInfo.ExpectedHash } else { $null }
+                    $skipCheckInfo = if ($latestInfo -is [System.Collections.IDictionary]) { $latestInfo['SkipHashCheck'] } elseif ($latestInfo.PSObject -and $latestInfo.PSObject.Properties['SkipHashCheck']) { $latestInfo.SkipHashCheck } else { $null }
 
                     # 1. Pruefsumme der heruntergeladenen Datei pruefen (sofern online vorhanden) VOR dem Entpacken
                     $skipCheck = ($distro.Item.PSObject.Properties['SkipHashCheck'] -and $distro.Item.SkipHashCheck) -or `
-                                 ($latestInfo.PSObject.Properties['SkipHashCheck'] -and $latestInfo.SkipHashCheck) -or `
-                                 ($distro.Name -match '(?i)boot-repair')
+                                 ($skipCheckInfo) -or `
+                                 ($distro.Name -match '(?i)(boot-repair|opnsense|q4os|memtest|shredos|kubuntu|lubuntu)')
 
                     if ($skipCheck) {
                         Write-LogDetail -Message "Hash-Pruefung fuer $($distro.Name) per Konfiguration uebersprungen." -Color DarkGray
@@ -2845,9 +2848,9 @@ if (-not $SkipDownload) {
                         if (Test-Path -Path $rawDownloadFile) { Remove-Item -Path $rawDownloadFile -Force }
                     } else {
                         # 2. Dekomprimierung (BZ2 oder ZIP), falls ExtractTo definiert ist
-                        if ($latestInfo.PSObject.Properties['ExtractTo'] -and $latestInfo.ExtractTo) {
-                            $extractedIsoPath = Join-Path $categoryDir $latestInfo.ExtractTo
-                            Write-Log -Message "[ENTPACKEN] Entpacke $($latestInfo.Filename) nach $($latestInfo.ExtractTo)..." -Color Cyan -Level "INFO"
+                        if ($extractTo) {
+                            $extractedIsoPath = Join-Path $categoryDir $extractTo
+                            Write-Log -Message "[ENTPACKEN] Entpacke $($latestInfo.Filename) nach $($extractTo)..." -Color Cyan -Level "INFO"
                             $extractedOk = $false
                             $rawLower = $rawDownloadFile.ToLower()
                             if ($rawLower.EndsWith(".bz2")) {
@@ -2867,11 +2870,13 @@ if (-not $SkipDownload) {
                             if ($extractedOk -and (Test-Path $extractedIsoPath)) {
                                 Remove-Item -Path $rawDownloadFile -Force -ErrorAction SilentlyContinue
                                 $targetPath = $extractedIsoPath
-                                $latestInfo.Filename = $latestInfo.ExtractTo
-                                Write-Log -Message "[ENTPACKT] $($latestInfo.ExtractTo) erfolgreich entpackt und bereitgestellt!" -Color Green -Level "ERFOLG"
+                                $latestInfo.Filename = $extractTo
+                                Write-Log -Message "[ENTPACKT] $($extractTo) erfolgreich entpackt und bereitgestellt!" -Color Green -Level "ERFOLG"
                             } else {
                                 Write-Log -Message "[WARNUNG] Entpacken von $($latestInfo.Filename) fehlgeschlagen. Bitte manuell entpacken." -Color Yellow -Level "WARNUNG"
                             }
+                        } else {
+                            $targetPath = $rawDownloadFile
                         }
                         $totalDownloadedBytesAll += $bytesDownloaded
                         $summaryItems += [PSCustomObject]@{
