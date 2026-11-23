@@ -747,6 +747,117 @@ function Get-PrettyIsoName {
     return ($words -join ' ')
 }
 
+function Get-IsoMenuTip {
+    param([string]$Filename)
+
+    # Rettungs-, Notfall- & Antiviren-Systeme
+    if ($Filename -match "(?i)desinfec'?t")      { return "c't Notfallsystem: Virensuche & Bereinigung mit 4 Antiviren-Scannern" }
+    if ($Filename -match '(?i)clonezilla')       { return "Festplatten- und Partitions-Klontool fuer Bare-Metal-Backups" }
+    if ($Filename -match '(?i)caine')            { return "Digitale Forensik & Autopsy-Live-Umgebung mit Schreibschutz" }
+    if ($Filename -match '(?i)drweb')            { return "Doctor Web Antivirus-LiveDisk zur Bereinigung infizierter Systeme" }
+    if ($Filename -match '(?i)krd')              { return "Kaspersky Rescue Disk zur Desinfektion kompromittierter Rechner" }
+    if ($Filename -match '(?i)eset_sysrescue')   { return "ESET SysRescue Live: Antivirus-Scan ausserhalb des Betriebssystems" }
+    if ($Filename -match '(?i)hbcd|hiren')       { return "Windows 11 PE Notfallumgebung mit umfangreichen Reparaturtools" }
+    if ($Filename -match '(?i)boot-repair')      { return "Automatische Ein-Klick-Reparatur beschaedigter GRUB- & EFI-Bootloader" }
+    if ($Filename -match '(?i)super_?grub')      { return "Multi-Boot-Finder zum Starten installierter Systeme bei defektem Bootloader" }
+    if ($Filename -match '(?i)ubcd')             { return "Hardware-Diagnose, CPU/RAM/Disk-Stresstests und Low-Level-Tools" }
+    if ($Filename -match '(?i)shredos')          { return "Sichere Datentraeger-Loeschung nach DoD- & NIST-Standards (nwipe)" }
+    if ($Filename -match '(?i)rescatux')         { return "Passwort-Zuruecksetzen, Dateisystem- & Bootloader-Reparatur" }
+    if ($Filename -match '(?i)rescuezilla')      { return "Benutzerfreundliche grafische Image-Backup & Restore Loesung" }
+    if ($Filename -match '(?i)systemrescue')     { return "Klassisches Linux-Administratoren-Werkzeug mit ClamAV & Partitionstools" }
+    if ($Filename -match '(?i)gparted')          { return "Grafischer Partitions-Manager zum Erstellen, Vergroessern und Verkleinern" }
+    if ($Filename -match '(?i)fygoos')           { return "Leistungsfaehiges WinPE-System zur Datenrettung und Windows-Wartung" }
+    if ($Filename -match '(?i)netboot\.xyz')     { return "iPXE-Netzwerk-Bootloader zum Starten von OS direkt aus dem Internet" }
+    if ($Filename -match '(?i)memtest|mt86plus') { return "RAM-Fehlerdiagnose fuer DDR4/DDR5 mit UEFI- & BIOS-Unterstuetzung" }
+    if ($Filename -match '(?i)pts-desktop-live|phoronix') { return "Umfassende Hardware-Benchmarking- und Stresstest-Live-Suite" }
+    if ($Filename -match '(?i)acronis')          { return "Acronis Cyber Protect / True Image Notfallmedium zur Systemsicherung" }
+    if ($Filename -match '(?i)macrium|reflect')  { return "Macrium Reflect Rescue PE zur Image-Wiederherstellung" }
+    if ($Filename -match '(?i)aomei')            { return "AOMEI Backupper & Partition Assistant Notfallumgebung" }
+    if ($Filename -match '(?i)easeus')           { return "EaseUS Partition Master & Todo Backup Wiederherstellungsumgebung" }
+    if ($Filename -match '(?i)winpe|windows[-_ ]?pe') { return "Windows Preinstallation Environment mit Reparatur- und Diagnosewerkzeugen" }
+    if ($Filename -match '(?i)redorescue')       { return "Einfaches Point-and-Click Bare-Metal Backup- und Wiederherstellungssystem" }
+
+    # BSD & Unix
+    if ($Filename -match '(?i)openbsd|install\d+\.iso') { return "Ultra-sicheres Unix-Betriebssystem mit Fokus auf Korrektheit und Kryptografie" }
+    if ($Filename -match '(?i)NetBSD')           { return "Hochgradig portables, sauberes und standardkonformes BSD-Unix-System" }
+    if ($Filename -match '(?i)dfly|dragonfly')   { return "BSD-Betriebssystem mit modernem HAMMER2-Cluster-Dateisystem" }
+    if ($Filename -match '(?i)FreeBSD')          { return "Leistungsstarkes, bewaehrtes Server- und Workstation-Betriebssystem" }
+    if ($Filename -match '(?i)ghostbsd')         { return "Anwenderfreundliches FreeBSD mit komfortablem MATE-Desktop" }
+    if ($Filename -match '(?i)opnsense')         { return "Professionelle Open-Source-Firewall- und Routing-Plattform" }
+    if ($Filename -match '(?i)pfsense')          { return "Leistungsfaehige FreeBSD-Firewall und UTM-Sicherheitsappliance" }
+
+    # Desktop Linux
+    if ($Filename -match '(?i)alpine')           { return "Ultraschlankes, ressourcenschonendes Mini-Linux auf musl- & busybox-Basis" }
+    if ($Filename -match '(?i)antix')            { return "Ressourcenschonendes Debian-Live-System ohne systemd fuer aeltere PCs" }
+    if ($Filename -match '(?i)archlinux')        { return "Puristische, hochflexible Rolling-Release-Distribution (KISS-Prinzip)" }
+    if ($Filename -match '(?i)bazzite')          { return "Moderner SteamOS-Klon auf Fedora-Basis fuer Gaming-PCs und Handhelds" }
+    if ($Filename -match '(?i)cachyos')          { return "Gaming- und Performance-optimiertes Arch-Linux mit x86-64-v3/v4-Kerneln" }
+    if ($Filename -match '(?i)cld.*x86_64')      { return "Gentoo-basierte Rolling-Release-Distribution mit schnellem KDE-Desktop" }
+    if ($Filename -match '(?i)crux')             { return "Schlanke, quellcode-basierte x86-64-Distribution fuer Linux-Minimalisten" }
+    if ($Filename -match '(?i)debian')           { return "Das universelle, grundsolide Betriebssystem fuer maximale Stabilitaet" }
+    if ($Filename -match '(?i)devuan')           { return "Solider Debian-Fork ohne systemd fuer Liebhaber klassischer Init-Systeme" }
+    if ($Filename -match '(?i)elementaryos')     { return "Elegantes, design-fokussiertes System mit intuitivem Pantheon-Desktop" }
+    if ($Filename -match '(?i)endeavouros')      { return "Benutzerfreundlicher Einstieg in das Arch-Linux-Oekosystem" }
+    if ($Filename -match '(?i)Fedora')           { return "Modernste Linux-Technologien und Innovationen aus dem Red-Hat-Umfeld" }
+    if ($Filename -match '(?i)garuda')           { return "Visuell spektakulaeres Arch-Derivat mit Gaming-Fokus und BTRFS-Snapshots" }
+    if ($Filename -match '(?i)livegui|gentoo')   { return "Hochgradig anpassbare Quellcode-Distribution als sofort startbares Live-GUI" }
+    if ($Filename -match '(?i)neon-user')        { return "Immer die neueste KDE-Plasma-Software auf stabiler Ubuntu-LTS-Basis" }
+    if ($Filename -match '(?i)kubuntu')          { return "Offizieller Ubuntu-Flavor mit dem modernen, eleganten KDE-Plasma-Desktop" }
+    if ($Filename -match '(?i)linux-lite')       { return "Einsteigerfreundliches Ubuntu-LTS-System mit vertrautem XFCE-Desktop" }
+    if ($Filename -match '(?i)linuxmint')        { return "Aeuserst benutzerfreundliches, elegantes Desktop-System mit Cinnamon-UI" }
+    if ($Filename -match '(?i)lubuntu')          { return "Extrem schlanker, schneller Ubuntu-Flavor mit ressourcenschonendem LXQt" }
+    if ($Filename -match '(?i)Mageia')           { return "Traditioneller Mandriva-Nachfolger mit komfortablem Kontrollzentrum" }
+    if ($Filename -match '(?i)manjaro')          { return "Komfortables, vorkonfiguriertes Arch-Linux mit XFCE-Desktop" }
+    if ($Filename -match '(?i)mx-.*xfce')        { return "Effizientes, extrem populaeres Debian-Desktop-System mit MX-Tools" }
+    if ($Filename -match '(?i)nixos.*graphical') { return "Rein deklarative Distribution mit reproduzierbaren Konfigurationen" }
+    if ($Filename -match '(?i)nobara')           { return "Performance- & Gaming-optimiertes Fedora von GloriousEggroll mit GPU-Treibern" }
+    if ($Filename -match '(?i)omarchy')          { return "Modernes, schlankes Arch-Derivat mit schnellem Installationsprogramm" }
+    if ($Filename -match '(?i)opensuse.*tumbleweed') { return "Kontinuierlich getestete Rolling-Release-Distribution mit YaST-Tools" }
+    if ($Filename -match '(?i)pop-os')           { return "System76-Distribution fuer Entwickler und Kreative mit Auto-Tiling" }
+    if ($Filename -match '(?i)q4os')             { return "Blitzschnelles, ressourcenschonendes Desktop-System auf Debian-Basis" }
+    if ($Filename -match '(?i)slackware')        { return "Traditionsreichste aktive Linux-Distribution mit Unix-artiger Transparenz" }
+    if ($Filename -match '(?i)solus.*budgie')    { return "Eigenstaendiges, schnelles Rolling-Release-System mit Budgie-Desktop" }
+    if ($Filename -match '(?i)tuxedo')           { return "Ubuntu-Basis mit KDE Plasma 6, neuester Hardware-Unterstuetzung und Kernel-Tuning" }
+    if ($Filename -match '(?i)ubuntucinnamon')   { return "Ubuntu-Flavor mit dem flexiblen, eleganten Cinnamon-Desktop" }
+    if ($Filename -match '(?i)ubuntu.*live-server') { return "Fuehrende Long-Term-Support-Plattform fuer Rechenzentren und Cloud" }
+    if ($Filename -match '(?i)ubuntu')           { return "Die weltweit meistverbreitete Standard-Linux-Distribution mit GNOME" }
+    if ($Filename -match '(?i)void-live')        { return "Unabhaengige Rolling-Release-Distribution mit schnellem XBPS-Paketmanager" }
+    if ($Filename -match '(?i)winux')            { return "Ubuntu-24.04-Basis mit modernem Windows-11-Look & vorkonfiguriertem Wine/Proton" }
+    if ($Filename -match '(?i)Zorin')            { return "Moderne, einsteigerfreundliche Distribution speziell fuer Bildung und Schulen" }
+
+    # Enterprise Server & NAS
+    if ($Filename -match '(?i)AlmaLinux')        { return "100% binaerkompatible RHEL-Enterprise-Alternative und CentOS-Nachfolger" }
+    if ($Filename -match '(?i)azurelinux|azure-linux|mariner') { return "Microsofts gehaertete Linux-Distribution fuer Cloud- und Edge-Infrastruktur" }
+    if ($Filename -match '(?i)CentOS')           { return "Kontinuierliche Upstream-Entwicklungsplattform fuer Red Hat Enterprise Linux" }
+    if ($Filename -match '(?i)openmediavault')   { return "Modulare, webbasierte NAS- und Speicher-Loesung auf Debian-Basis" }
+    if ($Filename -match '(?i)oraclelinux|oracle[-_ ]?linux') { return "Kostenloses RHEL-kompatibles Enterprise-OS mit Unbreakable Enterprise Kernel" }
+    if ($Filename -match '(?i)zimaos')           { return "Einfaches Cloud- & Speicher-Betriebssystem fuer Heimanwender und NAS" }
+    if ($Filename -match '(?i)TrueNAS|FreeNAS')  { return "Enterprise-Storage- & ZFS-Speicherplattform mit App-Support" }
+    if ($Filename -match '(?i)proxmox.*backup')  { return "Dedizierte Backup-Appliance fuer inkrementelle VM-Sicherungen" }
+    if ($Filename -match '(?i)proxmox')          { return "Fuehrender KVM- & LXC-Hypervisor fuer Rechenzentren und Virtualisierung" }
+    if ($Filename -match '(?i)Rocky')            { return "Community-getriebenes, hochstabiles RHEL-Enterprise-Betriebssystem" }
+    if ($Filename -match '(?i)Rockstor')         { return "BTRFS-fokussierte NAS-Distribution mit Web-Verwaltung und Docker-Apps" }
+    if ($Filename -match '(?i)xcp-ng')           { return "Leistungsfaehiger Open-Source-Hypervisor auf Xen-Basis fuer Enterprise-VMs" }
+
+    # Security & Pentest
+    if ($Filename -match '(?i)athenaos|athena[-_ ]?os') { return "Spezialisierte Arch-Pentesting-Plattform mit thematischen Rollenmodi" }
+    if ($Filename -match '(?i)blackarch')        { return "Arch-basierte Security-Distribution mit ueber 2.800 Pentesting-Tools" }
+    if ($Filename -match '(?i)kali')             { return "Der weltweite Industriestandard fuer Penetrationstests und Ethical Hacking" }
+    if ($Filename -match '(?i)kodachi')          { return "Anti-Forensik-Live-System mit automatischem VPN, Tor-Routing & Panic-Wipe" }
+    if ($Filename -match '(?i)Parrot')           { return "All-in-One-Plattform fuer IT-Sicherheit, Forensik und Kryptografie" }
+    if ($Filename -match '(?i)tails')            { return "The Amnesic Incognito Live System: Spurlos surfen ueber das Tor-Netzwerk" }
+    if ($Filename -match '(?i)qubes')            { return "Hochsicherheits-Betriebssystem mit Isolation durch Xen-Mikro-VMs" }
+
+    # Spezial
+    if ($Filename -match '(?i)CorePure64')       { return "Winziges, modulares Mini-Linux-System, das komplett im RAM laeuft" }
+    if ($Filename -match '(?i)knoppix')          { return "Der Urvater aller Live-Linux-Systeme zur Hardware-Erkennung und Reparatur" }
+    if ($Filename -match '(?i)pup(py)?64|fossapup|bionicpup|bookwormpup') { return "Ultra-leichtgewichtiges System fuer aeltere Computer" }
+    if ($Filename -match '(?i)win(dows)?[-_ ]?(10|11|server)') { return "Offizielles Microsoft Windows Setup & Installationsmedium" }
+
+    return "Bootfaehiges Image fuer Ventoy Multi-Boot"
+}
+
+
 function Get-LocalIsoFiles {
     param([string]$BaseDir)
     $categoryOrder = @(
@@ -2207,6 +2318,15 @@ function Start-VentoyCopyJob {
                     $allTargetImages[$vtoyPath] = $iso.Filename
                 }
 
+                $menuTips = @(
+                    @{ "dir" = "/01_Desktop-Linux";     "tip" = "Alltags-, Workstation- & Gaming-Betriebssysteme (Ubuntu, Mint, Fedora, Arch...)" },
+                    @{ "dir" = "/02_Enterprise-Server"; "tip" = "Enterprise-Server, Hypervisor & NAS-Systeme (RHEL, Proxmox, TrueNAS...)" },
+                    @{ "dir" = "/03_Security-Pentest";  "tip" = "IT-Sicherheit, Forensik, Anonymitaet & Penetration-Testing (Kali, Tails...)" },
+                    @{ "dir" = "/04_Rescue-Systeme";   "tip" = "Notfall-, Reparatur-, Hardware-Diagnose & Antivirus-Systeme" },
+                    @{ "dir" = "/05_BSD-Unix";          "tip" = "BSD-Derivate, Firewalls & alternative Unix-Systeme" },
+                    @{ "dir" = "/06_Windows-PE_Rescue"; "tip" = "Windows Preinstallation & PE-Rettungsumgebungen" }
+                )
+
                 foreach ($vpath in ($allTargetImages.Keys | Sort-Object)) {
                     $fn = $allTargetImages[$vpath]
                     $prettyTitle = Get-PrettyIsoName -Filename $fn
@@ -2214,9 +2334,21 @@ function Start-VentoyCopyJob {
                         "image" = $vpath
                         "alias" = $prettyTitle
                     }
+                    $menuTips += @{
+                        "image" = $vpath
+                        "tip"   = (Get-IsoMenuTip -Filename $fn)
+                    }
                 }
 
                 $configObj | Add-Member -NotePropertyName "menu_alias" -NotePropertyValue $menuAliases -Force
+
+                $tipConfig = @{
+                    "left"  = "5%"
+                    "top"   = "88%"
+                    "color" = "#58a6ff"
+                    "tips"  = $menuTips
+                }
+                $configObj | Add-Member -NotePropertyName "menu_tip" -NotePropertyValue $tipConfig -Force
 
                 $jsonOutput = ($configObj | ConvertTo-Json -Depth 10) -replace "`r`n", "`n"
                 [System.IO.File]::WriteAllText($ventoyJsonPath, $jsonOutput, (New-Object System.Text.UTF8Encoding($false)))

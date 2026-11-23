@@ -1897,6 +1897,122 @@ def get_pretty_iso_name(filename: str) -> str:
     return " ".join(words)
 
 
+def get_iso_menu_tip(filename: str) -> str:
+    """Liefert eine prägnante Kurzbeschreibung für das Ventoy-Menü (menu_tip Plugin)."""
+    fn_lower = filename.lower()
+    mapping = [
+        # Rettungs-, Notfall- & Antiviren-Systeme
+        (r"desinfec'?t", "c't Notfall-System mit 4 Virenscannern (ClamAV, ESET, WithSecure, Kaspersky) & Rettungswerkzeugen"),
+        ("clonezilla", "Branchenstandard für Disk-Imaging, Partition-Cloning und Bare-Metal-Wiederherstellung"),
+        ("caine", "Computer Aided Investigative Environment - Professionelle digitale IT-Forensik & Analyse"),
+        ("drweb", "Dr.Web LiveDisk - Zuverlässiger Notfall-Virenscanner zur Rettung infizierter Windows/Linux-Systeme"),
+        ("krd", "Kaspersky Rescue Disk - x64 Live-System zur Bereinigung tief sitzender Malware und Rootkits"),
+        ("eset_sysrescue", "ESET SysRescue Live - On-Demand Antivirus-Scan direkt vom USB-Stick mit Cloud-Signaturen"),
+        (r"hbcd|hiren", "Hiren's BootCD PE x64 (Windows 11 PE) - Umfassende Diagnostik-, Reparatur- und PW-Tools"),
+        (r"boot-repair", "Automatische 1-Klick-Reparatur für beschädigte GRUB-, EFI- und Windows-Bootloader"),
+        (r"super_?grub", "Startet jedes installierte Betriebssystem auch bei komplett zerstörtem MBR/EFI-Bootloader"),
+        (r"ubcd", "Ultimate Boot CD - Legendäre Diagnose-Sammlung für Hardware, CPU, RAM, Festplatten & BIOS"),
+        (r"shredos", "ShredOS - Sichere, zertifizierte Datenlöschung von NVMe/SSDs/HDDs nach DoD 5220.22-M"),
+        ("rescatux", "Grafisches Rettungssystem: Windows-Kennwörter zurücksetzen, GRUB reparieren, Dateisysteme prüfen"),
+        ("rescuezilla", "Einfache grafische Benutzeroberfläche für Clonezilla: Backup, Restore und Drive-Cloning"),
+        ("systemrescue", "Schweizer Taschenmesser für Admins: GParted, fsck, ddrescue, TestDisk, rsync, smartctl"),
+        ("gparted", "Grafischer Partitionsmanager: Partitionen verlustfrei vergrößern, verkleinern, verschieben, klonen"),
+        ("fygoos", "FygoOS Rescue PE - Modernes Windows-PE-Notfallsystem für Systemreparaturen und Datensicherung"),
+        (r"netboot\.xyz", "iPXE-Netzwerk-Bootloader zum Starten dutzender Betriebssysteme direkt aus dem Internet"),
+        (r"memtest|mt86plus", "MemTest86+ - Der Industriestandard für gründliche RAM-Speicherdiagnose und Hardware-Tests"),
+        (r"pts-desktop-live|phoronix", "Phoronix Test Suite Live - Automatisiertes Hardware-Benchmarking und Stresstests"),
+        (r"acronis", "Acronis Cyber Protect / True Image - Professionelles Backup, Disk Cloning & Bare-Metal Restore"),
+        (r"macrium|reflect", "Macrium Reflect Rescue PE - Zuverlässige Windows-Sicherung und Image-Wiederherstellung"),
+        (r"aomei", "AOMEI Backupper & Partition Assistant - Festplatten klonen und Partitionen verwalten"),
+        (r"easeus", "EaseUS Partition Master / Todo Backup - Partitionsverwaltung und Notfall-Recovery"),
+        (r"winpe|windows[-_ ]?pe", "Windows Preinstallation Environment - Basis für Windows-Wartung, PE-Tools & Setup"),
+        ("redorescue", "Point-and-Click Bare-Metal Backup und Restore für Festplatten und Partitionen"),
+
+        # BSD & Unix
+        (r"openbsd|install\d+\.iso", "Sicherheitsfokussiertes UNIX-Betriebssystem mit extrem sauberem Code und starker Kryptografie"),
+        ("netbsd", "Ultra-portables, sauberes BSD-Unix - läuft auf nahezu jeder bekannten Hardware-Architektur"),
+        (r"dfly|dragonfly", "Fortschrittliches BSD mit dem innovativen HAMMER2-Hochleistungs-Dateisystem"),
+        ("freebsd", "Leistungsstarkes UNIX-OS für Server, Firewalls, ZFS-Speicher und anspruchsvolle Desktops"),
+        ("ghostbsd", "Benutzerfreundliches Desktop-BSD auf FreeBSD-Basis mit vorkonfigurierter MATE-Umgebung"),
+        ("opnsense", "Professionelle Open-Source-Firewall & Routing-Plattform mit IDS/IPS und modernem Web-GUI"),
+        ("pfsense", "Führende Open-Source-Firewall und UTM-Sicherheitslösung für Netzwerke"),
+
+        # Desktop Linux (Alle 36 Systeme)
+        ("alpine", "Minimalistisches, ressourcenschonendes Linux mit musl libc und BusyBox - ideal für Container & Rescue"),
+        ("antix", "Extrem leichtgewichtiges System ohne systemd - perfekt für älteste Hardware und Netbooks"),
+        ("archlinux", "Rolling-Release-Distribution für Power-User mit neuester Software und Pacman-Paketmanager"),
+        ("bazzite", "SteamOS-Alternative auf Fedora-Basis - Perfekt optimiert für PC-Gaming und Handhelds (Steam Deck)"),
+        ("cachyos", "Ultra-performantes Arch-Linux mit x86-64-v3/v4 CPU-Optimierungen und BORE-Scheduler"),
+        (r"cld.*x86_64", "Calculate Linux Desktop KDE - Schnelles Gentoo-basiertes Rolling-Release für den Produktiveinsatz"),
+        ("crux", "Leichtgewichtige, quellcodebasierte Distribution für erfahrene Linux-Enthusiasten"),
+        ("debian", "Das universelle Betriebssystem - Legendär für maximale Stabilität und riesiges Software-Repository"),
+        ("devuan", "Debian-Fork ohne systemd - Maximale Wahlfreiheit für SysVinit, Runit oder OpenRC"),
+        ("elementaryos", "Elegantes, macOS-inspiriertes Desktop-System mit Fokus auf Ästhetik und Privatsphäre"),
+        ("endeavouros", "Benutzerfreundliches, schlankes Arch Linux mit einfacher GUI-Installation und starker Community"),
+        ("fedora", "Innovatives System von Red Hat mit neuester GNOME-Version, Wayland und PipeWire als Standard"),
+        ("garuda", "Performance-optimiertes Arch-Linux mit futuristischem Dr460nized-Design und Gaming-Tools"),
+        (r"livegui|gentoo", "Source-basierte High-End-Distribution für maximale Compiler-Optimierung auf eigener Hardware"),
+        ("neon-user", "Offizielle KDE-Distribution mit neuesten Plasma-Desktop-Features auf stabiler Ubuntu-LTS-Basis"),
+        ("kubuntu", "Ubuntu mit KDE Plasma Desktop - Mächtige Personalisierung und vertraute Software-Basis"),
+        ("linux-lite", "Einsteigerfreundliches, ressourcenschonendes System für den einfachen Umstieg von Windows 7/10"),
+        ("linuxmint", "Beliebteste Desktop-Distribution: Extrem stabil, sofort einsatzbereit mit Cinnamon Desktop"),
+        ("lubuntu", "Offizielles, extrem sparsames Ubuntu-Derivat mit leichtgewichtigem LXQt Desktop"),
+        ("mageia", "Vielseitiges Mandriva-Nachfolgesystem mit bewährtem drakxtools-Kontrollzentrum"),
+        ("manjaro", "Zugängliches Arch Linux mit automatischer Hardware-Erkennung und eigenen, getesteten Paket-Zweigen"),
+        (r"mx-.*xfce", "Extrem beliebtes, stabiles Desktop-OS auf Debian-Basis mit einzigartigen MX-Admin-Tools"),
+        (r"nixos.*graphical", "Deklaratives, reproduzierbares Linux-System mit unzerstörbaren Generations-Rollbacks"),
+        ("nobara", "Fedora-Spezialedition von GloriousEggroll - Out-of-the-Box für Gaming, Wine, Proton & Streaming"),
+        ("omarchy", "Arch-basiertes Live-System mit vorkonfigurierter Umgebung und praktischen Rettungstools"),
+        (r"opensuse.*tumbleweed", "Führende Rolling-Release-Distribution mit zypper, YaST und automatischen Btrfs-Snapshots"),
+        ("pop-os", "System76 OS für Entwickler, Kreative und Gamer mit modernem COSMIC Desktop und GPU-Support"),
+        ("q4os", "Hochentwickeltes, schlankes Debian-System mit klassischem Trinity- (TDE) oder KDE-Plasma-Desktop"),
+        ("slackware", "Die älteste noch gepflegte Linux-Distribution - Puristisch, transparent und Unix-nah"),
+        (r"solus.*budgie", "Eigenständige Desktop-Distribution mit modernem Budgie Desktop und hoher Alltags-Geschwindigkeit"),
+        ("tuxedo", "Optimiertes Desktop-Linux von TUXEDO Computers mit Tomte-Hardwareerkennung und KDE Plasma"),
+        ("ubuntucinnamon", "Offizieller Ubuntu-Flavor mit der beliebten, traditionellen Cinnamon-Desktopumgebung"),
+        (r"ubuntu.*live-server", "Führendes Cloud- und Server-Betriebssystem für Rechenzentren, Docker und K8s"),
+        ("ubuntu", "Das weltweit bekannteste Linux-System für Desktop und Workstation mit langer LTS-Unterstützung"),
+        ("void-live", "Unabhängige Rolling-Release-Distribution mit dem blitzschnellen XBPS-Paketmanager und Runit"),
+        ("winux", "Windows-11-Lookalike-Linux - Speziell für Windows-Umsteiger mit nahtloser Wine/Proton-Integration"),
+        ("zorin", "Design-Preisträger für Windows/macOS-Umsteiger mit anpassbarem Desktop-Layout"),
+
+        # Enterprise Server & NAS
+        ("almalinux", "1:1 binärkompatibler RHEL-Ersatz der Open Source Community für Produktivserver"),
+        (r"azurelinux|azure-linux|mariner", "Microsofts Enterprise-Linux für Azure-Infrastruktur, Edge-Geräte und AKS"),
+        ("centos", "Upstream-Entwicklungszweig direkt vor Red Hat Enterprise Linux"),
+        ("openmediavault", "Leistungsfähige Debian-basierte Network Attached Storage (NAS) Lösung mit WebGUI"),
+        ("oraclelinux", "Hochleistungsfähiges Enterprise-Linux mit Unbreakable Enterprise Kernel (UEK) von Oracle"),
+        ("zimaos", "Moderne Personal Cloud & NAS-Plattform für Medienserver, Docker und File-Sharing"),
+        (r"truenas|freenas", "Führende Enterprise-Speicherlösung mit OpenZFS, NFS/SMB, Snapshots und Container-Apps"),
+        (r"proxmox.*backup", "Proxmox Backup Server (PBS) - Deduplizierte, verschlüsselte und inkrementelle Backups für PVE"),
+        ("proxmox", "Führende Open-Source-Virtualisierungsplattform für KVM-Hypervisor und LXC-Container"),
+        ("rocky", "Von CentOS-Gründer Gregory Kurtzer geschaffener, 100% kompatibler RHEL-Enterprise-Nachfolger"),
+        ("rockstor", "Spezialisierte Btrfs-basierte private Cloud & NAS-Speicherlösung"),
+        ("xcp-ng", "Turnkey Open-Source-Hypervisor auf Xen-Basis für unternehmensweite Virtualisierung"),
+
+        # Security & Pentest
+        ("athenaos", "Next-Gen Cybersecurity-OS auf Arch-Basis mit themenbasierten Pentest-Rollen & Hack The Box"),
+        ("blackarch", "Umfassendste Pentesting-Distribution der Welt mit über 2800 vorinstallierten Hacking-Tools"),
+        ("kali", "Weltweiter Standard für Penetration Testing, Ethical Hacking und Incident Response"),
+        ("kodachi", "Spezialisiert auf Anonymität und Anti-Forensik mit integriertem VPN, Tor und DNSCrypt"),
+        ("parrot", "Vollwertige Sicherheits-Suite für Pentesting, Forensik, Reverse Engineering und Entwicklung"),
+        ("tails", "Live-Betriebssystem für absolute Privatsphäre und Zensurumgehung via Tor-Netzwerk"),
+        ("qubes", "Hochsicherheits-OS: Isoliert Anwendungen strikt in separaten virtuellen Xen-Maschinen"),
+
+        # Spezial & Leichtgewichtig
+        ("corepure64", "Ultra-kompaktes x86_64-Linux (nur ~25 MB) - Bootet komplett in den Arbeitsspeicher"),
+        ("knoppix", "Der Urvater aller Live-Linux-Distributionen mit riesiger Software- und Treiber-Ausstattung"),
+        (r"pup(py)?64|fossapup|bionicpup|bookwormpup", "Blitzschnelles Leichtgewicht: Lädt komplett in den RAM und rettet alte PCs"),
+        (r"win(dows)?[-_ ]?(10|11|server)", "Offizielles Windows Installations- und Wiederherstellungs-Setup"),
+    ]
+    for pattern, tip in mapping:
+        if re.search(pattern, fn_lower):
+            return tip
+
+    return f"ISO-Image: {filename}"
+
+
+
 def get_ventoy_theme_definitions() -> Dict[str, Dict[str, Any]]:
     """Gibt die 7 integrierten Ventoy-Themes zurück."""
     return {
@@ -3221,7 +3337,17 @@ def run_ventoy_sync(
             {"image": "/05_BSD-Unix", "alias": "BSD & Unix (FreeBSD, OpenBSD, NetBSD, DragonFly...)"},
             {"image": "/06_Windows-PE_Rescue", "alias": "Windows PE & Recovery (Hiren's BootCD PE, WinPE, Recovery...)"},
         ]
-        # Alle ISO-/IMG-Dateien auf dem Ziel-Laufwerk und aus der Kopierliste für Menü-Aliase erfassen
+
+        menu_tips = [
+            {"dir": "/01_Desktop-Linux", "tip": "Desktop-Betriebssysteme für Workstation, Office, Gaming & Multimedia"},
+            {"dir": "/02_Enterprise-Server", "tip": "Server-, Virtualisierungs- und Speicherplattformen für Rechenzentren und Homelabs"},
+            {"dir": "/03_Security-Pentest", "tip": "Sicherheits- & Pentesting-Systeme für IT-Security, Hacking und Forensik"},
+            {"dir": "/04_Rescue-Systeme", "tip": "Notfall-, Reparatur- und Antiviren-Systeme zur Datenrettung und Diagnose"},
+            {"dir": "/05_BSD-Unix", "tip": "Freie Unix- und BSD-Derivate für Server, Firewalls und Puristen"},
+            {"dir": "/06_Windows-PE_Rescue", "tip": "Windows-basierte Preinstallation & Rettungsumgebungen"},
+        ]
+
+        # Alle ISO-/IMG-Dateien auf dem Ziel-Laufwerk und aus der Kopierliste für Menü-Aliase und Tips erfassen
         all_target_images: Dict[str, str] = {}
         for cat in CATEGORY_ORDER:
             cat_dir = target_root / cat
@@ -3239,8 +3365,16 @@ def run_ventoy_sync(
             fn = all_target_images[vtoy_path]
             pretty = get_pretty_iso_name(fn)
             menu_aliases.append({"image": vtoy_path, "alias": pretty})
+            tip = get_iso_menu_tip(fn)
+            menu_tips.append({"image": vtoy_path, "tip": tip})
 
         config["menu_alias"] = menu_aliases
+        config["menu_tip"] = {
+            "left": "5%",
+            "top": "88%",
+            "color": "#58a6ff",
+            "tips": menu_tips
+        }
 
         try:
             ventoy_json_path.parent.mkdir(parents=True, exist_ok=True)
