@@ -2663,8 +2663,9 @@ if (-not $SkipDownload) {
 
         # ARCHIV ROUTINE
         $searchFolders = @($IsoDirectory, $categoryDir)
+        $cleanPattern = if ($distro.MatchPattern.StartsWith('^') -or $distro.MatchPattern.StartsWith('(?i)^')) { $distro.MatchPattern } else { "(^|[^a-zA-Z])" + $distro.MatchPattern }
         $oldFiles = Get-ChildItem -Path $searchFolders -File -ErrorAction SilentlyContinue | Where-Object { 
-            $_.Name -match $distro.MatchPattern -and $_.Name -ne $latestInfo.Filename -and $_.DirectoryName -notlike "*Archiv*"
+            $_.Name -match $cleanPattern -and $_.Name -ne $latestInfo.Filename -and $_.DirectoryName -notlike "*Archiv*"
         }
 
         $oldVersionStr = $null
@@ -2672,7 +2673,7 @@ if (-not $SkipDownload) {
             $oldVersList = @()
             foreach ($oldFile in $oldFiles) {
                 $verDetected = $null
-                if ($oldFile.Name -match $distro.MatchPattern -and $Matches.Count -gt 1 -and -not [string]::IsNullOrWhiteSpace($Matches[1])) {
+                if ($oldFile.Name -match $cleanPattern -and $Matches.Count -gt 1 -and -not [string]::IsNullOrWhiteSpace($Matches[1])) {
                     $verDetected = $Matches[1]
                 } elseif ($oldFile.BaseName -match '(\d{4}\.\d{2}\.\d{2}|\d+\.\d+(\.\d+)?|\d{6})') {
                     $verDetected = $Matches[1]

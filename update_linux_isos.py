@@ -3850,15 +3850,16 @@ def main() -> None:
                 match_pat = d.get("MatchPattern")
                 old_version_str = None
                 if match_pat:
+                    clean_pat = match_pat if match_pat.startswith("^") else f"(^|[^a-zA-Z]){match_pat}"
                     for search_folder in [iso_dir, cat_dir]:
                         if not search_folder.exists():
                             continue
                         for old_file in [x for x in search_folder.glob("*") if x.is_file() and x.suffix.lower() in [".iso", ".img"]]:
                             if "Archiv" in str(old_file):
                                 continue
-                            if re.search(match_pat, old_file.name) and old_file.name != effective_fn:
+                            if re.search(clean_pat, old_file.name) and old_file.name != effective_fn:
                                 old_mb = old_file.stat().st_size / (1024 * 1024)
-                                vm = re.search(match_pat, old_file.name)
+                                vm = re.search(clean_pat, old_file.name)
                                 ver_det = vm.group(1) if vm and vm.groups() else old_file.stem
                                 old_version_str = ver_det
 

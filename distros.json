@@ -291,7 +291,7 @@
   {
     "Enabled": true,
     "Name": "Kubuntu",
-    "MatchPattern": "kubuntu-(\\d+\\.\\d+(\\.\\d+)?)-desktop-amd64",
+    "MatchPattern": "^kubuntu-(\\d+\\.\\d+(\\.\\d+)?)-desktop-amd64",
     "Script": "$html = Get-WebContent -Uri 'https://cdimage.ubuntu.com/kubuntu/releases/'\nif ($html) {\n    $vers = [regex]::Matches($html, 'href=\"(\\d+\\.\\d+(\\.\\d+)?)/\"') | ForEach-Object { $_.Groups[1].Value } | Sort-Object { [version](ConvertTo-VersionString $_) } -Descending\n    foreach ($v in $vers) {\n        $sub = Get-WebContent -Uri \"https://cdimage.ubuntu.com/kubuntu/releases/$v/release/\"\n        if ($sub -and $sub -match \"(kubuntu-$([regex]::Escape($v))-desktop-amd64\\.iso)\") {\n            $fn = $Matches[1]\n            return @{ Version = $v; Url = \"https://cdimage.ubuntu.com/kubuntu/releases/$v/release/$fn\"; Filename = $fn; ChecksumUrl = \"https://cdimage.ubuntu.com/kubuntu/releases/$v/release/SHA256SUMS\" }\n        }\n    }\n}\nreturn @{ Version = '26.10'; Url = 'https://cdimage.ubuntu.com/kubuntu/releases/26.10/release/kubuntu-26.10-desktop-amd64.iso'; Filename = 'kubuntu-26.10-desktop-amd64.iso'; ChecksumUrl = 'https://cdimage.ubuntu.com/kubuntu/releases/26.10/release/SHA256SUMS' }",
     "Category": "01_Desktop-Linux",
     "SizeBytes": 4200000000
@@ -315,7 +315,7 @@
   {
     "Enabled": true,
     "Name": "Lubuntu",
-    "MatchPattern": "lubuntu-(\\d+\\.\\d+(\\.\\d+)?)-desktop-amd64",
+    "MatchPattern": "^lubuntu-(\\d+\\.\\d+(\\.\\d+)?)-desktop-amd64",
     "Script": "$baseUrl = 'https://cdimage.ubuntu.com/lubuntu/releases/'\n$html = Get-WebContent -Uri $baseUrl\nif ($html) {\n    $versions = [regex]::Matches($html, 'href=\"(\\d+\\.\\d+(\\.\\d+)?)/\"') | ForEach-Object { $_.Groups[1].Value } | Sort-Object { [version](ConvertTo-VersionString $_) } -Descending | Select-Object -First 3\n    foreach ($ver in $versions) {\n        $subHtml = Get-WebContent -Uri \"$baseUrl$ver/release/\"\n        if ($subHtml -and $subHtml -match 'href=\"(lubuntu-[^\"]+-desktop-amd64\\.iso)\"') {\n            return @{ Version = $ver; Url = \"$baseUrl$ver/release/$($Matches[1])\"; Filename = $Matches[1]; ChecksumUrl = \"$baseUrl$ver/release/SHA256SUMS\" }\n        }\n        $subHtmlDir = Get-WebContent -Uri \"$baseUrl$ver/\"\n        if ($subHtmlDir -and $subHtmlDir -match 'href=\"(lubuntu-[^\"]+-desktop-amd64\\.iso)\"') {\n            return @{ Version = $ver; Url = \"$baseUrl$ver/$($Matches[1])\"; Filename = $Matches[1]; ChecksumUrl = \"$baseUrl$ver/SHA256SUMS\" }\n        }\n    }\n}\nreturn $null",
     "SizeBytes": 3996559360,
     "Category": "01_Desktop-Linux"
@@ -571,7 +571,7 @@
   {
     "Enabled": true,
     "Name": "Ubuntu Cinnamon",
-    "MatchPattern": "ubuntucinnamon-(\\d+\\.\\d+(\\.\\d+)?)",
+    "MatchPattern": "^ubuntucinnamon-(\\d+\\.\\d+(\\.\\d+)?)",
     "Script": "$baseUrl = 'https://cdimage.ubuntu.com/ubuntucinnamon/releases/'\n$html = Get-WebContent -Uri $baseUrl\nif ($html) {\n    $versions = [regex]::Matches($html, 'href=\"(\\d+\\.\\d+(\\.\\d+)?)/\"') | ForEach-Object { $_.Groups[1].Value } | Sort-Object { [version](ConvertTo-VersionString $_) } -Descending | Select-Object -First 3\n    foreach ($ver in $versions) {\n        $subHtml = Get-WebContent -Uri \"$baseUrl$ver/release/\"\n        if ($subHtml -and $subHtml -match 'href=\"(ubuntucinnamon-[^\"]+-desktop-amd64\\.iso)\"') {\n            return @{ Version = $ver; Url = \"$baseUrl$ver/release/$($Matches[1])\"; Filename = $Matches[1] }\n        }\n        $subHtmlDir = Get-WebContent -Uri \"$baseUrl$ver/\"\n        if ($subHtmlDir -and $subHtmlDir -match 'href=\"(ubuntucinnamon-[^\"]+-desktop-amd64\\.iso)\"') {\n            return @{ Version = $ver; Url = \"$baseUrl$ver/$($Matches[1])\"; Filename = $Matches[1] }\n        }\n    }\n}\nreturn $null",
     "Category": "01_Desktop-Linux",
     "SizeBytes": 4897769472
@@ -579,7 +579,7 @@
   {
     "Enabled": true,
     "Name": "Ubuntu Desktop",
-    "MatchPattern": "ubuntu-(\\d+\\.\\d+(\\.\\d+)?)-desktop-amd64",
+    "MatchPattern": "^ubuntu-(\\d+\\.\\d+(\\.\\d+)?)-desktop-amd64",
     "Script": "$baseUrl = 'https://ftp.halifax.rwth-aachen.de/ubuntu-releases/'\n$html = Get-WebContent -Uri $baseUrl\nif ($html) {\n    $versions = [regex]::Matches($html, 'href=\"(\\d+\\.\\d+(\\.\\d+)?)/\"') | ForEach-Object { $_.Groups[1].Value } | Sort-Object { [version](ConvertTo-VersionString $_) } -Descending | Select-Object -First 3\n    foreach ($latestVer in $versions) {\n        $subHtml = Get-WebContent -Uri \"$baseUrl$latestVer/\"\n        if ($subHtml -and $subHtml -match 'href=\"(ubuntu-\\d+\\.\\d+(\\.\\d+)?-desktop-amd64\\.iso)\"') {\n            return @{ Version = $latestVer; Url = \"$baseUrl$latestVer/$($Matches[1])\"; Filename = $Matches[1] }\n        }\n    }\n}\nreturn $null",
     "Category": "01_Desktop-Linux",
     "SizeBytes": 6615449600
@@ -587,7 +587,7 @@
   {
     "Enabled": true,
     "Name": "Ubuntu Server LTS",
-    "MatchPattern": "ubuntu-(\\d+\\.\\d+(\\.\\d+)?)-live-server-amd64",
+    "MatchPattern": "^ubuntu-(\\d+\\.\\d+(\\.\\d+)?)-live-server-amd64",
     "Category": "02_Enterprise-Server",
     "Script": "$baseUrl = 'https://ftp.halifax.rwth-aachen.de/ubuntu-releases/'\n$html = Get-WebContent -Uri $baseUrl\nif ($html) {\n    $versions = [regex]::Matches($html, 'href=\"(\\d*[02468]\\.04(\\.\\d+)?)/\"') | ForEach-Object { $_.Groups[1].Value } | Sort-Object { [version](ConvertTo-VersionString $_) } -Descending | Select-Object -First 3\n    foreach ($latestVer in $versions) {\n        $subHtml = Get-WebContent -Uri \"$baseUrl$latestVer/\"\n        if ($subHtml -and $subHtml -match 'href=\"(ubuntu-\\d+\\.\\d+(\\.\\d+)?-live-server-amd64\\.iso)\"') {\n            return @{ Version = $latestVer; Url = \"$baseUrl$latestVer/$($Matches[1])\"; Filename = $Matches[1] }\n        }\n    }\n}\nreturn $null",
     "SizeBytes": 2927861760
