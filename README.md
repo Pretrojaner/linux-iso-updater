@@ -97,11 +97,9 @@ Ein PowerShell- und Python-basiertes All-in-One Automatisierungswerkzeug zum Her
 - **Zorin OS Education** – Speziell für Schulen, Schüler und Bildung konzipierte Zorin-OS-Version mit vorinstallierter Lernsoftware.
 
 ### 🏢 02_Enterprise-Server & NAS (13 Distros)
-- **AlmaLinux** – Binärkompatibles 1:1 RHEL-Enterprise-Betriebssystem und stabiler Nachfolger von CentOS.
 - **Azure Linux** – Microsofts gehärtete Linux-Distribution (vormals CBL-Mariner) für Cloud-Infrastruktur, Edge-Devices und Container-Hosts.
 - **CentOS Stream 9** – Die kontinuierlich aktualisierte Upstream-Entwicklungsplattform für Red Hat Enterprise Linux (RHEL).
 - **Proxmox VE** – Führende Open-Source-Virtualisierungsplattform für KVM-VMs, LXC-Container und Software-Defined Storage.
-- **Rocky Linux** – Community-getriebenes, hochstabiles Enterprise-Betriebssystem mit 100%iger RHEL-Kompatibilität.
 - **OpenMediaVault** – Modulare, webbasierte Network Attached Storage (NAS)-Lösung auf Debian-Basis.
 - **Oracle Linux** – Kostenloses, hochstabiles 100% RHEL-kompatibles Enterprise-Betriebssystem mit dem Unbreakable Enterprise Kernel (UEK).
 - **Proxmox Backup Server (PBS)** – Dedizierte Bare-Metal-Backup-Appliance zur unternehmensweiten Deduplizierung und inkrementellen VM/Container-Sicherung.
@@ -113,7 +111,6 @@ Ein PowerShell- und Python-basiertes All-in-One Automatisierungswerkzeug zum Her
 
 ### 🛡️ 03_Security- & Penetration-Testing (7 Distros)
 - **Kali Linux** – Die weltweite Standard-Distribution für professionelle Penetrationstests, Ethical Hacking und Security-Audits.
-- **BlackArch Linux** – Auf Arch basierende Sicherheits-Distribution mit über 2.800 vorinstallierten Pentesting-Werkzeugen.
 - **Parrot Security** – All-in-One-Umgebung für Cyber-Security, Penetration-Testing, Reverse Engineering und digitale Privatsphäre.
 - **Kodachi OS** – Extrem fokussiertes Anonymitäts- und Anti-Forensic-Betriebssystem (basiert auf XFCE) mit automatischem VPN, Tor-Routing, DNSCrypt und Panic-Wipe-Tools.
 - **Athena OS** – Hochmoderne Cybersecurity- und Pentesting-Distribution auf Arch-Basis mit themenbasierten Rollen-Modi.
@@ -160,7 +157,7 @@ Ein PowerShell- und Python-basiertes All-in-One Automatisierungswerkzeug zum Her
 | `update-linux-isos.ps1` | Hauptskript für Windows (Downloads, Hash-Prüfung, Archivierung, Ventoy-Themes, Sync). |
 | `update-linux-isos.sh`  | Ausführbares Bash-Startskript für Linux (prüft Abhängigkeiten, richtet ggf. `.venv` ein). |
 | `update_linux_isos.py`  | Vollständige Linux-Portierung in Python 3 (PEP 8, Pillow, Requests, Streaming-Downloads). |
-| `distros.json`          | JSON-Konfigurationsdatei aller 80 Distributionen, Download-Quellen und Regex-Muster. |
+| `distros.json`          | JSON-Konfigurationsdatei aller 77 Distributionen, Download-Quellen und Regex-Muster. |
 | `.gitignore`            | Schließt ISO-Dateien, Logdateien und temporäre Ordner vom Git-Tracking aus. |
 | `GITHUB_ANLEITUNG.md`   | Dokumentation zur Verwaltung und Pflege des GitHub-Repositories. |
 
@@ -219,4 +216,4 @@ chmod +x update-linux-isos.sh
 ## 📄 Lizenz & Danksagung
 
 Entwickelt für IT-Administratoren, Techniker und Linux-Enthusiasten.
-Basiert auf den offiziellen Upstream-Quellen aller 80 Distributionen und dem herausragenden [Ventoy-Projekt](https://www.ventoy.net/).
+Basiert auf den offiziellen Upstream-Quellen aller 77 Distributionen und dem herausragenden [Ventoy-Projekt](https://www.ventoy.net/).

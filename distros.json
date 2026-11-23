@@ -241,14 +241,6 @@
   },
   {
     "Enabled": true,
-    "Name": "AlmaLinux",
-    "MatchPattern": "AlmaLinux-[^\"]*?-x86_64-dvd",
-    "Script": "$baseUrls = @('https://ftp.halifax.rwth-aachen.de/almalinux/9/isos/x86_64/', 'https://ftp.fau.de/almalinux/9/isos/x86_64/', 'https://repo.almalinux.org/almalinux/9/isos/x86_64/')\nforeach ($baseUrl in $baseUrls) {\n    $html = Get-WebContent -Uri $baseUrl\n    if ($html -and $html -match 'href=\"(AlmaLinux-9[^\"]*?-x86_64-dvd\\.iso)\"') {\n        $fn  = $Matches[1]\n        $ver = if ($fn -match 'AlmaLinux-9\\.(\\d+)') { \"9.$($Matches[1])\" } else { \"9\" }\n        return @{ Version = $ver; Url = \"$baseUrl$fn\"; Filename = $fn }\n    }\n}\nreturn $null",
-    "Category": "02_Enterprise-Server",
-    "SizeBytes": 15151923200
-  },
-  {
-    "Enabled": true,
     "Name": "Azure Linux",
     "MatchPattern": "AzureLinux-[^\"]*?-x86_64",
     "Script": "$url = 'https://aka.ms/azurelinux-3.0-x86_64.iso'\nreturn @{ Version = '3.0'; Url = $url; Filename = 'AzureLinux-3.0-x86_64.iso'; ChecksumUrl = 'https://aka.ms/azurelinux-3.0-x86_64-iso-checksum' }",
@@ -297,14 +289,6 @@
   },
   {
     "Enabled": true,
-    "Name": "Rocky Linux",
-    "MatchPattern": "Rocky-9[^\"]*?-x86_64-dvd",
-    "Script": "$baseUrls = @('https://ftp.halifax.rwth-aachen.de/rockylinux/9/isos/x86_64/', 'https://ftp.fau.de/rockylinux/9/isos/x86_64/', 'https://ftp.gwdg.de/pub/linux/rocky/9/isos/x86_64/', 'https://dl.rockylinux.org/pub/rocky/9/isos/x86_64/')\nforeach ($baseUrl in $baseUrls) {\n    $html = Get-WebContent -Uri $baseUrl\n    if ($html -and $html -match 'href=\"(Rocky-9[^\"]*?-x86_64-dvd\\.iso)\"') {\n        $fn  = $Matches[1]\n        $ver = if ($fn -match 'Rocky-9\\.(\\d+)') { \"9.$($Matches[1])\" } else { \"9\" }\n        return @{ Version = $ver; Url = \"$baseUrl$fn\"; Filename = $fn }\n    }\n}\nreturn $null",
-    "SizeBytes": 15194259456,
-    "Category": "02_Enterprise-Server"
-  },
-  {
-    "Enabled": true,
     "Name": "Ubuntu Server LTS",
     "MatchPattern": "ubuntu-(\\d+\\.\\d+(\\.\\d+)?)-live-server-amd64",
     "Category": "02_Enterprise-Server",
@@ -318,14 +302,6 @@
     "Category": "02_Enterprise-Server",
     "Script": "$json = Get-WebContent -Uri \"https://api.github.com/repos/IceWhaleTech/ZimaOS/releases/latest\"\nif ($json) {\n    try {\n        $rel = $json | ConvertFrom-Json\n        $asset = $rel.assets | Where-Object { $_.name -like \"*.iso\" } | Select-Object -First 1\n        if ($asset) {\n            return @{ Version = $rel.tag_name.TrimStart(\"v\"); Url = $asset.browser_download_url; Filename = $asset.name }\n        }\n    } catch {}\n}\nreturn @{ Version = \"1.8.0-beta2\"; Url = \"https://github.com/IceWhaleTech/ZimaOS/releases/download/1.8.0-beta2/zimaos-x86_64-1.8.0-beta2_installer.iso\"; Filename = \"zimaos-x86_64-1.8.0-beta2_installer.iso\" }",
     "SizeBytes": 1806032896
-  },
-  {
-    "Enabled": true,
-    "Name": "BlackArch Linux",
-    "MatchPattern": "blackarch-linux-full-(\\d{4}\\.\\d{2}\\.\\d{2})-x86_64",
-    "Script": "$html = Get-WebContent -Uri 'https://ftp.halifax.rwth-aachen.de/blackarch/iso/'\nif ($html -and $html -match 'href=\"(blackarch-linux-full-(\\d{4}\\.\\d{2}\\.\\d{2})-x86_64\\.iso)\"') {\n    return @{ Version = $Matches[2]; Url = \"https://ftp.halifax.rwth-aachen.de/blackarch/iso/$($Matches[1])\"; Filename = $Matches[1] }\n}\nreturn $null",
-    "SizeBytes": 23588364288,
-    "Category": "03_Security-Pentest"
   },
   {
     "Enabled": true,
