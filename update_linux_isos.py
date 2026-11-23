@@ -1140,21 +1140,28 @@ class DistroScraperEngine:
         return {"Version": "26.10", "Url": "https://cdimage.ubuntu.com/kubuntu/releases/26.10/release/kubuntu-26.10-desktop-amd64.iso", "Filename": "kubuntu-26.10-desktop-amd64.iso", "ChecksumUrl": "https://cdimage.ubuntu.com/kubuntu/releases/26.10/release/SHA256SUMS"}
 
     def scrape_q4os(self) -> Optional[Dict[str, Any]]:
-        html = self.dm.get_web_content("https://q4os.org/downloads1.html")
-        if html:
-            m = re.search(r'href="([^"]*?(q4os-([0-9.]+)-x64(\.r\d+)?\.iso)/download)"', html)
-            if m:
-                return {"Version": m.group(3), "Url": m.group(1), "Filename": m.group(2)}
+        raw = self.dm.get_web_content("https://sourceforge.net/projects/q4os/best_release.json")
+        if raw:
+            try:
+                data = json.loads(raw)
+                rel = data.get("release", {})
+                if rel.get("url"):
+                    fn = Path(rel.get("filename", "")).name
+                    vm = re.search(r'q4os-([0-9.]+)-x64', fn)
+                    ver = vm.group(1) if vm else "6.11"
+                    return {"Version": ver, "Url": rel["url"], "Filename": fn}
+            except Exception:
+                pass
         return {"Version": "6.11", "Url": "https://sourceforge.net/projects/q4os/files/stable/q4os-6.11-x64.r1.iso/download", "Filename": "q4os-6.11-x64.r1.iso"}
 
     def scrape_kde_neon(self) -> Optional[Dict[str, Any]]:
         html = self.dm.get_web_content("https://neon.kde.org/download")
         if html:
-            m = re.search(r'href="([^"]*?(neon-user-([0-9-]+)\.iso))"', html)
+            m = re.search(r'href="(https://files\.kde\.org/neon/images/desk/user/([0-9-]+)/(neon-user-desk-([0-9-]+)\.iso))"', html)
             if m:
-                url, fn, ver = m.group(1), m.group(2), m.group(3)
+                url, fn, ver = m.group(1), m.group(3), m.group(4)
                 return {"Version": ver, "Url": url, "Filename": fn, "ChecksumUrl": f"{url}.sha256sum"}
-        return {"Version": "user", "Url": "https://files.kde.org/neon/images/user/current/neon-user-current.iso", "Filename": "neon-user-current.iso", "ChecksumUrl": "https://files.kde.org/neon/images/user/current/neon-user-current.iso.sha256sum"}
+        return {"Version": "20261025-1825", "Url": "https://files.kde.org/neon/images/desk/user/20261025-1825/neon-user-desk-20261025-1825.iso", "Filename": "neon-user-desk-20261025-1825.iso", "ChecksumUrl": "https://files.kde.org/neon/images/desk/user/20261025-1825/neon-user-desk-20261025-1825.iso.sha256sum"}
 
     def scrape_proxmox_backup_server_pbs(self) -> Optional[Dict[str, Any]]:
         html = self.dm.get_web_content("https://enterprise.proxmox.com/iso/")
@@ -1217,11 +1224,18 @@ class DistroScraperEngine:
         return {"Version": "9.00", "Url": "https://www.memtest.org/download/v9.00/mt86plus_9.00_x86_64.iso.zip", "Filename": "mt86plus_9.00.iso.zip", "ExtractTo": "mt86plus-9.00-x86_64.iso"}
 
     def scrape_redo_rescue(self) -> Optional[Dict[str, Any]]:
-        html = self.dm.get_web_content("https://sourceforge.net/projects/redobackup/files/")
-        if html:
-            m = re.search(r'href="([^"]*?(redorescue-([0-9.]+)\.iso)/download)"', html)
-            if m:
-                return {"Version": m.group(3), "Url": m.group(1), "Filename": m.group(2)}
+        raw = self.dm.get_web_content("https://sourceforge.net/projects/redobackup/best_release.json")
+        if raw:
+            try:
+                data = json.loads(raw)
+                rel = data.get("release", {})
+                if rel.get("url"):
+                    fn = Path(rel.get("filename", "redorescue-4.0.0.iso")).name
+                    vm = re.search(r'redorescue-([0-9.]+)\.iso', fn)
+                    ver = vm.group(1) if vm else "4.0.0"
+                    return {"Version": ver, "Url": rel["url"], "Filename": fn}
+            except Exception:
+                pass
         return {"Version": "4.0.0", "Url": "https://sourceforge.net/projects/redobackup/files/redorescue-4.0.0.iso/download", "Filename": "redorescue-4.0.0.iso"}
 
     def scrape_ghostbsd(self) -> Optional[Dict[str, Any]]:

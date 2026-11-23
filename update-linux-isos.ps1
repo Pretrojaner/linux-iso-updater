@@ -2607,13 +2607,15 @@ if (-not $SkipDownload) {
             continue
         }
 
-        if (-not $latestInfo) {
-            Write-Log -Message "Konnte keine aktuelle Online-Version fuer $($distro.Name) ermitteln." -Color Red -Level "FEHLER"
+        if (-not $latestInfo -or -not $latestInfo.Filename -or [string]::IsNullOrWhiteSpace($latestInfo.Filename)) {
+            Write-Log -Message "Konnte keine gueltige Online-Version/Dateinamen fuer $($distro.Name) ermitteln." -Color Red -Level "FEHLER"
             continue
         }
 
-        if (-not ($latestInfo.Filename.EndsWith(".iso") -or $latestInfo.Filename.EndsWith(".img") -or $latestInfo.Filename.EndsWith(".iso.bz2"))) {
-            Write-Log -Message "[UeBERSPRUNGEN] Format ist weder ISO noch IMG ($($latestInfo.Filename)) fuer $($distro.Name)" -Color Yellow -Level "WARNUNG"
+        $fnLower = $latestInfo.Filename.ToLower()
+        $isValidExt = ($fnLower.EndsWith(".iso") -or $fnLower.EndsWith(".img") -or $fnLower.EndsWith(".iso.bz2") -or $fnLower.EndsWith(".zip"))
+        if (-not $isValidExt) {
+            Write-Log -Message "[UeBERSPRUNGEN] Format ist weder ISO, IMG noch Archiv ($($latestInfo.Filename)) fuer $($distro.Name)" -Color Yellow -Level "WARNUNG"
             continue
         }
 
@@ -2626,8 +2628,9 @@ if (-not $SkipDownload) {
         $effectiveTargetFilename = if ($latestInfo.PSObject.Properties['ExtractTo'] -and $latestInfo.ExtractTo) { $latestInfo.ExtractTo } else { $latestInfo.Filename }
         $targetPath   = Join-Path $categoryDir $effectiveTargetFilename
 
+        # Nur verschieben, wenn $rootFile wirklich eine DATEI ist (niemals Verzeichnisse wie Z:\ISO_LOAD!)
         $rootFile = Join-Path $IsoDirectory $latestInfo.Filename
-        if ((Test-Path -Path $rootFile) -and $targetPath -ne $rootFile) {
+        if (-not [string]::IsNullOrWhiteSpace($latestInfo.Filename) -and (Test-Path -Path $rootFile -PathType Leaf) -and ($targetPath -ne $rootFile)) {
             if (-not $DryRun) {
                 if (-not (Test-Path -Path $categoryDir)) {
                     New-Item -ItemType Directory -Path $categoryDir -Force | Out-Null
@@ -2693,7 +2696,9 @@ if (-not $SkipDownload) {
                     $localMB  = [math]::Round($fileItem.Length / 1MB, 2)
                     $onlineMB = [math]::Round($onlineSizeBytes / 1MB, 2)
                     Write-Log -Message "[UNVOLLSTAeNDIG] Lokale Datei $($latestInfo.Filename) - ${localMB} MB (Online: ${onlineMB} MB). Datei wird geloescht und neu geladen." -Color Yellow -Level "WARNUNG"
-                    Remove-Item -Path $targetPath -Force
+                    if (Test-Path -Path $targetPath -PathType Leaf) {
+                        Remove-Item -Path $targetPath -Force
+                    }
                 }
             } else {
                 if ($fileItem.Length -gt 1MB) {
@@ -2701,7 +2706,9 @@ if (-not $SkipDownload) {
                 } else {
                     $fileMB = [math]::Round($fileItem.Length / 1MB, 2)
                     Write-Log -Message "[WARNUNG] Lokale Datei $($latestInfo.Filename) ist zu klein - ${fileMB} MB. Wird erneuert." -Color Yellow -Level "WARNUNG"
-                    Remove-Item -Path $targetPath -Force
+                    if (Test-Path -Path $targetPath -PathType Leaf) {
+                        Remove-Item -Path $targetPath -Force
+                    }
                 }
             }
         }
