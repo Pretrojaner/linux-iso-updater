@@ -44,7 +44,7 @@ function Show-Help {
     Write-Host "  Stand:         05. November 2026" -ForegroundColor $cOption
     Write-Host "  Autor:         Pretrojaner & Community (Ingo)" -ForegroundColor $cOption
     Write-Host "  Plattform:     Windows (PowerShell 7+) / Linux & macOS (Python 3.8+)" -ForegroundColor $cOption
-    Write-Host "  Umfang:        80 bootfaehige Systeme in 6 Kategorien (inkl. Windows-PE Rescue)" -ForegroundColor $cOption
+    Write-Host "  Umfang:        77 bootfaehige Systeme in 6 Kategorien (inkl. Windows-PE Rescue)" -ForegroundColor $cOption
     Write-Host "  Repository:    https://github.com/Pretrojaner/linux-iso-updater" -ForegroundColor $cOption
     Write-Host "====================================================================================================" -ForegroundColor $cBanner
     Write-Host ""
