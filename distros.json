@@ -162,8 +162,8 @@
   {
     "Enabled": true,
     "Name": "Omarchy",
-    "MatchPattern": "omarchy-(\\d+\\.\\d+(\\.\\d+)?)",
-    "Script": "$apiJson = Get-WebContent -Uri 'https://api.github.com/repos/omacom/omarchy/releases/latest'\nif ($apiJson) {\n    try {\n        $rel = $apiJson | ConvertFrom-Json\n        $tag = $rel.tag_name.TrimStart('v')\n        $isoUrl = \"https://iso.omarchy.org/omarchy-$tag.iso\"\n        $fn     = \"omarchy-$tag.iso\"\n        \n        $asset = $rel.assets | Where-Object { $_.name -like \"*.iso\" } | Select-Object -First 1\n        if ($asset) {\n            $isoUrl = $asset.browser_download_url\n            $fn     = $asset.name\n        }\n        return @{ Version = $tag; Url = $isoUrl; Filename = $fn }\n    } catch {}\n}\n$html = Get-WebContent -Uri 'https://github.com/omacom/omarchy/releases'\nif ($html -and $html -match 'omarchy-(\\d+\\.\\d+(\\.\\d+)?)\\.iso') {\n    $ver = $Matches[1]\n    return @{ Version = $ver; Url = \"https://iso.omarchy.org/omarchy-$ver.iso\"; Filename = \"omarchy-$ver.iso\" }\n}\nreturn $null",
+    "MatchPattern": "omarchy-(\\d+\\.\\d+(\\.\\d+)?)(-x86)?",
+    "Script": "$apiJson = Get-WebContent -Uri 'https://api.github.com/repos/omacom/omarchy/releases/latest'\nif ($apiJson) {\n    try {\n        $rel = $apiJson | ConvertFrom-Json\n        $tag = $rel.tag_name.TrimStart('v')\n        $isoUrl = \"https://iso.omarchy.org/omarchy-$tag-x86.iso\"\n        $fn     = \"omarchy-$tag-x86.iso\"\n        $asset = $rel.assets | Where-Object { $_.name -like '*.iso' } | Select-Object -First 1\n        if ($asset) {\n            $isoUrl = $asset.browser_download_url\n            $fn     = $asset.name\n        }\n        return @{ Version = $tag; Url = $isoUrl; Filename = $fn }\n    } catch {}\n}\n$html = Get-WebContent -Uri 'https://omarchy.org/'\nif ($html -and $html -match 'href=\"([^\"]*?omarchy-([0-9.]+)-x86\\.iso)\"') {\n    $url = $Matches[1]\n    $ver = $Matches[2]\n    return @{ Version = $ver; Url = $url; Filename = [System.IO.Path]::GetFileName($url) }\n}\nreturn @{ Version = '4.5.0'; Url = 'https://iso.omarchy.org/omarchy-4.5.0-x86.iso'; Filename = 'omarchy-4.5.0-x86.iso' }",
     "Category": "01_Desktop-Linux",
     "SizeBytes": 6448529408
   },
@@ -443,8 +443,8 @@
     "Enabled": true,
     "Name": "ShredOS Disk Sanitizer",
     "Category": "04_Rescue-Systeme",
-    "MatchPattern": "shredos-[^\"']*-x86-64",
-    "Script": "$json = Get-WebContent -Uri 'https://api.github.com/repos/PartialVolume/shredos.x86_64/releases/latest'\nif ($json) {\n    try {\n        $rel = $json | ConvertFrom-Json\n        $ver = $rel.tag_name.TrimStart('v')\n        $asset = $rel.assets | Where-Object { $_.name -like '*.img' -and $_.name -like '*x86-64*' -and $_.name -notlike '*lite*' } | Select-Object -First 1\n        if ($asset) {\n            return @{ Version = $ver; Url = $asset.browser_download_url; Filename = $asset.name }\n        }\n    } catch {}\n}\nreturn @{ Version = '0.43.1'; Url = 'https://github.com/PartialVolume/shredos.x86_64/releases/download/v2025.11_32_x86-64_0.43.1/shredos-2025.11_32_x86-64_v0.43.1_20261010.img'; Filename = 'shredos-2025.11_32_x86-64_v0.43.1_20261010.img' }",
+    "MatchPattern": "shredos-[^\\\"']*-x86-64.*?\\.(img|iso)",
+    "Script": "$json = Get-WebContent -Uri 'https://api.github.com/repos/PartialVolume/shredos.x86_64/releases/latest'\nif ($json) {\n    try {\n        $rel = $json | ConvertFrom-Json\n        $ver = $rel.tag_name.TrimStart('v')\n        $asset = $rel.assets | Where-Object { ($_.name -like '*.iso' -or $_.name -like '*.img') -and $_.name -like '*x86-64*' -and $_.name -notlike '*lite*' -and $_.name -notlike '*plus-partition*' } | Sort-Object { if ($_.name -like '*.iso') { 0 } else { 1 } } | Select-Object -First 1\n        if ($asset) {\n            return @{ Version = $ver; Url = $asset.browser_download_url; Filename = $asset.name }\n        }\n    } catch {}\n}\nreturn @{ Version = '0.43.1'; Url = 'https://github.com/PartialVolume/shredos.x86_64/releases/download/v2025.11_32_x86-64_0.43.1/shredos-2025.11_32_x86-64_v0.43.1_20261010.iso'; Filename = 'shredos-2025.11_32_x86-64_v0.43.1_20261010.iso' }",
     "SizeBytes": 372612864
   },
   {

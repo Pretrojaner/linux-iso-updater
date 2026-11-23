@@ -329,7 +329,7 @@ function Get-WebContent {
         $curl = Get-Command "curl.exe" -ErrorAction SilentlyContinue
         if ($curl) {
             $curlUserAgent = if ($Uri -match "sourceforge\.net") { "curl/8.4.0" } else { $UserAgent }
-            $content = & curl.exe -sL -A $curlUserAgent --max-time 15 $Uri
+            $content = & curl.exe -sL --fail -A $curlUserAgent --max-time 15 $Uri
             if (-not [string]::IsNullOrWhiteSpace($content)) { return $content }
         }
     } catch {}
@@ -438,6 +438,11 @@ function Test-IsoChecksum {
         foreach ($cUrl in $candidates) {
             $content = Get-WebContent -Uri $cUrl
             if ($content) {
+                # HTML-Antworten (z. B. SourceForge 404-Fehlerseiten oder Captcha-Portale) ignorieren
+                if ($content -match '(?i)<(!doctype\s+)?html') {
+                    continue
+                }
+
                 # Format: "Filename ... [Hash]" oder "[Hash] ... Filename"
                 if ($Filename -and ($content -match "(?m)^.*$([regex]::Escape($Filename)).*?(?<![a-fA-F0-9])([a-fA-F0-9]{$hexLen})(?![a-fA-F0-9])")) {
                     $expectedHash = $Matches[1].ToLower()
@@ -2466,8 +2471,8 @@ if (-not $SkipDownload) {
             continue
         }
 
-        if ($latestInfo.Filename -notlike "*.iso") {
-            Write-Log -Message "[UeBERSPRUNGEN] Format ist kein ISO ($($latestInfo.Filename)) fuer $($distro.Name)" -Color Yellow -Level "WARNUNG"
+        if (-not ($latestInfo.Filename.EndsWith(".iso") -or $latestInfo.Filename.EndsWith(".img") -or $latestInfo.Filename.EndsWith(".iso.bz2"))) {
+            Write-Log -Message "[UeBERSPRUNGEN] Format ist weder ISO noch IMG ($($latestInfo.Filename)) fuer $($distro.Name)" -Color Yellow -Level "WARNUNG"
             continue
         }
 

@@ -664,8 +664,8 @@ class DistroScraperEngine:
             try:
                 rel = json.loads(api)
                 tag = rel["tag_name"].lstrip("v")
-                iso_url = f"https://iso.omarchy.org/omarchy-{tag}.iso"
-                fn = f"omarchy-{tag}.iso"
+                iso_url = f"https://iso.omarchy.org/omarchy-{tag}-x86.iso"
+                fn = f"omarchy-{tag}-x86.iso"
                 for a in rel.get("assets", []):
                     if a.get("name", "").endswith(".iso"):
                         iso_url = a["browser_download_url"]
@@ -674,13 +674,14 @@ class DistroScraperEngine:
                 return {"Version": tag, "Url": iso_url, "Filename": fn}
             except Exception:
                 pass
-        html = self.dm.get_web_content("https://github.com/omacom/omarchy/releases")
+        html = self.dm.get_web_content("https://omarchy.org/")
         if html:
-            m = re.search(r"omarchy-(\d+\.\d+(\.\d+)?)\.iso", html)
+            m = re.search(r'href="([^"]*?omarchy-([0-9.]+)-x86\.iso)"', html)
             if m:
-                ver = m.group(1)
-                return {"Version": ver, "Url": f"https://iso.omarchy.org/omarchy-{ver}.iso", "Filename": f"omarchy-{ver}.iso"}
-        return None
+                url = m.group(1)
+                ver = m.group(2)
+                return {"Version": ver, "Url": url, "Filename": os.path.basename(url)}
+        return {"Version": "4.5.0", "Url": "https://iso.omarchy.org/omarchy-4.5.0-x86.iso", "Filename": "omarchy-4.5.0-x86.iso"}
 
     def scrape_ubuntu_desktop(self) -> Optional[Dict[str, Any]]:
         base = "https://ftp.halifax.rwth-aachen.de/ubuntu-releases/"
@@ -1600,20 +1601,24 @@ class DistroScraperEngine:
             try:
                 data = json.loads(raw)
                 ver = data.get("tag_name", "").lstrip("v")
+                candidates = []
                 for a in data.get("assets", []):
                     name = a.get("name", "")
-                    if name.endswith(".img") and "x86-64" in name and "lite" not in name:
-                        return {
+                    if (name.endswith(".iso") or name.endswith(".img")) and "x86-64" in name and "lite" not in name and "plus-partition" not in name:
+                        candidates.append((0 if name.endswith(".iso") else 1, {
                             "Version": ver,
                             "Url": a.get("browser_download_url"),
                             "Filename": name
-                        }
+                        }))
+                if candidates:
+                    candidates.sort(key=lambda x: x[0])
+                    return candidates[0][1]
             except Exception:
                 pass
         return {
             "Version": "0.43.1",
-            "Url": "https://github.com/PartialVolume/shredos.x86_64/releases/download/v2025.11_32_x86-64_0.43.1/shredos-2025.11_32_x86-64_v0.43.1_20261010.img",
-            "Filename": "shredos-2025.11_32_x86-64_v0.43.1_20261010.img"
+            "Url": "https://github.com/PartialVolume/shredos.x86_64/releases/download/v2025.11_32_x86-64_0.43.1/shredos-2025.11_32_x86-64_v0.43.1_20261010.iso",
+            "Filename": "shredos-2025.11_32_x86-64_v0.43.1_20261010.iso"
         }
 
 
