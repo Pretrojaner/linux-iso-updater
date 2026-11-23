@@ -25,6 +25,46 @@
   },
   {
     "Enabled": true,
+    "Name": "Athena OS",
+    "MatchPattern": "athenaos-live-[^\\\"]*?\\.iso",
+    "Script": "return @{ Version = 'latest'; Url = 'https://hub.athenaos.org/iso/athenaos-live-x86_64.iso'; Filename = 'athenaos-live-x86_64.iso'; ChecksumUrl = 'https://hub.athenaos.org/iso/athenaos-live-x86_64.iso.sha256' }",
+    "Category": "03_Security-Pentest",
+    "SizeBytes": 3950000000
+  },
+  {
+    "Enabled": true,
+    "Name": "Azure Linux",
+    "MatchPattern": "AzureLinux-[^\"]*?-x86_64",
+    "Script": "$url = 'https://aka.ms/azurelinux-3.0-x86_64.iso'\nreturn @{ Version = '3.0'; Url = $url; Filename = 'AzureLinux-3.0-x86_64.iso'; ChecksumUrl = 'https://aka.ms/azurelinux-3.0-x86_64-iso-checksum' }",
+    "Category": "02_Enterprise-Server",
+    "SizeBytes": 780576768
+  },
+  {
+    "Enabled": true,
+    "Name": "BackBox Linux",
+    "MatchPattern": "backbox-(\\d+)-desktop-amd64",
+    "Script": "$baseUrl = 'http://ftp.halifax.rwth-aachen.de/backbox/'\n$html = Get-WebContent -Uri $baseUrl\nif ($html) {\n    $matches = [regex]::Matches($html, 'href=\"(backbox-(\\d+)-desktop-amd64\\.iso)\"')\n    if ($matches.Count -gt 0) {\n        $latest = $matches | Sort-Object { [int]$_.Groups[2].Value } | Select-Object -Last 1\n        $fn = $latest.Groups[1].Value\n        $ver = $latest.Groups[2].Value\n        return @{\n            Version = $ver\n            Url = \"$baseUrl$fn\"\n            Filename = $fn\n            ChecksumUrl = \"$baseUrl$fn.sha256\"\n        }\n    }\n}\nreturn $null",
+    "SizeBytes": 6422528000,
+    "Category": "03_Security-Pentest"
+  },
+  {
+    "Enabled": true,
+    "Name": "Bazzite",
+    "MatchPattern": "bazzite-stable-live-amd64",
+    "Script": "return @{ Version = 'stable'; Url = 'https://download.bazzite.gg/bazzite-stable-live-amd64.iso'; Filename = 'bazzite-stable-live-amd64.iso'; ChecksumUrl = 'https://download.bazzite.gg/bazzite-stable-live-amd64.iso-CHECKSUM' }",
+    "Category": "01_Desktop-Linux",
+    "SizeBytes": 8391852032
+  },
+  {
+    "Enabled": true,
+    "Name": "Boot-Repair-Disk",
+    "Category": "04_Rescue-Systeme",
+    "MatchPattern": "boot-repair-disk-64bit",
+    "Script": "$xmlStr = Get-WebContent -Uri 'https://sourceforge.net/projects/boot-repair-cd/rss?path=/'\nif ($xmlStr) {\n    try {\n        [xml]$xml = $xmlStr\n        foreach ($item in $xml.rss.channel.item) {\n            if ($item.title.InnerText -match 'boot-repair-disk-64bit\\.iso') {\n                return @{ Version = 'latest'; Url = $item.link; Filename = 'boot-repair-disk-64bit.iso' }\n            }\n        }\n    } catch {}\n}\nreturn @{ Version = 'latest'; Url = 'https://sourceforge.net/projects/boot-repair-cd/files/boot-repair-disk-64bit.iso/download'; Filename = 'boot-repair-disk-64bit.iso' }",
+    "SizeBytes": 922746880
+  },
+  {
+    "Enabled": true,
     "Name": "CachyOS",
     "MatchPattern": "cachyos-desktop-linux-(\\d+)",
     "Script": "$urls = @('https://mirror.cachyos.org/ISO/desktop/', 'https://cdn.cachyos.org/ISO/desktop/')\nforeach ($u in $urls) {\n    $html = Get-WebContent -Uri $u\n    if ($html) {\n        $matches = [regex]::Matches($html, 'href=\"(\\d+)/\"')\n        if ($matches.Count -gt 0) {\n            $latestDir = $matches | ForEach-Object { $_.Groups[1].Value } | Sort-Object { [long]$_ } -Descending | Select-Object -First 1\n            $filename  = \"cachyos-desktop-linux-$latestDir.iso\"\n            return @{ Version = $latestDir; Url = \"https://mirror.cachyos.org/ISO/desktop/$latestDir/$filename\"; Filename = $filename }\n        }\n    }\n}\nreturn $null",
@@ -33,11 +73,35 @@
   },
   {
     "Enabled": true,
+    "Name": "CAINE Live (Forensic & Autopsy)",
+    "Category": "03_Security-Pentest",
+    "MatchPattern": "caine(\\d+(\\.\\d+)?)\\.iso",
+    "Script": "$html = Get-WebContent -Uri 'https://www.caine-live.net/page5/page5.html'\nif ($html -and $html -match 'href=\"https://www\\.caine-live\\.net/Downloads/(caine(\\d+(\\.\\d+)?)\\.iso)\"') {\n    $fn = $Matches[1]\n    $ver = $Matches[2]\n    $url = \"https://caine.mirror.garr.it/caine/$fn\"\n    $chkUrl = \"https://www.caine-live.net/page5/$fn.sha256.txt\"\n    return @{ Version = $ver; Url = $url; Filename = $fn; ChecksumUrl = $chkUrl }\n}\nreturn $null",
+    "SizeBytes": 4169138176
+  },
+  {
+    "Enabled": true,
     "Name": "Calculate Linux",
     "MatchPattern": "cld-(\\d+)-x86_64",
     "Script": "$baseUrl = 'https://mirror.calculate-linux.org/release/'\n$html = Get-WebContent -Uri $baseUrl\nif ($html) {\n    $dirs = [regex]::Matches($html, 'href=\"(\\d{8})/?\"') | ForEach-Object { $_.Groups[1].Value } | Sort-Object | Select-Object -Last 1\n    if ($dirs) {\n        $subHtml = Get-WebContent -Uri \"$baseUrl$dirs/\"\n        if ($subHtml -and $subHtml -match 'href=\"(cld-(\\d+)-x86_64\\.iso)\"') {\n            return @{ Version = $Matches[2]; Url = \"$baseUrl$dirs/$($Matches[1])\"; Filename = $Matches[1]; ChecksumUrl = \"$baseUrl$dirs/SHA256SUMS\" }\n        }\n    }\n}\nreturn $null",
     "SizeBytes": 3435973836,
     "Category": "01_Desktop-Linux"
+  },
+  {
+    "Enabled": true,
+    "Name": "CentOS Stream 9",
+    "MatchPattern": "CentOS-Stream-9[^\"]*?-x86_64-(dvd1|boot)",
+    "Script": "$html = Get-WebContent -Uri 'https://mirror.stream.centos.org/9-stream/BaseOS/x86_64/iso/'\nif ($html -and $html -match 'href=\"(CentOS-Stream-9-[^\"]*?-x86_64-boot\\.iso)') {\n    $fn = $Matches[1]\n    return @{ Version = \"9-stream\"; Url = \"https://mirror.stream.centos.org/9-stream/BaseOS/x86_64/iso/$fn\"; Filename = $fn }\n}\nreturn $null",
+    "Category": "02_Enterprise-Server",
+    "SizeBytes": 1572438016
+  },
+  {
+    "Enabled": true,
+    "Name": "Clonezilla Live",
+    "Category": "04_Rescue-Systeme",
+    "MatchPattern": "clonezilla-live-(\\d+\\.\\d+\\.\\d+-\\d+)-amd64",
+    "Script": "$chk = Get-WebContent -Uri 'https://clonezilla.org/downloads/stable/data/CHECKSUMS.TXT'\nif ($chk -and $chk -match 'clonezilla-live-(\\d+\\.\\d+\\.\\d+-\\d+)-amd64\\.iso') {\n    $fn = $Matches[0]\n    $ver = $Matches[1]\n    $url = \"https://downloads.sourceforge.net/project/clonezilla/clonezilla_live_stable/$ver/$fn\"\n    return @{ Version = $ver; Url = $url; Filename = $fn; ChecksumUrl = 'https://clonezilla.org/downloads/stable/data/CHECKSUMS.TXT' }\n}\nreturn $null",
+    "SizeBytes": 505413632
   },
   {
     "Enabled": true,
@@ -65,6 +129,22 @@
   },
   {
     "Enabled": true,
+    "Name": "Dr.Web LiveDisk",
+    "Category": "04_Rescue-Systeme",
+    "MatchPattern": "drweb-livedisk-(\\d+)-cd\\.iso",
+    "Script": "$html = Get-WebContent -Uri 'https://free.drweb.com/livedisk/'\nif ($html -and $html -match '(https://cdn-download\\.drweb\\.com/pub/drweb/livedisk/(drweb-livedisk-(\\d+)-cd\\.iso))') {\n    $url = $Matches[1]\n    $fn  = $Matches[2]\n    $ver = $Matches[3]\n    return @{ Version = $ver; Url = $url; Filename = $fn; ChecksumUrl = \"$url.md5\" }\n}\nreturn @{ Version = \"900\"; Url = \"https://cdn-download.drweb.com/pub/drweb/livedisk/drweb-livedisk-900-cd.iso\"; Filename = \"drweb-livedisk-900-cd.iso\"; ChecksumUrl = \"https://cdn-download.drweb.com/pub/drweb/livedisk/drweb-livedisk-900-cd.iso.md5\" }",
+    "SizeBytes": 895483904
+  },
+  {
+    "Enabled": true,
+    "Name": "DragonFly BSD",
+    "Category": "05_BSD-Unix",
+    "MatchPattern": "dfly-x86_64-([\\d\\.]+)_REL\\.iso",
+    "Script": "$html = Get-WebContent -Uri 'https://mirror.checkdomain.de/dragonflybsd/iso-images/'\nif ($html) {\n    $matches = [regex]::Matches($html, 'href=\"(dfly-x86_64-([\\d\\.]+)_REL\\.iso)\"')\n    if ($matches.Count -gt 0) {\n        $latest = $matches | Sort-Object { [version]($_.Groups[2].Value) } -Descending | Select-Object -First 1\n        $fn = $latest.Groups[1].Value\n        $ver = $latest.Groups[2].Value\n        return @{ Version = $ver; Url = \"https://mirror.checkdomain.de/dragonflybsd/iso-images/$fn\"; Filename = $fn; ChecksumUrl = \"https://mirror.checkdomain.de/dragonflybsd/iso-images/md5.txt\" }\n    }\n}\nreturn $null",
+    "SizeBytes": 783974400
+  },
+  {
+    "Enabled": true,
     "Name": "elementary OS",
     "MatchPattern": "elementaryos-(\\d+\\.\\d+)-stable-amd64",
     "Script": "$html = Get-WebContent -Uri 'https://elementary.io/'\nif ($html -and $html -match 'href=\"(https://dl\\.elementaryos\\.org/[^\"]+/elementaryos-([0-9.]+)-stable-amd64\\.([0-9]+)\\.iso)\"') {\n    $fn = [System.IO.Path]::GetFileName($Matches[1])\n    return @{ Version = \"$($Matches[2]).$($Matches[3])\"; Url = $Matches[1]; Filename = $fn }\n}\nreturn $null",
@@ -81,11 +161,51 @@
   },
   {
     "Enabled": true,
+    "Name": "ESET SysRescue Live",
+    "MatchPattern": "eset_sysrescue_live[^\\\"]*?\\.iso",
+    "Category": "04_Rescue-Systeme",
+    "Script": "return @{ Version = '2024.05'; Url = 'https://archive.org/download/eset_sysrescue_live_enu_202405/eset_sysrescue_live_enu.iso'; Filename = 'eset_sysrescue_live_enu.iso' }",
+    "SizeBytes": 780140544
+  },
+  {
+    "Enabled": true,
     "Name": "Fedora Workstation",
     "MatchPattern": "Fedora-Workstation-Live-(\\d+)",
     "Script": "$baseUrl = 'https://ftp.halifax.rwth-aachen.de/fedora/linux/releases/'\n$html = Get-WebContent -Uri $baseUrl\nif ($html) {\n    $versions = [regex]::Matches($html, 'href=\"(\\d+)/\"') | ForEach-Object { $_.Groups[1].Value } | Sort-Object { [int]$_ } -Descending | Select-Object -First 3\n    foreach ($v in $versions) {\n        $subHtml = Get-WebContent -Uri \"$baseUrl$v/Workstation/x86_64/iso/\"\n        if ($subHtml -and $subHtml -match 'href=\"(Fedora-Workstation-Live-[^\"]+?\\.iso)\"') {\n            return @{ Version = $v; Url = \"$baseUrl$v/Workstation/x86_64/iso/$($Matches[1])\"; Filename = $Matches[1] }\n        }\n    }\n}\nreturn $null",
     "SizeBytes": 2851612672,
     "Category": "01_Desktop-Linux"
+  },
+  {
+    "Enabled": true,
+    "Name": "Foxclone (Backup & System Restore)",
+    "MatchPattern": "foxclone(\\d+)-noble",
+    "Script": "$baseUrl = 'https://www.foxclone.org'\n$html = Get-WebContent -Uri \"$baseUrl/downloads.html\"\nif ($html) {\n    $matches = [regex]::Matches($html, '(/downloads/foxclone(\\d+)-noble\\.iso)')\n    if ($matches.Count -gt 0) {\n        $latest = $matches | Sort-Object { [int]$_.Groups[2].Value } | Select-Object -Last 1\n        $relPath = $latest.Groups[1].Value\n        $ver = $latest.Groups[2].Value\n        $fn = \"foxclone$ver-noble.iso\"\n        return @{\n            Version = $ver\n            Url = \"$baseUrl$relPath\"\n            Filename = $fn\n        }\n    }\n}\nreturn $null",
+    "SizeBytes": 1313751040,
+    "Category": "04_Rescue-Systeme"
+  },
+  {
+    "Enabled": true,
+    "Name": "FreeBSD",
+    "MatchPattern": "FreeBSD-(\\d+\\.\\d+)-RELEASE-amd64-disc1",
+    "Script": "$html = Get-WebContent -Uri 'https://download.freebsd.org/releases/ISO-IMAGES/'\nif ($html) {\n    $dirs = [regex]::Matches($html, 'href=\"(\\d+\\.\\d+)/\"') | ForEach-Object { $_.Groups[1].Value } | Sort-Object { [version](ConvertTo-VersionString $_) } -Descending | Select-Object -First 3\n    foreach ($d in $dirs) {\n        $subHtml = Get-WebContent -Uri \"https://download.freebsd.org/releases/ISO-IMAGES/$d/\"\n        if ($subHtml -and $subHtml -match 'href=\"(FreeBSD-\\d+\\.\\d+-RELEASE-amd64-disc1\\.iso)\"') {\n            return @{ Version = $d; Url = \"https://download.freebsd.org/releases/ISO-IMAGES/$d/$($Matches[1])\"; Filename = $Matches[1] }\n        }\n    }\n}\nreturn $null",
+    "SizeBytes": 1352255488,
+    "Category": "05_BSD-Unix"
+  },
+  {
+    "Enabled": true,
+    "Name": "FreeNAS (TrueNAS)",
+    "MatchPattern": "TrueNAS-(?:SCALE|CORE)-[^\\\"]*",
+    "Category": "02_Enterprise-Server",
+    "Script": "$html = Get-WebContent -Uri \"https://download.truenas.com/\"\nif ($html) {\n    $matches = [regex]::Matches($html, \"href=`\"([^`\"]*?(TrueNAS-(?:SCALE|CORE)-(\\d+\\.\\d+(\\.\\d+)*))\\.iso)`\"\")\n    if ($matches.Count -gt 0) {\n        $m = $matches[$matches.Count - 1]\n        $relUrl = $m.Groups[1].Value\n        $ver = $m.Groups[3].Value\n        $fn = [System.IO.Path]::GetFileName($relUrl)\n        return @{ Version = $ver; Url = \"https://download.truenas.com/$relUrl\"; Filename = $fn }\n    }\n}\nreturn @{ Version = \"25.10.7\"; Url = \"https://download.truenas.com/TrueNAS-SCALE-Goldeye/25.10.7/TrueNAS-SCALE-25.10.7.iso\"; Filename = \"TrueNAS-SCALE-25.10.7.iso\" }",
+    "SizeBytes": 2339317760
+  },
+  {
+    "Enabled": true,
+    "Name": "FygoOS PE",
+    "MatchPattern": "fygoos_PE[^\\\"]*?(\\d+\\.\\d+.*)",
+    "Category": "04_Rescue-Systeme",
+    "Script": "$html = Get-WebContent -Uri \"https://www.fygonas.com/download\"\n$matches = [regex]::Matches($html, '([^\"'' ]*?fygoos_PE_x86[^\"'' ]*?(\\d+\\.\\d+[^\"'' ]*)\\.iso)')\nif ($matches.Count -gt 0) {\n    $url = $matches[0].Groups[1].Value\n    if ($url.StartsWith(\"//\")) { $url = \"https:\" + $url }\n    elseif (-not $url.StartsWith(\"http\")) { $url = \"https://www.fygonas.com\" + $url }\n    return @{ Version = $matches[0].Groups[2].Value; Url = $url; Filename = \"fygoos_PE_x86_$($matches[0].Groups[2].Value).iso\" }\n}\nreturn @{ Version = \"1.2.0604_2686\"; Url = \"https://download.liveupdate.fygonas.com/x86_64/trim/fygoos_PE_x86_1.2.0604_2686.iso\"; Filename = \"fygoos_PE_x86_1.2.0604_2686.iso\" }",
+    "SizeBytes": 3734011904
   },
   {
     "Enabled": true,
@@ -102,6 +222,78 @@
     "Script": "$html = Get-WebContent -Uri 'https://distfiles.gentoo.org/releases/amd64/autobuilds/current-livegui-amd64/'\nif ($html -and $html -match 'href=\"(livegui-amd64-(\\d{8}T\\d{6}Z)\\.iso)\"') {\n    return @{ Version = $Matches[2]; Url = \"https://distfiles.gentoo.org/releases/amd64/autobuilds/current-livegui-amd64/$($Matches[1])\"; Filename = $Matches[1] }\n}\nreturn $null",
     "SizeBytes": 4319342592,
     "Category": "01_Desktop-Linux"
+  },
+  {
+    "Enabled": true,
+    "Name": "GhostBSD",
+    "MatchPattern": "GhostBSD-[^\\\"]*?\\.iso",
+    "Script": "$html = Get-WebContent -Uri 'https://ghostbsd.org/download'\nif ($html -and $html -match 'href=\"(https://download\\.ghostbsd\\.org/releases/amd64/([0-9.a-zA-Z]+)/(GhostBSD-[0-9.a-zA-Z-]+\\.iso))\"') {\n    $url = $Matches[1]\n    $ver = $Matches[2]\n    $fn  = $Matches[3]\n    return @{ Version = $ver; Url = $url; Filename = $fn; ChecksumUrl = \"$url.sha256\" }\n}\nreturn @{ Version = '26.3'; Url = 'https://download.ghostbsd.org/releases/amd64/26.3.R15.1p6/GhostBSD-26.3.R15.1p6.iso'; Filename = 'GhostBSD-26.3.R15.1p6.iso'; ChecksumUrl = 'https://download.ghostbsd.org/releases/amd64/26.3.R15.1p6/GhostBSD-26.3.R15.1p6.iso.sha256' }",
+    "Category": "05_BSD-Unix",
+    "SizeBytes": 3220000000
+  },
+  {
+    "Enabled": true,
+    "Name": "GParted Live",
+    "MatchPattern": "gparted-live-(\\d+\\.\\d+\\.\\d+-\\d+)-amd64",
+    "Category": "04_Rescue-Systeme",
+    "Script": "$html = Get-WebContent -Uri \"https://gparted.org/download.php\"\nif (-not $html) { $html = Get-WebContent -Uri \"https://sourceforge.net/projects/gparted/files/gparted-live-stable/\" }\nif ($html -and $html -match \"gparted-live-(\\d+\\.\\d+\\.\\d+-\\d+)-amd64\\.iso\") {\n    $ver = $Matches[1]\n    $fn  = \"gparted-live-$ver-amd64.iso\"\n    $url = \"https://downloads.sourceforge.net/project/gparted/gparted-live-stable/$ver/$fn\"\n    return @{ Version = $ver; Url = $url; Filename = $fn }\n}\nreturn $null",
+    "SizeBytes": 720371712
+  },
+  {
+    "Enabled": true,
+    "Name": "Grml (Live Linux for Sysadmins)",
+    "MatchPattern": "grml-full-(\\d{4}\\.\\d{2})-amd64",
+    "Script": "$baseUrl = 'https://download.grml.org/'\n$html = Get-WebContent -Uri $baseUrl\nif ($html) {\n    $matches = [regex]::Matches($html, 'href=\"(grml-full-(\\d{4}\\.\\d{2})-amd64\\.iso)\"')\n    if ($matches.Count -gt 0) {\n        $latest = $matches | Sort-Object { $_.Groups[2].Value } | Select-Object -Last 1\n        $fn = $latest.Groups[1].Value\n        $ver = $latest.Groups[2].Value\n        return @{\n            Version = $ver\n            Url = \"$baseUrl$fn\"\n            Filename = $fn\n            ChecksumUrl = \"$baseUrl$fn.sha256\"\n        }\n    }\n}\nreturn $null",
+    "SizeBytes": 1153918976,
+    "Category": "04_Rescue-Systeme"
+  },
+  {
+    "Enabled": true,
+    "Name": "Hiren's BootCD PE",
+    "Category": "06_Windows-PE_Rescue",
+    "MatchPattern": "HBCD_PE_x64",
+    "Script": "$html = Get-WebContent -Uri 'https://www.hirensbootcd.org/download/'\nif ($html -and $html -match 'href=\"([^\"]*?HBCD_PE_x64\\.iso)\"') {\n    $url = $Matches[1]\n    $ver = if ($html -match 'v(\\d+\\.\\d+(\\.\\d+)?)') { $Matches[1] } else { '1.0.8' }\n    return @{ Version = $ver; Url = $url; Filename = 'HBCD_PE_x64.iso' }\n}\nreturn @{ Version = '1.0.8'; Url = 'https://www.hirensbootcd.org/files/HBCD_PE_x64.iso'; Filename = 'HBCD_PE_x64.iso' }",
+    "SizeBytes": 3291686912
+  },
+  {
+    "Enabled": true,
+    "Name": "Kali Linux",
+    "MatchPattern": "kali-linux-(\\d{4}\\.\\d+)-installer-amd64",
+    "Script": "$html = Get-WebContent -Uri 'https://cdimage.kali.org/current/'\nif ($html -and $html -match 'href=\"(kali-linux-(\\d{4}\\.\\d+)-installer-amd64\\.iso)\"') {\n    $fn  = $Matches[1]\n    $ver = $Matches[2]\n    return @{ Version = $ver; Url = \"https://cdimage.kali.org/current/$fn\"; Filename = $fn }\n}\nreturn $null",
+    "Category": "03_Security-Pentest",
+    "SizeBytes": 5047031808
+  },
+  {
+    "Enabled": true,
+    "Name": "Kaspersky Rescue Disk",
+    "MatchPattern": "krd(-[\\d\\.]+)?\\.iso",
+    "Category": "04_Rescue-Systeme",
+    "Script": "return @{ Version = '2024'; Url = 'https://rescuedisk.s.kaspersky-labs.com/updatable/2024/krd.iso'; Filename = 'krd-2024.iso' }",
+    "SizeBytes": 703758336
+  },
+  {
+    "Enabled": true,
+    "Name": "KDE neon",
+    "MatchPattern": "neon-user-[^\\\"]*?\\.iso",
+    "Script": "$html = Get-WebContent -Uri 'https://neon.kde.org/download'\nif ($html -and $html -match 'href=\"(https://files\\.kde\\.org/neon/images/desk/user/([0-9-]+)/(neon-user-desk-([0-9-]+)\\.iso))\"') {\n    return @{ Version = $Matches[4]; Url = $Matches[1]; Filename = $Matches[3]; ChecksumUrl = \"$($Matches[1]).sha256sum\" }\n}\nreturn @{ Version = '20261025-1825'; Url = 'https://files.kde.org/neon/images/desk/user/20261025-1825/neon-user-desk-20261025-1825.iso'; Filename = 'neon-user-desk-20261025-1825.iso'; ChecksumUrl = 'https://files.kde.org/neon/images/desk/user/20261025-1825/neon-user-desk-20261025-1825.iso.sha256sum' }",
+    "Category": "01_Desktop-Linux",
+    "SizeBytes": 2700000000
+  },
+  {
+    "Enabled": true,
+    "Name": "Kodachi OS",
+    "Category": "03_Security-Pentest",
+    "MatchPattern": "kodachi-os-xfce-(\\d+\\.\\d+\\.\\d+)-amd64",
+    "Script": "$html = Get-WebContent -Uri 'https://kodachi.cloud/downloads/'\nif ($html -and $html -match 'kodachi-os-xfce-(\\d+\\.\\d+\\.\\d+)-amd64\\.iso') {\n    $ver = $Matches[1]\n    $fn = \"kodachi-os-xfce-$ver-amd64.iso\"\n    $url = \"https://kodachi.cloud/downloads/download.php?f=xfce-iso\"\n    $chk = \"https://kodachi.cloud/downloads/installers/desktop/kodachi-os-xfce-$ver-amd64.iso.sha256\"\n    return @{ Version = $ver; Url = $url; Filename = $fn; ChecksumUrl = $chk }\n}\nreturn @{ Version = '10.0.3'; Url = 'https://kodachi.cloud/downloads/download.php?f=xfce-iso'; Filename = 'kodachi-os-xfce-10.0.3-amd64.iso'; ChecksumUrl = 'https://kodachi.cloud/downloads/installers/desktop/kodachi-os-xfce-10.0.3-amd64.iso.sha256' }",
+    "SizeBytes": 4516642816
+  },
+  {
+    "Enabled": true,
+    "Name": "Kubuntu",
+    "MatchPattern": "kubuntu-(\\d+\\.\\d+(\\.\\d+)?)-desktop-amd64",
+    "Script": "$html = Get-WebContent -Uri 'https://cdimage.ubuntu.com/kubuntu/releases/'\nif ($html) {\n    $vers = [regex]::Matches($html, 'href=\"(\\d+\\.\\d+(\\.\\d+)?)/\"') | ForEach-Object { $_.Groups[1].Value } | Sort-Object { [version](ConvertTo-VersionString $_) } -Descending\n    foreach ($v in $vers) {\n        $sub = Get-WebContent -Uri \"https://cdimage.ubuntu.com/kubuntu/releases/$v/release/\"\n        if ($sub -and $sub -match \"(kubuntu-$([regex]::Escape($v))-desktop-amd64\\.iso)\") {\n            $fn = $Matches[1]\n            return @{ Version = $v; Url = \"https://cdimage.ubuntu.com/kubuntu/releases/$v/release/$fn\"; Filename = $fn; ChecksumUrl = \"https://cdimage.ubuntu.com/kubuntu/releases/$v/release/SHA256SUMS\" }\n        }\n    }\n}\nreturn @{ Version = '26.10'; Url = 'https://cdimage.ubuntu.com/kubuntu/releases/26.10/release/kubuntu-26.10-desktop-amd64.iso'; Filename = 'kubuntu-26.10-desktop-amd64.iso'; ChecksumUrl = 'https://cdimage.ubuntu.com/kubuntu/releases/26.10/release/SHA256SUMS' }",
+    "Category": "01_Desktop-Linux",
+    "SizeBytes": 4200000000
   },
   {
     "Enabled": true,
@@ -145,11 +337,35 @@
   },
   {
     "Enabled": true,
+    "Name": "MemTest86+",
+    "MatchPattern": "mt86plus[-_][0-9.]+(x86_64)?\\.(bin|iso)",
+    "Script": "$html = Get-WebContent -Uri 'https://www.memtest.org/'\nif ($html -and $html -match 'href=\"([^\"]*?(mt86plus_([0-9.]+)_x86_64\\.iso\\.zip))\"') {\n    $url = \"https://www.memtest.org$($Matches[1])\"\n    $ver = $Matches[3]\n    return @{ Version = $ver; Url = $url; Filename = \"mt86plus_$ver.iso.zip\"; ExtractTo = \"mt86plus-$ver-x86_64.iso\" }\n}\nreturn @{ Version = '9.00'; Url = 'https://www.memtest.org/download/v9.00/mt86plus_9.00_x86_64.iso.zip'; Filename = 'mt86plus_9.00.iso.zip'; ExtractTo = 'mt86plus-9.00-x86_64.iso' }",
+    "Category": "04_Rescue-Systeme",
+    "SizeBytes": 10485760
+  },
+  {
+    "Enabled": true,
     "Name": "MX Linux",
     "MatchPattern": "MX-(\\d+\\.\\d+)_Xfce_x64",
     "Script": "$baseUrl = 'https://ftp.gwdg.de/pub/linux/mx/iso/MX/Final/Xfce/'\n$html = Get-WebContent -Uri $baseUrl\nif ($html -and $html -match 'href=\"(MX-([0-9.]+)_Xfce_x64\\.iso)\"') {\n    return @{ Version = $Matches[2]; Url = \"$baseUrl$($Matches[1])\"; Filename = $Matches[1]; ChecksumUrl = \"$baseUrl$($Matches[1]).sha256\" }\n}\nreturn $null",
     "SizeBytes": 2348810240,
     "Category": "01_Desktop-Linux"
+  },
+  {
+    "Enabled": true,
+    "Name": "netboot.xyz",
+    "MatchPattern": "netboot\\.xyz(-[\\d\\.]+)?\\.iso",
+    "Category": "04_Rescue-Systeme",
+    "Script": "$json = Get-WebContent -Uri 'https://api.github.com/repos/netbootxyz/netboot.xyz/releases/latest'\nif ($json) {\n    try {\n        $rel = $json | ConvertFrom-Json\n        $ver = $rel.tag_name.TrimStart('v')\n        $asset = $rel.assets | Where-Object { $_.name -eq 'netboot.xyz.iso' } | Select-Object -First 1\n        if ($asset) {\n            return @{ Version = $ver; Url = $asset.browser_download_url; Filename = \"netboot.xyz-$ver.iso\" }\n        }\n    } catch {}\n}\nreturn @{ Version = '3.0.3'; Url = 'https://github.com/netbootxyz/netboot.xyz/releases/download/3.0.3/netboot.xyz.iso'; Filename = 'netboot.xyz-3.0.3.iso' }",
+    "SizeBytes": 2428928
+  },
+  {
+    "Enabled": true,
+    "Name": "NetBSD",
+    "Category": "05_BSD-Unix",
+    "MatchPattern": "NetBSD-(\\d+\\.\\d+(\\.\\d+)?)-amd64\\.iso",
+    "Script": "$html = Get-WebContent -Uri 'https://cdn.netbsd.org/pub/NetBSD/images/'\nif ($html) {\n    $vers = [regex]::Matches($html, 'href=\"(\\d+\\.\\d+(\\.\\d+)?)/\"') | ForEach-Object { $_.Groups[1].Value } | Sort-Object { [version](ConvertTo-VersionString $_) } -Descending\n    foreach ($v in $vers) {\n        $sub = Get-WebContent -Uri \"https://cdn.netbsd.org/pub/NetBSD/images/$v/\"\n        if ($sub -and $sub -match \"(NetBSD-$([regex]::Escape($v))-amd64\\.iso)\") {\n            $fn = $Matches[1]\n            return @{ Version = $v; Url = \"https://cdn.netbsd.org/pub/NetBSD/images/$v/$fn\"; Filename = $fn; ChecksumUrl = \"https://archive.netbsd.org/pub/NetBSD-archive/images/$v/SHA512\" }\n        }\n    }\n}\nreturn $null",
+    "SizeBytes": 654090240
   },
   {
     "Enabled": true,
@@ -161,6 +377,14 @@
   },
   {
     "Enabled": true,
+    "Name": "Nobara Project",
+    "MatchPattern": "Nobara-[^\\\"]*?-Official-[^\\\"]*?\\.iso",
+    "Script": "$html = Get-WebContent -Uri 'https://nobaraproject.org/download-nobara/'\nif ($html -and $html -match 'href=\"([^\"]*?(Nobara-(\\d+)-Official-([0-9-]+)\\.iso))\\.sha256sum\"') {\n    $isoUrl = $Matches[1]\n    $fn = $Matches[2]\n    $ver = \"$($Matches[3]) ($($Matches[4]))\"\n    return @{ Version = $ver; Url = $isoUrl; Filename = $fn; ChecksumUrl = \"$isoUrl.sha256sum\" }\n}\nreturn @{ Version = '44'; Url = 'https://nobara-images.nobaraproject.org/Nobara-44-Official-2026-10-13.iso'; Filename = 'Nobara-44-Official-2026-10-13.iso'; ChecksumUrl = 'https://nobara-images.nobaraproject.org/Nobara-44-Official-2026-10-13.iso.sha256sum' }",
+    "Category": "01_Desktop-Linux",
+    "SizeBytes": 3885000000
+  },
+  {
+    "Enabled": true,
     "Name": "Omarchy",
     "MatchPattern": "omarchy-(\\d+\\.\\d+(\\.\\d+)?)(-x86)?",
     "Script": "$apiJson = Get-WebContent -Uri 'https://api.github.com/repos/omacom/omarchy/releases/latest'\nif ($apiJson) {\n    try {\n        $rel = $apiJson | ConvertFrom-Json\n        $tag = $rel.tag_name.TrimStart('v')\n        $isoUrl = \"https://iso.omarchy.org/omarchy-$tag-x86.iso\"\n        $fn     = \"omarchy-$tag-x86.iso\"\n        $asset = $rel.assets | Where-Object { $_.name -like '*.iso' } | Select-Object -First 1\n        if ($asset) {\n            $isoUrl = $asset.browser_download_url\n            $fn     = $asset.name\n        }\n        return @{ Version = $tag; Url = $isoUrl; Filename = $fn }\n    } catch {}\n}\n$html = Get-WebContent -Uri 'https://omarchy.org/'\nif ($html -and $html -match 'href=\"([^\"]*?omarchy-([0-9.]+)-x86\\.iso)\"') {\n    $url = $Matches[1]\n    $ver = $Matches[2]\n    return @{ Version = $ver; Url = $url; Filename = [System.IO.Path]::GetFileName($url) }\n}\nreturn @{ Version = '4.5.0'; Url = 'https://iso.omarchy.org/omarchy-4.5.0-x86.iso'; Filename = 'omarchy-4.5.0-x86.iso' }",
@@ -169,99 +393,11 @@
   },
   {
     "Enabled": true,
-    "Name": "openSUSE Tumbleweed",
-    "MatchPattern": "openSUSE-Tumbleweed-DVD-x86_64-Snapshot(\\d+)-Media",
-    "Script": "$baseUrl = 'https://ftp.halifax.rwth-aachen.de/opensuse/tumbleweed/iso/'\n$html = Get-WebContent -Uri $baseUrl\nif ($html -and $html -match 'href=\"(openSUSE-Tumbleweed-DVD-x86_64-Snapshot([0-9]+)-Media\\.iso)\"') {\n    return @{ Version = $Matches[2]; Url = \"$baseUrl$($Matches[1])\"; Filename = $Matches[1]; ChecksumUrl = \"$baseUrl$($Matches[1]).sha256\" }\n}\nreturn $null",
-    "SizeBytes": 4718592000,
-    "Category": "01_Desktop-Linux"
-  },
-  {
-    "Enabled": true,
-    "Name": "Pop!_OS",
-    "MatchPattern": "pop-os_(\\d+\\.\\d+)_amd64_intel_(\\d+)",
-    "Script": "$html = Get-WebContent -Uri 'https://system76.com/pop/download'\nif ($html -and $html -match 'location\\.href=\\x27(https://iso\\.pop-os\\.org/([0-9.]+)/amd64/intel/([0-9]+)/(pop-os_[^\\x27]+\\.iso))\\x27') {\n    return @{ Version = \"$($Matches[2]).$($Matches[3])\"; Url = $Matches[1]; Filename = $Matches[4]; ChecksumUrl = \"https://iso.pop-os.org/$($Matches[2])/amd64/intel/$($Matches[3])/SHA256SUMS\" }\n}\nreturn $null",
-    "SizeBytes": 3435973836,
-    "Category": "01_Desktop-Linux"
-  },
-  {
-    "Enabled": true,
-    "Name": "Slackware",
-    "MatchPattern": "slackware64-(\\d+\\.\\d+)-install-dvd",
-    "Script": "$baseUrl = 'https://ftp.gwdg.de/pub/linux/slackware/slackware-iso/'\n$html = Get-WebContent -Uri $baseUrl\nif ($html) {\n    $dirs = [regex]::Matches($html, 'href=\"(slackware64-([0-9.]+)-iso)/?\"') | ForEach-Object { $_.Groups[1].Value } | Sort-Object | Select-Object -Last 1\n    if ($dirs) {\n        $subHtml = Get-WebContent -Uri \"$baseUrl$dirs/\"\n        if ($subHtml -and $subHtml -match 'href=\"(slackware64-([0-9.]+)-install-dvd\\.iso)\"') {\n            return @{ Version = $Matches[2]; Url = \"$baseUrl$dirs/$($Matches[1])\"; Filename = $Matches[1]; ChecksumUrl = \"$baseUrl$dirs/$($Matches[1]).md5\" }\n        }\n    }\n}\nreturn $null",
-    "SizeBytes": 3932160000,
-    "Category": "01_Desktop-Linux"
-  },
-  {
-    "Enabled": true,
-    "Name": "Solus",
-    "MatchPattern": "Solus-Budgie-Release-([\\d-]+)",
-    "Script": "$html = Get-WebContent -Uri 'https://getsol.us/download/'\nif ($html -and $html -match '(https://downloads\\.getsol\\.us/isos/([^/]+)/(Solus-Budgie-Release-([^\\s\\\"\\x27&>]+)\\.iso))') {\n    return @{ Version = $Matches[4]; Url = $Matches[1]; Filename = $Matches[3]; ChecksumUrl = \"$($Matches[1]).sha256sum\" }\n}\nreturn $null",
-    "SizeBytes": 4338690048,
-    "Category": "01_Desktop-Linux"
-  },
-  {
-    "Enabled": true,
-    "Name": "Ubuntu Cinnamon",
-    "MatchPattern": "ubuntucinnamon-(\\d+\\.\\d+(\\.\\d+)?)",
-    "Script": "$baseUrl = 'https://cdimage.ubuntu.com/ubuntucinnamon/releases/'\n$html = Get-WebContent -Uri $baseUrl\nif ($html) {\n    $versions = [regex]::Matches($html, 'href=\"(\\d+\\.\\d+(\\.\\d+)?)/\"') | ForEach-Object { $_.Groups[1].Value } | Sort-Object { [version](ConvertTo-VersionString $_) } -Descending | Select-Object -First 3\n    foreach ($ver in $versions) {\n        $subHtml = Get-WebContent -Uri \"$baseUrl$ver/release/\"\n        if ($subHtml -and $subHtml -match 'href=\"(ubuntucinnamon-[^\"]+-desktop-amd64\\.iso)\"') {\n            return @{ Version = $ver; Url = \"$baseUrl$ver/release/$($Matches[1])\"; Filename = $Matches[1] }\n        }\n        $subHtmlDir = Get-WebContent -Uri \"$baseUrl$ver/\"\n        if ($subHtmlDir -and $subHtmlDir -match 'href=\"(ubuntucinnamon-[^\"]+-desktop-amd64\\.iso)\"') {\n            return @{ Version = $ver; Url = \"$baseUrl$ver/$($Matches[1])\"; Filename = $Matches[1] }\n        }\n    }\n}\nreturn $null",
-    "Category": "01_Desktop-Linux",
-    "SizeBytes": 4897769472
-  },
-  {
-    "Enabled": true,
-    "Name": "Ubuntu Desktop",
-    "MatchPattern": "ubuntu-(\\d+\\.\\d+(\\.\\d+)?)-desktop-amd64",
-    "Script": "$baseUrl = 'https://ftp.halifax.rwth-aachen.de/ubuntu-releases/'\n$html = Get-WebContent -Uri $baseUrl\nif ($html) {\n    $versions = [regex]::Matches($html, 'href=\"(\\d+\\.\\d+(\\.\\d+)?)/\"') | ForEach-Object { $_.Groups[1].Value } | Sort-Object { [version](ConvertTo-VersionString $_) } -Descending | Select-Object -First 3\n    foreach ($latestVer in $versions) {\n        $subHtml = Get-WebContent -Uri \"$baseUrl$latestVer/\"\n        if ($subHtml -and $subHtml -match 'href=\"(ubuntu-\\d+\\.\\d+(\\.\\d+)?-desktop-amd64\\.iso)\"') {\n            return @{ Version = $latestVer; Url = \"$baseUrl$latestVer/$($Matches[1])\"; Filename = $Matches[1] }\n        }\n    }\n}\nreturn $null",
-    "Category": "01_Desktop-Linux",
-    "SizeBytes": 6615449600
-  },
-  {
-    "Enabled": true,
-    "Name": "Void Linux",
-    "MatchPattern": "void-live-x86_64-(\\d+)-xfce",
-    "Script": "$baseUrl = 'https://repo-default.voidlinux.org/live/current/'\n$html = Get-WebContent -Uri $baseUrl\nif ($html -and $html -match 'href=\"(void-live-x86_64-([0-9]+)-xfce\\.iso)\"') {\n    return @{ Version = $Matches[2]; Url = \"$baseUrl$($Matches[1])\"; Filename = $Matches[1]; ChecksumUrl = \"$baseUrl$sha256sum.txt\" }\n}\nreturn $null",
-    "SizeBytes": 1258291200,
-    "Category": "01_Desktop-Linux"
-  },
-  {
-    "Enabled": true,
-    "Name": "Winux",
-    "Category": "01_Desktop-Linux",
-    "MatchPattern": "winux-(\\d+\\.\\d+(\\.\\d+)?)-noble-lts",
-    "Script": "$json = Get-WebContent -Uri 'https://sourceforge.net/projects/windows-linux/best_release.json'\nif ($json) {\n    try {\n        $obj = $json | ConvertFrom-Json\n        $fnPath = $obj.release.filename\n        if ($fnPath -match 'winux-([0-9.]+[^/]*?)\\.iso$') {\n            $ver = $Matches[1]\n            $fn = [System.IO.Path]::GetFileName($fnPath)\n            $url = \"https://downloads.sourceforge.net/project/windows-linux$fnPath\"\n            return @{ Version = $ver; Url = $url; Filename = $fn; Sha256 = $obj.release.sha256sum }\n        }\n    } catch {}\n}\nreturn @{ Version = '11.26.10-noble-lts'; Url = 'https://downloads.sourceforge.net/project/windows-linux/winux-11.26.10-noble-lts.iso'; Filename = 'winux-11.26.10-noble-lts.iso'; Sha256 = '5ba96c841a12518b0df69f8ed1d506f1c4e86ad343c3bfdc01ef789424739630' }",
-    "SizeBytes": 6685507584
-  },
-  {
-    "Enabled": true,
-    "Name": "Zorin OS Education",
-    "MatchPattern": "Zorin-OS-(\\d+(\\.\\d+)?)-Education-64-bit",
-    "Script": "$html = Get-WebContent -Uri 'https://zorin.com/os/download/'\n$mainVer = '18'\nif ($html -and $html -match '/os/download/(\\d+)/education/') {\n    $mainVer = $Matches[1]\n}\n$dlPageHtml = Get-WebContent -Uri \"https://zorin.com/os/download/$mainVer/education/\"\nif ($dlPageHtml -and $dlPageHtml -match 'href=\"(https://[^\"]*?Zorin-OS-(\\d+(\\.\\d+)?)-Education-64-bit\\.iso)\"') {\n    $url = $Matches[1]\n    $ver = $Matches[2]\n    $fn  = \"Zorin-OS-$ver-Education-64-bit.iso\"\n    return @{ Version = $ver; Url = $url; Filename = $fn }\n}\nreturn $null",
-    "SizeBytes": 8059355136,
-    "Category": "01_Desktop-Linux"
-  },
-  {
-    "Enabled": true,
-    "Name": "Azure Linux",
-    "MatchPattern": "AzureLinux-[^\"]*?-x86_64",
-    "Script": "$url = 'https://aka.ms/azurelinux-3.0-x86_64.iso'\nreturn @{ Version = '3.0'; Url = $url; Filename = 'AzureLinux-3.0-x86_64.iso'; ChecksumUrl = 'https://aka.ms/azurelinux-3.0-x86_64-iso-checksum' }",
-    "Category": "02_Enterprise-Server",
-    "SizeBytes": 780576768
-  },
-  {
-    "Enabled": true,
-    "Name": "CentOS Stream 9",
-    "MatchPattern": "CentOS-Stream-9[^\"]*?-x86_64-(dvd1|boot)",
-    "Script": "$html = Get-WebContent -Uri 'https://mirror.stream.centos.org/9-stream/BaseOS/x86_64/iso/'\nif ($html -and $html -match 'href=\"(CentOS-Stream-9-[^\"]*?-x86_64-boot\\.iso)') {\n    $fn = $Matches[1]\n    return @{ Version = \"9-stream\"; Url = \"https://mirror.stream.centos.org/9-stream/BaseOS/x86_64/iso/$fn\"; Filename = $fn }\n}\nreturn $null",
-    "Category": "02_Enterprise-Server",
-    "SizeBytes": 1572438016
-  },
-  {
-    "Enabled": true,
-    "Name": "FreeNAS (TrueNAS)",
-    "MatchPattern": "TrueNAS-(?:SCALE|CORE)-[^\\\"]*",
-    "Category": "02_Enterprise-Server",
-    "Script": "$html = Get-WebContent -Uri \"https://download.truenas.com/\"\nif ($html) {\n    $matches = [regex]::Matches($html, \"href=`\"([^`\"]*?(TrueNAS-(?:SCALE|CORE)-(\\d+\\.\\d+(\\.\\d+)*))\\.iso)`\"\")\n    if ($matches.Count -gt 0) {\n        $m = $matches[$matches.Count - 1]\n        $relUrl = $m.Groups[1].Value\n        $ver = $m.Groups[3].Value\n        $fn = [System.IO.Path]::GetFileName($relUrl)\n        return @{ Version = $ver; Url = \"https://download.truenas.com/$relUrl\"; Filename = $fn }\n    }\n}\nreturn @{ Version = \"25.10.7\"; Url = \"https://download.truenas.com/TrueNAS-SCALE-Goldeye/25.10.7/TrueNAS-SCALE-25.10.7.iso\"; Filename = \"TrueNAS-SCALE-25.10.7.iso\" }",
-    "SizeBytes": 2339317760
+    "Name": "OpenBSD",
+    "Category": "05_BSD-Unix",
+    "MatchPattern": "install(\\d+)\\.iso",
+    "Script": "$html = Get-WebContent -Uri 'https://cdn.openbsd.org/pub/OpenBSD/'\nif ($html) {\n    $vers = [regex]::Matches($html, 'href=\"(\\d+\\.\\d+)/\"') | ForEach-Object { $_.Groups[1].Value } | Sort-Object { [version](ConvertTo-VersionString $_) } -Descending\n    foreach ($v in $vers) {\n        $sub = Get-WebContent -Uri \"https://cdn.openbsd.org/pub/OpenBSD/$v/amd64/\"\n        if ($sub -and $sub -match 'install(\\d+)\\.iso') {\n            $fn = $Matches[0]\n            return @{ Version = $v; Url = \"https://cdn.openbsd.org/pub/OpenBSD/$v/amd64/$fn\"; Filename = $fn; ChecksumUrl = \"https://cdn.openbsd.org/pub/OpenBSD/$v/amd64/SHA256\" }\n        }\n    }\n}\nreturn $null",
+    "SizeBytes": 700000000
   },
   {
     "Enabled": true,
@@ -273,59 +409,27 @@
   },
   {
     "Enabled": true,
-    "Name": "Proxmox VE",
-    "MatchPattern": "proxmox-ve_(\\d+\\.\\d+-\\d+)",
-    "Script": "$html = Get-WebContent -Uri 'https://enterprise.proxmox.com/iso/'\nif ($html -and $html -match 'href=\"\\./(proxmox-ve_(\\d+\\.\\d+-\\d+)\\.iso)\"') {\n    return @{ Version = $Matches[2]; Url = \"https://enterprise.proxmox.com/iso/$($Matches[1])\"; Filename = $Matches[1] }\n}\nreturn $null",
-    "SizeBytes": 1706178560,
-    "Category": "02_Enterprise-Server"
+    "Name": "openSUSE Tumbleweed",
+    "MatchPattern": "openSUSE-Tumbleweed-DVD-x86_64-Snapshot(\\d+)-Media",
+    "Script": "$baseUrl = 'https://ftp.halifax.rwth-aachen.de/opensuse/tumbleweed/iso/'\n$html = Get-WebContent -Uri $baseUrl\nif ($html -and $html -match 'href=\"(openSUSE-Tumbleweed-DVD-x86_64-Snapshot([0-9]+)-Media\\.iso)\"') {\n    return @{ Version = $Matches[2]; Url = \"$baseUrl$($Matches[1])\"; Filename = $Matches[1]; ChecksumUrl = \"$baseUrl$($Matches[1]).sha256\" }\n}\nreturn $null",
+    "SizeBytes": 4718592000,
+    "Category": "01_Desktop-Linux"
   },
   {
     "Enabled": true,
-    "Name": "Rockstor",
-    "MatchPattern": "(?i)Rockstor-.*-generic\\.x86_64.*\\.iso",
+    "Name": "OPNsense",
+    "MatchPattern": "OPNsense-(\\d+\\.\\d+)-dvd-amd64\\.iso",
+    "Script": "$baseUrl = 'https://mirror.ams1.nl.leaseweb.net/opnsense/releases/'\n$html = Get-WebContent -Uri $baseUrl\nif ($html) {\n    $vers = [regex]::Matches($html, 'href=\"(\\d+\\.\\d+)/\"') | ForEach-Object { $_.Groups[1].Value } | Sort-Object { [version](ConvertTo-VersionString $_) } -Descending\n    foreach ($v in $vers) {\n        $sub = Get-WebContent -Uri \"$baseUrl$v/\"\n        if ($sub -and $sub -match \"(OPNsense-$v-dvd-amd64\\.iso\\.bz2)\") {\n            $fn = $Matches[1]\n            $extTo = $fn -replace '\\.bz2$', ''\n            return @{ Version = $v; Url = \"$baseUrl$v/$fn\"; Filename = $fn; ExtractTo = $extTo; ChecksumUrl = \"$baseUrl$v/OPNsense-$v-checksums-amd64.sha256\" }\n        }\n    }\n}\nreturn @{ Version = '26.7'; Url = 'https://mirror.ams1.nl.leaseweb.net/opnsense/releases/26.7/OPNsense-26.7-dvd-amd64.iso.bz2'; Filename = 'OPNsense-26.7-dvd-amd64.iso.bz2'; ExtractTo = 'OPNsense-26.7-dvd-amd64.iso'; ChecksumUrl = 'https://mirror.ams1.nl.leaseweb.net/opnsense/releases/26.7/OPNsense-26.7-checksums-amd64.sha256' }",
+    "Category": "05_BSD-Unix",
+    "SizeBytes": 1280000000
+  },
+  {
+    "Enabled": true,
+    "Name": "Oracle Linux",
+    "MatchPattern": "OracleLinux-R\\d+-U\\d+-x86_64-(dvd|boot)",
+    "Script": "$html = Get-WebContent -Uri 'https://yum.oracle.com/oracle-linux-isos.html'\nif ($html -and $html -match 'href=\"([^\"]*?(OracleLinux-R(\\d+)-U(\\d+)-x86_64-(dvd|boot)\\.iso))\"') {\n    $url = $Matches[1]\n    $fn = $Matches[2]\n    $ver = \"$($Matches[3]).$($Matches[4])\"\n    return @{ Version = $ver; Url = $url; Filename = $fn }\n}\nreturn @{ Version = '9.9'; Url = 'https://yum.oracle.com/ISOS/OracleLinux/OL9/u9/x86_64/OracleLinux-R9-U9-x86_64-dvd.iso'; Filename = 'OracleLinux-R9-U9-x86_64-dvd.iso' }",
     "Category": "02_Enterprise-Server",
-    "Script": "$html = Get-WebContent -Uri 'https://rockstor.com/dls/index.html'\nif ($html) {\n    $pattern = 'href=[\"'']([^\"'']*(Rockstor-Leap[0-9.]+-generic\\.x86_64-([0-9.-]+)\\.install\\.iso))[\"'']'\n    $m = [regex]::Match($html, $pattern)\n    if ($m.Success) {\n        return @{ Version = $m.Groups[3].Value; Url = $m.Groups[1].Value; Filename = $m.Groups[2].Value }\n    }\n    $patternGen = 'href=[\"'']([^\"'']*(Rockstor-[^\"'']*?-generic\\.x86_64-([0-9.-]+)\\.install\\.iso))[\"'']'\n    $mGen = [regex]::Match($html, $patternGen)\n    if ($mGen.Success) {\n        return @{ Version = $mGen.Groups[3].Value; Url = $mGen.Groups[1].Value; Filename = $mGen.Groups[2].Value }\n    }\n}\nreturn @{ Version = '5.1.0-0'; Url = 'https://rockstor.com/downloads/installer/leap/15.6/x86_64/Rockstor-Leap15.6-generic.x86_64-5.1.0-0.install.iso'; Filename = 'Rockstor-Leap15.6-generic.x86_64-5.1.0-0.install.iso' }",
-    "SizeBytes": 940294144
-  },
-  {
-    "Enabled": true,
-    "Name": "Ubuntu Server LTS",
-    "MatchPattern": "ubuntu-(\\d+\\.\\d+(\\.\\d+)?)-live-server-amd64",
-    "Category": "02_Enterprise-Server",
-    "Script": "$baseUrl = 'https://ftp.halifax.rwth-aachen.de/ubuntu-releases/'\n$html = Get-WebContent -Uri $baseUrl\nif ($html) {\n    $versions = [regex]::Matches($html, 'href=\"(\\d*[02468]\\.04(\\.\\d+)?)/\"') | ForEach-Object { $_.Groups[1].Value } | Sort-Object { [version](ConvertTo-VersionString $_) } -Descending | Select-Object -First 3\n    foreach ($latestVer in $versions) {\n        $subHtml = Get-WebContent -Uri \"$baseUrl$latestVer/\"\n        if ($subHtml -and $subHtml -match 'href=\"(ubuntu-\\d+\\.\\d+(\\.\\d+)?-live-server-amd64\\.iso)\"') {\n            return @{ Version = $latestVer; Url = \"$baseUrl$latestVer/$($Matches[1])\"; Filename = $Matches[1] }\n        }\n    }\n}\nreturn $null",
-    "SizeBytes": 2927861760
-  },
-  {
-    "Enabled": true,
-    "Name": "ZimaOS",
-    "MatchPattern": "zimaos-[^\\\"]*?installer",
-    "Category": "02_Enterprise-Server",
-    "Script": "$json = Get-WebContent -Uri \"https://api.github.com/repos/IceWhaleTech/ZimaOS/releases/latest\"\nif ($json) {\n    try {\n        $rel = $json | ConvertFrom-Json\n        $asset = $rel.assets | Where-Object { $_.name -like \"*.iso\" } | Select-Object -First 1\n        if ($asset) {\n            return @{ Version = $rel.tag_name.TrimStart(\"v\"); Url = $asset.browser_download_url; Filename = $asset.name }\n        }\n    } catch {}\n}\nreturn @{ Version = \"1.8.0-beta2\"; Url = \"https://github.com/IceWhaleTech/ZimaOS/releases/download/1.8.0-beta2/zimaos-x86_64-1.8.0-beta2_installer.iso\"; Filename = \"zimaos-x86_64-1.8.0-beta2_installer.iso\" }",
-    "SizeBytes": 1806032896
-  },
-  {
-    "Enabled": true,
-    "Name": "CAINE Live (Forensic & Autopsy)",
-    "Category": "03_Security-Pentest",
-    "MatchPattern": "caine(\\d+(\\.\\d+)?)\\.iso",
-    "Script": "$html = Get-WebContent -Uri 'https://www.caine-live.net/page5/page5.html'\nif ($html -and $html -match 'href=\"https://www\\.caine-live\\.net/Downloads/(caine(\\d+(\\.\\d+)?)\\.iso)\"') {\n    $fn = $Matches[1]\n    $ver = $Matches[2]\n    $url = \"https://caine.mirror.garr.it/caine/$fn\"\n    $chkUrl = \"https://www.caine-live.net/page5/$fn.sha256.txt\"\n    return @{ Version = $ver; Url = $url; Filename = $fn; ChecksumUrl = $chkUrl }\n}\nreturn $null",
-    "SizeBytes": 4169138176
-  },
-  {
-    "Enabled": true,
-    "Name": "Kali Linux",
-    "MatchPattern": "kali-linux-(\\d{4}\\.\\d+)-installer-amd64",
-    "Script": "$html = Get-WebContent -Uri 'https://cdimage.kali.org/current/'\nif ($html -and $html -match 'href=\"(kali-linux-(\\d{4}\\.\\d+)-installer-amd64\\.iso)\"') {\n    $fn  = $Matches[1]\n    $ver = $Matches[2]\n    return @{ Version = $ver; Url = \"https://cdimage.kali.org/current/$fn\"; Filename = $fn }\n}\nreturn $null",
-    "Category": "03_Security-Pentest",
-    "SizeBytes": 5047031808
-  },
-  {
-    "Enabled": true,
-    "Name": "Kodachi OS",
-    "Category": "03_Security-Pentest",
-    "MatchPattern": "kodachi-os-xfce-(\\d+\\.\\d+\\.\\d+)-amd64",
-    "Script": "$html = Get-WebContent -Uri 'https://kodachi.cloud/downloads/'\nif ($html -and $html -match 'kodachi-os-xfce-(\\d+\\.\\d+\\.\\d+)-amd64\\.iso') {\n    $ver = $Matches[1]\n    $fn = \"kodachi-os-xfce-$ver-amd64.iso\"\n    $url = \"https://kodachi.cloud/downloads/download.php?f=xfce-iso\"\n    $chk = \"https://kodachi.cloud/downloads/installers/desktop/kodachi-os-xfce-$ver-amd64.iso.sha256\"\n    return @{ Version = $ver; Url = $url; Filename = $fn; ChecksumUrl = $chk }\n}\nreturn @{ Version = '10.0.3'; Url = 'https://kodachi.cloud/downloads/download.php?f=xfce-iso'; Filename = 'kodachi-os-xfce-10.0.3-amd64.iso'; ChecksumUrl = 'https://kodachi.cloud/downloads/installers/desktop/kodachi-os-xfce-10.0.3-amd64.iso.sha256' }",
-    "SizeBytes": 4516642816
+    "SizeBytes": 10400000000
   },
   {
     "Enabled": true,
@@ -337,67 +441,43 @@
   },
   {
     "Enabled": true,
-    "Name": "Boot-Repair-Disk",
-    "Category": "04_Rescue-Systeme",
-    "MatchPattern": "boot-repair-disk-64bit",
-    "Script": "$xmlStr = Get-WebContent -Uri 'https://sourceforge.net/projects/boot-repair-cd/rss?path=/'\nif ($xmlStr) {\n    try {\n        [xml]$xml = $xmlStr\n        foreach ($item in $xml.rss.channel.item) {\n            if ($item.title.InnerText -match 'boot-repair-disk-64bit\\.iso') {\n                return @{ Version = 'latest'; Url = $item.link; Filename = 'boot-repair-disk-64bit.iso' }\n            }\n        }\n    } catch {}\n}\nreturn @{ Version = 'latest'; Url = 'https://sourceforge.net/projects/boot-repair-cd/files/boot-repair-disk-64bit.iso/download'; Filename = 'boot-repair-disk-64bit.iso' }",
-    "SizeBytes": 922746880
+    "Name": "Pop!_OS",
+    "MatchPattern": "pop-os_(\\d+\\.\\d+)_amd64_intel_(\\d+)",
+    "Script": "$html = Get-WebContent -Uri 'https://system76.com/pop/download'\nif ($html -and $html -match 'location\\.href=\\x27(https://iso\\.pop-os\\.org/([0-9.]+)/amd64/intel/([0-9]+)/(pop-os_[^\\x27]+\\.iso))\\x27') {\n    return @{ Version = \"$($Matches[2]).$($Matches[3])\"; Url = $Matches[1]; Filename = $Matches[4]; ChecksumUrl = \"https://iso.pop-os.org/$($Matches[2])/amd64/intel/$($Matches[3])/SHA256SUMS\" }\n}\nreturn $null",
+    "SizeBytes": 3435973836,
+    "Category": "01_Desktop-Linux"
   },
   {
     "Enabled": true,
-    "Name": "Clonezilla Live",
-    "Category": "04_Rescue-Systeme",
-    "MatchPattern": "clonezilla-live-(\\d+\\.\\d+\\.\\d+-\\d+)-amd64",
-    "Script": "$chk = Get-WebContent -Uri 'https://clonezilla.org/downloads/stable/data/CHECKSUMS.TXT'\nif ($chk -and $chk -match 'clonezilla-live-(\\d+\\.\\d+\\.\\d+-\\d+)-amd64\\.iso') {\n    $fn = $Matches[0]\n    $ver = $Matches[1]\n    $url = \"https://downloads.sourceforge.net/project/clonezilla/clonezilla_live_stable/$ver/$fn\"\n    return @{ Version = $ver; Url = $url; Filename = $fn; ChecksumUrl = 'https://clonezilla.org/downloads/stable/data/CHECKSUMS.TXT' }\n}\nreturn $null",
-    "SizeBytes": 505413632
+    "Name": "Proxmox Backup Server (PBS)",
+    "MatchPattern": "proxmox-backup-server_([0-9.-]+)\\.iso",
+    "Script": "$html = Get-WebContent -Uri 'https://enterprise.proxmox.com/iso/'\nif ($html) {\n    $matches = [regex]::Matches($html, 'href=\"(proxmox-backup-server_([0-9.-]+)\\.iso)\"')\n    if ($matches.Count -gt 0) {\n        $latest = $matches[$matches.Count - 1]\n        $fn = $latest.Groups[1].Value\n        $ver = $latest.Groups[2].Value\n        $url = \"https://enterprise.proxmox.com/iso/$fn\"\n        return @{ Version = $ver; Url = $url; Filename = $fn; ChecksumUrl = \"$url.sha256\" }\n    }\n}\nreturn @{ Version = '4.2-1'; Url = 'https://enterprise.proxmox.com/iso/proxmox-backup-server_4.2-1.iso'; Filename = 'proxmox-backup-server_4.2-1.iso'; ChecksumUrl = 'https://enterprise.proxmox.com/iso/proxmox-backup-server_4.2-1.iso.sha256' }",
+    "Category": "02_Enterprise-Server",
+    "SizeBytes": 1250000000
   },
   {
     "Enabled": true,
-    "Name": "Dr.Web LiveDisk",
-    "Category": "04_Rescue-Systeme",
-    "MatchPattern": "drweb-livedisk-(\\d+)-cd\\.iso",
-    "Script": "$html = Get-WebContent -Uri 'https://free.drweb.com/livedisk/'\nif ($html -and $html -match '(https://cdn-download\\.drweb\\.com/pub/drweb/livedisk/(drweb-livedisk-(\\d+)-cd\\.iso))') {\n    $url = $Matches[1]\n    $fn  = $Matches[2]\n    $ver = $Matches[3]\n    return @{ Version = $ver; Url = $url; Filename = $fn; ChecksumUrl = \"$url.md5\" }\n}\nreturn @{ Version = \"900\"; Url = \"https://cdn-download.drweb.com/pub/drweb/livedisk/drweb-livedisk-900-cd.iso\"; Filename = \"drweb-livedisk-900-cd.iso\"; ChecksumUrl = \"https://cdn-download.drweb.com/pub/drweb/livedisk/drweb-livedisk-900-cd.iso.md5\" }",
-    "SizeBytes": 895483904
+    "Name": "Proxmox VE",
+    "MatchPattern": "proxmox-ve_(\\d+\\.\\d+-\\d+)",
+    "Script": "$html = Get-WebContent -Uri 'https://enterprise.proxmox.com/iso/'\nif ($html -and $html -match 'href=\"\\./(proxmox-ve_(\\d+\\.\\d+-\\d+)\\.iso)\"') {\n    return @{ Version = $Matches[2]; Url = \"https://enterprise.proxmox.com/iso/$($Matches[1])\"; Filename = $Matches[1] }\n}\nreturn $null",
+    "SizeBytes": 1706178560,
+    "Category": "02_Enterprise-Server"
   },
   {
     "Enabled": true,
-    "Name": "ESET SysRescue Live",
-    "MatchPattern": "eset_sysrescue_live[^\\\"]*?\\.iso",
-    "Category": "04_Rescue-Systeme",
-    "Script": "return @{ Version = '2024.05'; Url = 'https://archive.org/download/eset_sysrescue_live_enu_202405/eset_sysrescue_live_enu.iso'; Filename = 'eset_sysrescue_live_enu.iso' }",
-    "SizeBytes": 780140544
+    "Name": "Q4OS",
+    "MatchPattern": "q4os-([0-9.]+)-x64(\\.r\\d+)?\\.iso",
+    "Script": "$json = Get-WebContent -Uri 'https://sourceforge.net/projects/q4os/best_release.json'\nif ($json) {\n    try {\n        $rel = $json | ConvertFrom-Json\n        if ($rel.release -and $rel.release.url) {\n            $fn = [System.IO.Path]::GetFileName($rel.release.filename)\n            $ver = if ($fn -match 'q4os-([0-9.]+)-x64') { $Matches[1] } else { '6.11' }\n            $chk = if ($rel.release.sha256sum) { $rel.release.sha256sum } else { $null }\n            return @{ Version = $ver; Url = $rel.release.url; Filename = $fn; ExpectedHash = $chk }\n        }\n    } catch {}\n}\nreturn @{ Version = '6.11'; Url = 'https://sourceforge.net/projects/q4os/files/stable/q4os-6.11-x64.r1.iso/download'; Filename = 'q4os-6.11-x64.r1.iso'; ExpectedHash = 'e29032193ac73f97184e520935ce6af24dbb2cd3bbf813fe25d4c33b89775463' }",
+    "Category": "01_Desktop-Linux",
+    "SizeBytes": 1540000000
   },
   {
     "Enabled": true,
-    "Name": "FygoOS PE",
-    "MatchPattern": "fygoos_PE[^\\\"]*?(\\d+\\.\\d+.*)",
+    "Name": "Redo Rescue",
+    "MatchPattern": "redorescue-(\\d+\\.\\d+(\\.\\d+)?)\\.iso",
+    "Script": "$json = Get-WebContent -Uri 'https://sourceforge.net/projects/redobackup/best_release.json'\nif ($json) {\n    try {\n        $rel = $json | ConvertFrom-Json\n        if ($rel.release -and $rel.release.url) {\n            $fn = $rel.release.filename.TrimStart('/')\n            $ver = if ($fn -match 'redorescue-([0-9.]+)\\.iso') { $Matches[1] } else { '4.0.0' }\n            return @{ Version = $ver; Url = $rel.release.url; Filename = $fn }\n        }\n    } catch {}\n}\nreturn @{ Version = '4.0.0'; Url = 'https://sourceforge.net/projects/redobackup/files/redorescue-4.0.0.iso/download'; Filename = 'redorescue-4.0.0.iso' }",
     "Category": "04_Rescue-Systeme",
-    "Script": "$html = Get-WebContent -Uri \"https://www.fygonas.com/download\"\n$matches = [regex]::Matches($html, '([^\"'' ]*?fygoos_PE_x86[^\"'' ]*?(\\d+\\.\\d+[^\"'' ]*)\\.iso)')\nif ($matches.Count -gt 0) {\n    $url = $matches[0].Groups[1].Value\n    if ($url.StartsWith(\"//\")) { $url = \"https:\" + $url }\n    elseif (-not $url.StartsWith(\"http\")) { $url = \"https://www.fygonas.com\" + $url }\n    return @{ Version = $matches[0].Groups[2].Value; Url = $url; Filename = \"fygoos_PE_x86_$($matches[0].Groups[2].Value).iso\" }\n}\nreturn @{ Version = \"1.2.0604_2686\"; Url = \"https://download.liveupdate.fygonas.com/x86_64/trim/fygoos_PE_x86_1.2.0604_2686.iso\"; Filename = \"fygoos_PE_x86_1.2.0604_2686.iso\" }",
-    "SizeBytes": 3734011904
-  },
-  {
-    "Enabled": true,
-    "Name": "GParted Live",
-    "MatchPattern": "gparted-live-(\\d+\\.\\d+\\.\\d+-\\d+)-amd64",
-    "Category": "04_Rescue-Systeme",
-    "Script": "$html = Get-WebContent -Uri \"https://gparted.org/download.php\"\nif (-not $html) { $html = Get-WebContent -Uri \"https://sourceforge.net/projects/gparted/files/gparted-live-stable/\" }\nif ($html -and $html -match \"gparted-live-(\\d+\\.\\d+\\.\\d+-\\d+)-amd64\\.iso\") {\n    $ver = $Matches[1]\n    $fn  = \"gparted-live-$ver-amd64.iso\"\n    $url = \"https://downloads.sourceforge.net/project/gparted/gparted-live-stable/$ver/$fn\"\n    return @{ Version = $ver; Url = $url; Filename = $fn }\n}\nreturn $null",
-    "SizeBytes": 720371712
-  },
-  {
-    "Enabled": true,
-    "Name": "Kaspersky Rescue Disk",
-    "MatchPattern": "krd(-[\\d\\.]+)?\\.iso",
-    "Category": "04_Rescue-Systeme",
-    "Script": "return @{ Version = '2024'; Url = 'https://rescuedisk.s.kaspersky-labs.com/updatable/2024/krd.iso'; Filename = 'krd-2024.iso' }",
-    "SizeBytes": 703758336
-  },
-  {
-    "Enabled": true,
-    "Name": "netboot.xyz",
-    "MatchPattern": "netboot\\.xyz(-[\\d\\.]+)?\\.iso",
-    "Category": "04_Rescue-Systeme",
-    "Script": "$json = Get-WebContent -Uri 'https://api.github.com/repos/netbootxyz/netboot.xyz/releases/latest'\nif ($json) {\n    try {\n        $rel = $json | ConvertFrom-Json\n        $ver = $rel.tag_name.TrimStart('v')\n        $asset = $rel.assets | Where-Object { $_.name -eq 'netboot.xyz.iso' } | Select-Object -First 1\n        if ($asset) {\n            return @{ Version = $ver; Url = $asset.browser_download_url; Filename = \"netboot.xyz-$ver.iso\" }\n        }\n    } catch {}\n}\nreturn @{ Version = '3.0.3'; Url = 'https://github.com/netbootxyz/netboot.xyz/releases/download/3.0.3/netboot.xyz.iso'; Filename = 'netboot.xyz-3.0.3.iso' }",
-    "SizeBytes": 2428928
+    "SizeBytes": 620000000
   },
   {
     "Enabled": true,
@@ -417,11 +497,35 @@
   },
   {
     "Enabled": true,
+    "Name": "Rockstor",
+    "MatchPattern": "(?i)Rockstor-.*-generic\\.x86_64.*\\.iso",
+    "Category": "02_Enterprise-Server",
+    "Script": "$html = Get-WebContent -Uri 'https://rockstor.com/dls/index.html'\nif ($html) {\n    $pattern = 'href=[\"'']([^\"'']*(Rockstor-Leap[0-9.]+-generic\\.x86_64-([0-9.-]+)\\.install\\.iso))[\"'']'\n    $m = [regex]::Match($html, $pattern)\n    if ($m.Success) {\n        return @{ Version = $m.Groups[3].Value; Url = $m.Groups[1].Value; Filename = $m.Groups[2].Value }\n    }\n    $patternGen = 'href=[\"'']([^\"'']*(Rockstor-[^\"'']*?-generic\\.x86_64-([0-9.-]+)\\.install\\.iso))[\"'']'\n    $mGen = [regex]::Match($html, $patternGen)\n    if ($mGen.Success) {\n        return @{ Version = $mGen.Groups[3].Value; Url = $mGen.Groups[1].Value; Filename = $mGen.Groups[2].Value }\n    }\n}\nreturn @{ Version = '5.1.0-0'; Url = 'https://rockstor.com/downloads/installer/leap/15.6/x86_64/Rockstor-Leap15.6-generic.x86_64-5.1.0-0.install.iso'; Filename = 'Rockstor-Leap15.6-generic.x86_64-5.1.0-0.install.iso' }",
+    "SizeBytes": 940294144
+  },
+  {
+    "Enabled": true,
     "Name": "ShredOS Disk Sanitizer",
     "Category": "04_Rescue-Systeme",
     "MatchPattern": "shredos-[^\\\"']*-x86-64.*?\\.(img|iso)",
     "Script": "$json = Get-WebContent -Uri 'https://api.github.com/repos/PartialVolume/shredos.x86_64/releases/latest'\nif ($json) {\n    try {\n        $rel = $json | ConvertFrom-Json\n        $ver = $rel.tag_name.TrimStart('v')\n        $asset = $rel.assets | Where-Object { ($_.name -like '*.iso' -or $_.name -like '*.img') -and $_.name -like '*x86-64*' -and $_.name -notlike '*lite*' -and $_.name -notlike '*plus-partition*' } | Sort-Object { if ($_.name -like '*.iso') { 0 } else { 1 } } | Select-Object -First 1\n        if ($asset) {\n            return @{ Version = $ver; Url = $asset.browser_download_url; Filename = $asset.name }\n        }\n    } catch {}\n}\nreturn @{ Version = '0.43.1'; Url = 'https://github.com/PartialVolume/shredos.x86_64/releases/download/v2025.11_32_x86-64_0.43.1/shredos-2025.11_32_x86-64_v0.43.1_20261010.iso'; Filename = 'shredos-2025.11_32_x86-64_v0.43.1_20261010.iso' }",
     "SizeBytes": 372612864
+  },
+  {
+    "Enabled": true,
+    "Name": "Slackware",
+    "MatchPattern": "slackware64-(\\d+\\.\\d+)-install-dvd",
+    "Script": "$baseUrl = 'https://ftp.gwdg.de/pub/linux/slackware/slackware-iso/'\n$html = Get-WebContent -Uri $baseUrl\nif ($html) {\n    $dirs = [regex]::Matches($html, 'href=\"(slackware64-([0-9.]+)-iso)/?\"') | ForEach-Object { $_.Groups[1].Value } | Sort-Object | Select-Object -Last 1\n    if ($dirs) {\n        $subHtml = Get-WebContent -Uri \"$baseUrl$dirs/\"\n        if ($subHtml -and $subHtml -match 'href=\"(slackware64-([0-9.]+)-install-dvd\\.iso)\"') {\n            return @{ Version = $Matches[2]; Url = \"$baseUrl$dirs/$($Matches[1])\"; Filename = $Matches[1]; ChecksumUrl = \"$baseUrl$dirs/$($Matches[1]).md5\" }\n        }\n    }\n}\nreturn $null",
+    "SizeBytes": 3932160000,
+    "Category": "01_Desktop-Linux"
+  },
+  {
+    "Enabled": true,
+    "Name": "Solus",
+    "MatchPattern": "Solus-Budgie-Release-([\\d-]+)",
+    "Script": "$html = Get-WebContent -Uri 'https://getsol.us/download/'\nif ($html -and $html -match '(https://downloads\\.getsol\\.us/isos/([^/]+)/(Solus-Budgie-Release-([^\\s\\\"\\x27&>]+)\\.iso))') {\n    return @{ Version = $Matches[4]; Url = $Matches[1]; Filename = $Matches[3]; ChecksumUrl = \"$($Matches[1]).sha256sum\" }\n}\nreturn $null",
+    "SizeBytes": 4338690048,
+    "Category": "01_Desktop-Linux"
   },
   {
     "Enabled": true,
@@ -441,75 +545,19 @@
   },
   {
     "Enabled": true,
+    "Name": "Tails",
+    "MatchPattern": "tails-amd64-(\\d+\\.\\d+(\\.\\d+)?)",
+    "Script": "$json = Get-WebContent -Uri 'https://tails.net/install/v2/Tails/amd64/stable/latest.json'\nif ($json) {\n    try {\n        $data = $json | ConvertFrom-Json\n        $target = $data.installations[0].'installation-paths'[0].'target-files' | Where-Object { $_.url -like '*.iso' } | Select-Object -First 1\n        if ($target) {\n            $fn = [System.IO.Path]::GetFileName($target.url)\n            $ver = if ($fn -match 'tails-amd64-([0-9.]+)') { $Matches[1] } else { 'latest' }\n            return @{ Version = $ver; Url = $target.url; Filename = $fn }\n        }\n    } catch {}\n}\nreturn @{ Version = '7.17.1'; Url = 'https://download.tails.net/tails/stable/tails-amd64-7.17.1/tails-amd64-7.17.1.iso'; Filename = 'tails-amd64-7.17.1.iso' }",
+    "Category": "03_Security-Pentest",
+    "SizeBytes": 1400000000
+  },
+  {
+    "Enabled": true,
     "Name": "Tiny Core Linux",
     "MatchPattern": "CorePure64-(\\d+\\.\\d+(\\.\\d+)?)",
     "Script": "$html = Get-WebContent -Uri 'http://tinycorelinux.net/15.x/x86_64/release/'\nif ($html -and $html -match 'href=\"(CorePure64-(\\d+\\.\\d+(\\.\\d+)?)\\.iso)\"') {\n    return @{ Version = $Matches[2]; Url = \"http://tinycorelinux.net/15.x/x86_64/release/$($Matches[1])\"; Filename = $Matches[1] }\n}\nreturn $null",
     "SizeBytes": 20523008,
     "Category": "04_Rescue-Systeme"
-  },
-  {
-    "Enabled": true,
-    "Name": "Ultimate Boot CD (UBCD)",
-    "Category": "04_Rescue-Systeme",
-    "MatchPattern": "ubcd\\d+",
-    "Script": "$mirrors = @(\n    'https://mirror.koddos.net/ubcd/ubcd539.iso',\n    'https://mirror.clientvps.com/ubcd/ubcd539.iso',\n    'https://mirror.vcu.edu/pub/windows/ubcd/ubcd539.iso',\n    'http://mirror.sysadminguide.net/ubcd/ubcd539.iso',\n    'https://archive.org/download/ubcd539_202306/ubcd539.iso'\n)\n$sha256 = '054c6d41cfe169de8ca93a084612793ecdacb401fb827b174d155966289f6f1b'\nforeach ($m in $mirrors) {\n    try {\n        $req = [System.Net.HttpWebRequest]::Create($m)\n        $req.Method = 'HEAD'\n        $req.Timeout = 4000\n        $res = $req.GetResponse()\n        if ([int]$res.StatusCode -eq 200) {\n            $res.Close()\n            return @{ Version = '5.3.9'; Url = $m; Filename = 'ubcd539.iso'; Sha256 = $sha256 }\n        }\n        $res.Close()\n    } catch {}\n}\nreturn @{ Version = '5.3.9'; Url = 'https://mirror.koddos.net/ubcd/ubcd539.iso'; Filename = 'ubcd539.iso'; Sha256 = $sha256 }",
-    "SizeBytes": 842489856
-  },
-  {
-    "Enabled": true,
-    "Name": "DragonFly BSD",
-    "Category": "05_BSD-Unix",
-    "MatchPattern": "dfly-x86_64-([\\d\\.]+)_REL\\.iso",
-    "Script": "$html = Get-WebContent -Uri 'https://mirror.checkdomain.de/dragonflybsd/iso-images/'\nif ($html) {\n    $matches = [regex]::Matches($html, 'href=\"(dfly-x86_64-([\\d\\.]+)_REL\\.iso)\"')\n    if ($matches.Count -gt 0) {\n        $latest = $matches | Sort-Object { [version]($_.Groups[2].Value) } -Descending | Select-Object -First 1\n        $fn = $latest.Groups[1].Value\n        $ver = $latest.Groups[2].Value\n        return @{ Version = $ver; Url = \"https://mirror.checkdomain.de/dragonflybsd/iso-images/$fn\"; Filename = $fn; ChecksumUrl = \"https://mirror.checkdomain.de/dragonflybsd/iso-images/md5.txt\" }\n    }\n}\nreturn $null",
-    "SizeBytes": 783974400
-  },
-  {
-    "Enabled": true,
-    "Name": "FreeBSD",
-    "MatchPattern": "FreeBSD-(\\d+\\.\\d+)-RELEASE-amd64-disc1",
-    "Script": "$html = Get-WebContent -Uri 'https://download.freebsd.org/releases/ISO-IMAGES/'\nif ($html) {\n    $dirs = [regex]::Matches($html, 'href=\"(\\d+\\.\\d+)/\"') | ForEach-Object { $_.Groups[1].Value } | Sort-Object { [version](ConvertTo-VersionString $_) } -Descending | Select-Object -First 3\n    foreach ($d in $dirs) {\n        $subHtml = Get-WebContent -Uri \"https://download.freebsd.org/releases/ISO-IMAGES/$d/\"\n        if ($subHtml -and $subHtml -match 'href=\"(FreeBSD-\\d+\\.\\d+-RELEASE-amd64-disc1\\.iso)\"') {\n            return @{ Version = $d; Url = \"https://download.freebsd.org/releases/ISO-IMAGES/$d/$($Matches[1])\"; Filename = $Matches[1] }\n        }\n    }\n}\nreturn $null",
-    "SizeBytes": 1352255488,
-    "Category": "05_BSD-Unix"
-  },
-  {
-    "Enabled": true,
-    "Name": "NetBSD",
-    "Category": "05_BSD-Unix",
-    "MatchPattern": "NetBSD-(\\d+\\.\\d+(\\.\\d+)?)-amd64\\.iso",
-    "Script": "$html = Get-WebContent -Uri 'https://cdn.netbsd.org/pub/NetBSD/images/'\nif ($html) {\n    $vers = [regex]::Matches($html, 'href=\"(\\d+\\.\\d+(\\.\\d+)?)/\"') | ForEach-Object { $_.Groups[1].Value } | Sort-Object { [version](ConvertTo-VersionString $_) } -Descending\n    foreach ($v in $vers) {\n        $sub = Get-WebContent -Uri \"https://cdn.netbsd.org/pub/NetBSD/images/$v/\"\n        if ($sub -and $sub -match \"(NetBSD-$([regex]::Escape($v))-amd64\\.iso)\") {\n            $fn = $Matches[1]\n            return @{ Version = $v; Url = \"https://cdn.netbsd.org/pub/NetBSD/images/$v/$fn\"; Filename = $fn; ChecksumUrl = \"https://archive.netbsd.org/pub/NetBSD-archive/images/$v/SHA512\" }\n        }\n    }\n}\nreturn $null",
-    "SizeBytes": 654090240
-  },
-  {
-    "Enabled": true,
-    "Name": "OpenBSD",
-    "Category": "05_BSD-Unix",
-    "MatchPattern": "install(\\d+)\\.iso",
-    "Script": "$html = Get-WebContent -Uri 'https://cdn.openbsd.org/pub/OpenBSD/'\nif ($html) {\n    $vers = [regex]::Matches($html, 'href=\"(\\d+\\.\\d+)/\"') | ForEach-Object { $_.Groups[1].Value } | Sort-Object { [version](ConvertTo-VersionString $_) } -Descending\n    foreach ($v in $vers) {\n        $sub = Get-WebContent -Uri \"https://cdn.openbsd.org/pub/OpenBSD/$v/amd64/\"\n        if ($sub -and $sub -match 'install(\\d+)\\.iso') {\n            $fn = $Matches[0]\n            return @{ Version = $v; Url = \"https://cdn.openbsd.org/pub/OpenBSD/$v/amd64/$fn\"; Filename = $fn; ChecksumUrl = \"https://cdn.openbsd.org/pub/OpenBSD/$v/amd64/SHA256\" }\n        }\n    }\n}\nreturn $null",
-    "SizeBytes": 700000000
-  },
-  {
-    "Enabled": true,
-    "Name": "Hiren's BootCD PE",
-    "Category": "06_Windows-PE_Rescue",
-    "MatchPattern": "HBCD_PE_x64",
-    "Script": "$html = Get-WebContent -Uri 'https://www.hirensbootcd.org/download/'\nif ($html -and $html -match 'href=\"([^\"]*?HBCD_PE_x64\\.iso)\"') {\n    $url = $Matches[1]\n    $ver = if ($html -match 'v(\\d+\\.\\d+(\\.\\d+)?)') { $Matches[1] } else { '1.0.8' }\n    return @{ Version = $ver; Url = $url; Filename = 'HBCD_PE_x64.iso' }\n}\nreturn @{ Version = '1.0.8'; Url = 'https://www.hirensbootcd.org/files/HBCD_PE_x64.iso'; Filename = 'HBCD_PE_x64.iso' }",
-    "SizeBytes": 3291686912
-  },
-  {
-    "Enabled": true,
-    "Name": "Nobara Project",
-    "MatchPattern": "Nobara-[^\\\"]*?-Official-[^\\\"]*?\\.iso",
-    "Script": "$html = Get-WebContent -Uri 'https://nobaraproject.org/download-nobara/'\nif ($html -and $html -match 'href=\"([^\"]*?(Nobara-(\\d+)-Official-([0-9-]+)\\.iso))\\.sha256sum\"') {\n    $isoUrl = $Matches[1]\n    $fn = $Matches[2]\n    $ver = \"$($Matches[3]) ($($Matches[4]))\"\n    return @{ Version = $ver; Url = $isoUrl; Filename = $fn; ChecksumUrl = \"$isoUrl.sha256sum\" }\n}\nreturn @{ Version = '44'; Url = 'https://nobara-images.nobaraproject.org/Nobara-44-Official-2026-10-13.iso'; Filename = 'Nobara-44-Official-2026-10-13.iso'; ChecksumUrl = 'https://nobara-images.nobaraproject.org/Nobara-44-Official-2026-10-13.iso.sha256sum' }",
-    "Category": "01_Desktop-Linux",
-    "SizeBytes": 3885000000
-  },
-  {
-    "Enabled": true,
-    "Name": "Bazzite",
-    "MatchPattern": "bazzite-stable-live-amd64",
-    "Script": "return @{ Version = 'stable'; Url = 'https://download.bazzite.gg/bazzite-stable-live-amd64.iso'; Filename = 'bazzite-stable-live-amd64.iso'; ChecksumUrl = 'https://download.bazzite.gg/bazzite-stable-live-amd64.iso-CHECKSUM' }",
-    "Category": "01_Desktop-Linux",
-    "SizeBytes": 8391852032
   },
   {
     "Enabled": true,
@@ -521,43 +569,51 @@
   },
   {
     "Enabled": true,
-    "Name": "Kubuntu",
-    "MatchPattern": "kubuntu-(\\d+\\.\\d+(\\.\\d+)?)-desktop-amd64",
-    "Script": "$html = Get-WebContent -Uri 'https://cdimage.ubuntu.com/kubuntu/releases/'\nif ($html) {\n    $vers = [regex]::Matches($html, 'href=\"(\\d+\\.\\d+(\\.\\d+)?)/\"') | ForEach-Object { $_.Groups[1].Value } | Sort-Object { [version](ConvertTo-VersionString $_) } -Descending\n    foreach ($v in $vers) {\n        $sub = Get-WebContent -Uri \"https://cdimage.ubuntu.com/kubuntu/releases/$v/release/\"\n        if ($sub -and $sub -match \"(kubuntu-$([regex]::Escape($v))-desktop-amd64\\.iso)\") {\n            $fn = $Matches[1]\n            return @{ Version = $v; Url = \"https://cdimage.ubuntu.com/kubuntu/releases/$v/release/$fn\"; Filename = $fn; ChecksumUrl = \"https://cdimage.ubuntu.com/kubuntu/releases/$v/release/SHA256SUMS\" }\n        }\n    }\n}\nreturn @{ Version = '26.10'; Url = 'https://cdimage.ubuntu.com/kubuntu/releases/26.10/release/kubuntu-26.10-desktop-amd64.iso'; Filename = 'kubuntu-26.10-desktop-amd64.iso'; ChecksumUrl = 'https://cdimage.ubuntu.com/kubuntu/releases/26.10/release/SHA256SUMS' }",
+    "Name": "Ubuntu Cinnamon",
+    "MatchPattern": "ubuntucinnamon-(\\d+\\.\\d+(\\.\\d+)?)",
+    "Script": "$baseUrl = 'https://cdimage.ubuntu.com/ubuntucinnamon/releases/'\n$html = Get-WebContent -Uri $baseUrl\nif ($html) {\n    $versions = [regex]::Matches($html, 'href=\"(\\d+\\.\\d+(\\.\\d+)?)/\"') | ForEach-Object { $_.Groups[1].Value } | Sort-Object { [version](ConvertTo-VersionString $_) } -Descending | Select-Object -First 3\n    foreach ($ver in $versions) {\n        $subHtml = Get-WebContent -Uri \"$baseUrl$ver/release/\"\n        if ($subHtml -and $subHtml -match 'href=\"(ubuntucinnamon-[^\"]+-desktop-amd64\\.iso)\"') {\n            return @{ Version = $ver; Url = \"$baseUrl$ver/release/$($Matches[1])\"; Filename = $Matches[1] }\n        }\n        $subHtmlDir = Get-WebContent -Uri \"$baseUrl$ver/\"\n        if ($subHtmlDir -and $subHtmlDir -match 'href=\"(ubuntucinnamon-[^\"]+-desktop-amd64\\.iso)\"') {\n            return @{ Version = $ver; Url = \"$baseUrl$ver/$($Matches[1])\"; Filename = $Matches[1] }\n        }\n    }\n}\nreturn $null",
     "Category": "01_Desktop-Linux",
-    "SizeBytes": 4200000000
+    "SizeBytes": 4897769472
   },
   {
     "Enabled": true,
-    "Name": "Q4OS",
-    "MatchPattern": "q4os-([0-9.]+)-x64(\\.r\\d+)?\\.iso",
-    "Script": "$json = Get-WebContent -Uri 'https://sourceforge.net/projects/q4os/best_release.json'\nif ($json) {\n    try {\n        $rel = $json | ConvertFrom-Json\n        if ($rel.release -and $rel.release.url) {\n            $fn = [System.IO.Path]::GetFileName($rel.release.filename)\n            $ver = if ($fn -match 'q4os-([0-9.]+)-x64') { $Matches[1] } else { '6.11' }\n            $chk = if ($rel.release.sha256sum) { $rel.release.sha256sum } else { $null }\n            return @{ Version = $ver; Url = $rel.release.url; Filename = $fn; ExpectedHash = $chk }\n        }\n    } catch {}\n}\nreturn @{ Version = '6.11'; Url = 'https://sourceforge.net/projects/q4os/files/stable/q4os-6.11-x64.r1.iso/download'; Filename = 'q4os-6.11-x64.r1.iso'; ExpectedHash = 'e29032193ac73f97184e520935ce6af24dbb2cd3bbf813fe25d4c33b89775463' }",
+    "Name": "Ubuntu Desktop",
+    "MatchPattern": "ubuntu-(\\d+\\.\\d+(\\.\\d+)?)-desktop-amd64",
+    "Script": "$baseUrl = 'https://ftp.halifax.rwth-aachen.de/ubuntu-releases/'\n$html = Get-WebContent -Uri $baseUrl\nif ($html) {\n    $versions = [regex]::Matches($html, 'href=\"(\\d+\\.\\d+(\\.\\d+)?)/\"') | ForEach-Object { $_.Groups[1].Value } | Sort-Object { [version](ConvertTo-VersionString $_) } -Descending | Select-Object -First 3\n    foreach ($latestVer in $versions) {\n        $subHtml = Get-WebContent -Uri \"$baseUrl$latestVer/\"\n        if ($subHtml -and $subHtml -match 'href=\"(ubuntu-\\d+\\.\\d+(\\.\\d+)?-desktop-amd64\\.iso)\"') {\n            return @{ Version = $latestVer; Url = \"$baseUrl$latestVer/$($Matches[1])\"; Filename = $Matches[1] }\n        }\n    }\n}\nreturn $null",
     "Category": "01_Desktop-Linux",
-    "SizeBytes": 1540000000
+    "SizeBytes": 6615449600
   },
   {
     "Enabled": true,
-    "Name": "KDE neon",
-    "MatchPattern": "neon-user-[^\\\"]*?\\.iso",
-    "Script": "$html = Get-WebContent -Uri 'https://neon.kde.org/download'\nif ($html -and $html -match 'href=\"(https://files\\.kde\\.org/neon/images/desk/user/([0-9-]+)/(neon-user-desk-([0-9-]+)\\.iso))\"') {\n    return @{ Version = $Matches[4]; Url = $Matches[1]; Filename = $Matches[3]; ChecksumUrl = \"$($Matches[1]).sha256sum\" }\n}\nreturn @{ Version = '20261025-1825'; Url = 'https://files.kde.org/neon/images/desk/user/20261025-1825/neon-user-desk-20261025-1825.iso'; Filename = 'neon-user-desk-20261025-1825.iso'; ChecksumUrl = 'https://files.kde.org/neon/images/desk/user/20261025-1825/neon-user-desk-20261025-1825.iso.sha256sum' }",
-    "Category": "01_Desktop-Linux",
-    "SizeBytes": 2700000000
-  },
-  {
-    "Enabled": true,
-    "Name": "Proxmox Backup Server (PBS)",
-    "MatchPattern": "proxmox-backup-server_([0-9.-]+)\\.iso",
-    "Script": "$html = Get-WebContent -Uri 'https://enterprise.proxmox.com/iso/'\nif ($html) {\n    $matches = [regex]::Matches($html, 'href=\"(proxmox-backup-server_([0-9.-]+)\\.iso)\"')\n    if ($matches.Count -gt 0) {\n        $latest = $matches[$matches.Count - 1]\n        $fn = $latest.Groups[1].Value\n        $ver = $latest.Groups[2].Value\n        $url = \"https://enterprise.proxmox.com/iso/$fn\"\n        return @{ Version = $ver; Url = $url; Filename = $fn; ChecksumUrl = \"$url.sha256\" }\n    }\n}\nreturn @{ Version = '4.2-1'; Url = 'https://enterprise.proxmox.com/iso/proxmox-backup-server_4.2-1.iso'; Filename = 'proxmox-backup-server_4.2-1.iso'; ChecksumUrl = 'https://enterprise.proxmox.com/iso/proxmox-backup-server_4.2-1.iso.sha256' }",
+    "Name": "Ubuntu Server LTS",
+    "MatchPattern": "ubuntu-(\\d+\\.\\d+(\\.\\d+)?)-live-server-amd64",
     "Category": "02_Enterprise-Server",
-    "SizeBytes": 1250000000
+    "Script": "$baseUrl = 'https://ftp.halifax.rwth-aachen.de/ubuntu-releases/'\n$html = Get-WebContent -Uri $baseUrl\nif ($html) {\n    $versions = [regex]::Matches($html, 'href=\"(\\d*[02468]\\.04(\\.\\d+)?)/\"') | ForEach-Object { $_.Groups[1].Value } | Sort-Object { [version](ConvertTo-VersionString $_) } -Descending | Select-Object -First 3\n    foreach ($latestVer in $versions) {\n        $subHtml = Get-WebContent -Uri \"$baseUrl$latestVer/\"\n        if ($subHtml -and $subHtml -match 'href=\"(ubuntu-\\d+\\.\\d+(\\.\\d+)?-live-server-amd64\\.iso)\"') {\n            return @{ Version = $latestVer; Url = \"$baseUrl$latestVer/$($Matches[1])\"; Filename = $Matches[1] }\n        }\n    }\n}\nreturn $null",
+    "SizeBytes": 2927861760
   },
   {
     "Enabled": true,
-    "Name": "Oracle Linux",
-    "MatchPattern": "OracleLinux-R\\d+-U\\d+-x86_64-(dvd|boot)",
-    "Script": "$html = Get-WebContent -Uri 'https://yum.oracle.com/oracle-linux-isos.html'\nif ($html -and $html -match 'href=\"([^\"]*?(OracleLinux-R(\\d+)-U(\\d+)-x86_64-(dvd|boot)\\.iso))\"') {\n    $url = $Matches[1]\n    $fn = $Matches[2]\n    $ver = \"$($Matches[3]).$($Matches[4])\"\n    return @{ Version = $ver; Url = $url; Filename = $fn }\n}\nreturn @{ Version = '9.9'; Url = 'https://yum.oracle.com/ISOS/OracleLinux/OL9/u9/x86_64/OracleLinux-R9-U9-x86_64-dvd.iso'; Filename = 'OracleLinux-R9-U9-x86_64-dvd.iso' }",
-    "Category": "02_Enterprise-Server",
-    "SizeBytes": 10400000000
+    "Name": "Ultimate Boot CD (UBCD)",
+    "Category": "04_Rescue-Systeme",
+    "MatchPattern": "ubcd\\d+",
+    "Script": "$mirrors = @(\n    'https://mirror.koddos.net/ubcd/ubcd539.iso',\n    'https://mirror.clientvps.com/ubcd/ubcd539.iso',\n    'https://mirror.vcu.edu/pub/windows/ubcd/ubcd539.iso',\n    'http://mirror.sysadminguide.net/ubcd/ubcd539.iso',\n    'https://archive.org/download/ubcd539_202306/ubcd539.iso'\n)\n$sha256 = '054c6d41cfe169de8ca93a084612793ecdacb401fb827b174d155966289f6f1b'\nforeach ($m in $mirrors) {\n    try {\n        $req = [System.Net.HttpWebRequest]::Create($m)\n        $req.Method = 'HEAD'\n        $req.Timeout = 4000\n        $res = $req.GetResponse()\n        if ([int]$res.StatusCode -eq 200) {\n            $res.Close()\n            return @{ Version = '5.3.9'; Url = $m; Filename = 'ubcd539.iso'; Sha256 = $sha256 }\n        }\n        $res.Close()\n    } catch {}\n}\nreturn @{ Version = '5.3.9'; Url = 'https://mirror.koddos.net/ubcd/ubcd539.iso'; Filename = 'ubcd539.iso'; Sha256 = $sha256 }",
+    "SizeBytes": 842489856
+  },
+  {
+    "Enabled": true,
+    "Name": "Void Linux",
+    "MatchPattern": "void-live-x86_64-(\\d+)-xfce",
+    "Script": "$baseUrl = 'https://repo-default.voidlinux.org/live/current/'\n$html = Get-WebContent -Uri $baseUrl\nif ($html -and $html -match 'href=\"(void-live-x86_64-([0-9]+)-xfce\\.iso)\"') {\n    return @{ Version = $Matches[2]; Url = \"$baseUrl$($Matches[1])\"; Filename = $Matches[1]; ChecksumUrl = \"$baseUrl$sha256sum.txt\" }\n}\nreturn $null",
+    "SizeBytes": 1258291200,
+    "Category": "01_Desktop-Linux"
+  },
+  {
+    "Enabled": true,
+    "Name": "Winux",
+    "Category": "01_Desktop-Linux",
+    "MatchPattern": "winux-(\\d+\\.\\d+(\\.\\d+)?)-noble-lts",
+    "Script": "$json = Get-WebContent -Uri 'https://sourceforge.net/projects/windows-linux/best_release.json'\nif ($json) {\n    try {\n        $obj = $json | ConvertFrom-Json\n        $fnPath = $obj.release.filename\n        if ($fnPath -match 'winux-([0-9.]+[^/]*?)\\.iso$') {\n            $ver = $Matches[1]\n            $fn = [System.IO.Path]::GetFileName($fnPath)\n            $url = \"https://downloads.sourceforge.net/project/windows-linux$fnPath\"\n            return @{ Version = $ver; Url = $url; Filename = $fn; Sha256 = $obj.release.sha256sum }\n        }\n    } catch {}\n}\nreturn @{ Version = '11.26.10-noble-lts'; Url = 'https://downloads.sourceforge.net/project/windows-linux/winux-11.26.10-noble-lts.iso'; Filename = 'winux-11.26.10-noble-lts.iso'; Sha256 = '5ba96c841a12518b0df69f8ed1d506f1c4e86ad343c3bfdc01ef789424739630' }",
+    "SizeBytes": 6685507584
   },
   {
     "Enabled": true,
@@ -569,50 +625,18 @@
   },
   {
     "Enabled": true,
-    "Name": "Tails",
-    "MatchPattern": "tails-amd64-(\\d+\\.\\d+(\\.\\d+)?)",
-    "Script": "$json = Get-WebContent -Uri 'https://tails.net/install/v2/Tails/amd64/stable/latest.json'\nif ($json) {\n    try {\n        $data = $json | ConvertFrom-Json\n        $target = $data.installations[0].'installation-paths'[0].'target-files' | Where-Object { $_.url -like '*.iso' } | Select-Object -First 1\n        if ($target) {\n            $fn = [System.IO.Path]::GetFileName($target.url)\n            $ver = if ($fn -match 'tails-amd64-([0-9.]+)') { $Matches[1] } else { 'latest' }\n            return @{ Version = $ver; Url = $target.url; Filename = $fn }\n        }\n    } catch {}\n}\nreturn @{ Version = '7.17.1'; Url = 'https://download.tails.net/tails/stable/tails-amd64-7.17.1/tails-amd64-7.17.1.iso'; Filename = 'tails-amd64-7.17.1.iso' }",
-    "Category": "03_Security-Pentest",
-    "SizeBytes": 1400000000
+    "Name": "ZimaOS",
+    "MatchPattern": "zimaos-[^\\\"]*?installer",
+    "Category": "02_Enterprise-Server",
+    "Script": "$json = Get-WebContent -Uri \"https://api.github.com/repos/IceWhaleTech/ZimaOS/releases/latest\"\nif ($json) {\n    try {\n        $rel = $json | ConvertFrom-Json\n        $asset = $rel.assets | Where-Object { $_.name -like \"*.iso\" } | Select-Object -First 1\n        if ($asset) {\n            return @{ Version = $rel.tag_name.TrimStart(\"v\"); Url = $asset.browser_download_url; Filename = $asset.name }\n        }\n    } catch {}\n}\nreturn @{ Version = \"1.8.0-beta2\"; Url = \"https://github.com/IceWhaleTech/ZimaOS/releases/download/1.8.0-beta2/zimaos-x86_64-1.8.0-beta2_installer.iso\"; Filename = \"zimaos-x86_64-1.8.0-beta2_installer.iso\" }",
+    "SizeBytes": 1806032896
   },
   {
     "Enabled": true,
-    "Name": "Athena OS",
-    "MatchPattern": "athenaos-live-[^\\\"]*?\\.iso",
-    "Script": "return @{ Version = 'latest'; Url = 'https://hub.athenaos.org/iso/athenaos-live-x86_64.iso'; Filename = 'athenaos-live-x86_64.iso'; ChecksumUrl = 'https://hub.athenaos.org/iso/athenaos-live-x86_64.iso.sha256' }",
-    "Category": "03_Security-Pentest",
-    "SizeBytes": 3950000000
-  },
-  {
-    "Enabled": true,
-    "Name": "MemTest86+",
-    "MatchPattern": "mt86plus[-_][0-9.]+(x86_64)?\\.(bin|iso)",
-    "Script": "$html = Get-WebContent -Uri 'https://www.memtest.org/'\nif ($html -and $html -match 'href=\"([^\"]*?(mt86plus_([0-9.]+)_x86_64\\.iso\\.zip))\"') {\n    $url = \"https://www.memtest.org$($Matches[1])\"\n    $ver = $Matches[3]\n    return @{ Version = $ver; Url = $url; Filename = \"mt86plus_$ver.iso.zip\"; ExtractTo = \"mt86plus-$ver-x86_64.iso\" }\n}\nreturn @{ Version = '9.00'; Url = 'https://www.memtest.org/download/v9.00/mt86plus_9.00_x86_64.iso.zip'; Filename = 'mt86plus_9.00.iso.zip'; ExtractTo = 'mt86plus-9.00-x86_64.iso' }",
-    "Category": "04_Rescue-Systeme",
-    "SizeBytes": 10485760
-  },
-  {
-    "Enabled": true,
-    "Name": "Redo Rescue",
-    "MatchPattern": "redorescue-(\\d+\\.\\d+(\\.\\d+)?)\\.iso",
-    "Script": "$json = Get-WebContent -Uri 'https://sourceforge.net/projects/redobackup/best_release.json'\nif ($json) {\n    try {\n        $rel = $json | ConvertFrom-Json\n        if ($rel.release -and $rel.release.url) {\n            $fn = $rel.release.filename.TrimStart('/')\n            $ver = if ($fn -match 'redorescue-([0-9.]+)\\.iso') { $Matches[1] } else { '4.0.0' }\n            return @{ Version = $ver; Url = $rel.release.url; Filename = $fn }\n        }\n    } catch {}\n}\nreturn @{ Version = '4.0.0'; Url = 'https://sourceforge.net/projects/redobackup/files/redorescue-4.0.0.iso/download'; Filename = 'redorescue-4.0.0.iso' }",
-    "Category": "04_Rescue-Systeme",
-    "SizeBytes": 620000000
-  },
-  {
-    "Enabled": true,
-    "Name": "GhostBSD",
-    "MatchPattern": "GhostBSD-[^\\\"]*?\\.iso",
-    "Script": "$html = Get-WebContent -Uri 'https://ghostbsd.org/download'\nif ($html -and $html -match 'href=\"(https://download\\.ghostbsd\\.org/releases/amd64/([0-9.a-zA-Z]+)/(GhostBSD-[0-9.a-zA-Z-]+\\.iso))\"') {\n    $url = $Matches[1]\n    $ver = $Matches[2]\n    $fn  = $Matches[3]\n    return @{ Version = $ver; Url = $url; Filename = $fn; ChecksumUrl = \"$url.sha256\" }\n}\nreturn @{ Version = '26.3'; Url = 'https://download.ghostbsd.org/releases/amd64/26.3.R15.1p6/GhostBSD-26.3.R15.1p6.iso'; Filename = 'GhostBSD-26.3.R15.1p6.iso'; ChecksumUrl = 'https://download.ghostbsd.org/releases/amd64/26.3.R15.1p6/GhostBSD-26.3.R15.1p6.iso.sha256' }",
-    "Category": "05_BSD-Unix",
-    "SizeBytes": 3220000000
-  },
-  {
-    "Enabled": true,
-    "Name": "OPNsense",
-    "MatchPattern": "OPNsense-(\\d+\\.\\d+)-dvd-amd64\\.iso",
-    "Script": "$baseUrl = 'https://mirror.ams1.nl.leaseweb.net/opnsense/releases/'\n$html = Get-WebContent -Uri $baseUrl\nif ($html) {\n    $vers = [regex]::Matches($html, 'href=\"(\\d+\\.\\d+)/\"') | ForEach-Object { $_.Groups[1].Value } | Sort-Object { [version](ConvertTo-VersionString $_) } -Descending\n    foreach ($v in $vers) {\n        $sub = Get-WebContent -Uri \"$baseUrl$v/\"\n        if ($sub -and $sub -match \"(OPNsense-$v-dvd-amd64\\.iso\\.bz2)\") {\n            $fn = $Matches[1]\n            $extTo = $fn -replace '\\.bz2$', ''\n            return @{ Version = $v; Url = \"$baseUrl$v/$fn\"; Filename = $fn; ExtractTo = $extTo; ChecksumUrl = \"$baseUrl$v/OPNsense-$v-checksums-amd64.sha256\" }\n        }\n    }\n}\nreturn @{ Version = '26.7'; Url = 'https://mirror.ams1.nl.leaseweb.net/opnsense/releases/26.7/OPNsense-26.7-dvd-amd64.iso.bz2'; Filename = 'OPNsense-26.7-dvd-amd64.iso.bz2'; ExtractTo = 'OPNsense-26.7-dvd-amd64.iso'; ChecksumUrl = 'https://mirror.ams1.nl.leaseweb.net/opnsense/releases/26.7/OPNsense-26.7-checksums-amd64.sha256' }",
-    "Category": "05_BSD-Unix",
-    "SizeBytes": 1280000000
+    "Name": "Zorin OS Education",
+    "MatchPattern": "Zorin-OS-(\\d+(\\.\\d+)?)-Education-64-bit",
+    "Script": "$html = Get-WebContent -Uri 'https://zorin.com/os/download/'\n$mainVer = '18'\nif ($html -and $html -match '/os/download/(\\d+)/education/') {\n    $mainVer = $Matches[1]\n}\n$dlPageHtml = Get-WebContent -Uri \"https://zorin.com/os/download/$mainVer/education/\"\nif ($dlPageHtml -and $dlPageHtml -match 'href=\"(https://[^\"]*?Zorin-OS-(\\d+(\\.\\d+)?)-Education-64-bit\\.iso)\"') {\n    $url = $Matches[1]\n    $ver = $Matches[2]\n    $fn  = \"Zorin-OS-$ver-Education-64-bit.iso\"\n    return @{ Version = $ver; Url = $url; Filename = $fn }\n}\nreturn $null",
+    "SizeBytes": 8059355136,
+    "Category": "01_Desktop-Linux"
   }
 ]

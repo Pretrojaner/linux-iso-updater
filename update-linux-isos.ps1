@@ -661,6 +661,8 @@ function Get-PrettyIsoName {
     if ($Filename -match '(?i)easeus')           { return "EaseUS Partition Master / Todo Backup" }
     if ($Filename -match '(?i)winpe|windows[-_ ]?pe') { return "Windows PE Recovery Environment" }
     if ($Filename -match '(?i)redorescue')       { return "Redo Rescue (Point & Click Backup & Restore)" }
+    if ($Filename -match '(?i)foxclone')        { return "Foxclone (Backup & Partition Clone)" }
+    if ($Filename -match '(?i)grml')            { return "Grml Live Linux (Sysadmin & Recovery)" }
 
     # BSD & Unix
     if ($Filename -match '(?i)openbsd|install\d+\.iso') { return "OpenBSD Release" }
@@ -724,6 +726,7 @@ function Get-PrettyIsoName {
 
     # Security & Pentest
     if ($Filename -match '(?i)athenaos|athena[-_ ]?os') { return "Athena OS (Cybersecurity & Pentesting)" }
+    if ($Filename -match '(?i)backbox')         { return "BackBox Linux (Ethical Hacking & Pentest)" }
     if ($Filename -match '(?i)blackarch')        { return "BlackArch Linux (Full)" }
     if ($Filename -match '(?i)kali')             { return "Kali Linux Security" }
     if ($Filename -match '(?i)kodachi')          { return "Kodachi OS (Anonymous Anti-Forensic Live)" }
@@ -782,6 +785,8 @@ function Get-IsoMenuTip {
     if ($Filename -match '(?i)easeus')           { return "EaseUS Partition Master & Todo Backup Wiederherstellungsumgebung" }
     if ($Filename -match '(?i)winpe|windows[-_ ]?pe') { return "Windows Preinstallation Environment mit Reparatur- und Diagnosewerkzeugen" }
     if ($Filename -match '(?i)redorescue')       { return "Einfaches Point-and-Click Bare-Metal Backup- und Wiederherstellungssystem" }
+    if ($Filename -match '(?i)foxclone')        { return "Ventoy-optimiertes Backup- und Klon-System auf Ubuntu-Basis fuer NVMe-, SSD- und HDD-Images" }
+    if ($Filename -match '(?i)grml')            { return "Debian-basiertes Notfall- & Diagnosesystem fuer Administratoren mit reichhaltiger Zsh-Toolbox" }
 
     # BSD & Unix
     if ($Filename -match '(?i)openbsd|install\d+\.iso') { return "Ultra-sicheres Unix-Betriebssystem mit Fokus auf Korrektheit und Kryptografie" }
@@ -847,6 +852,7 @@ function Get-IsoMenuTip {
 
     # Security & Pentest
     if ($Filename -match '(?i)athenaos|athena[-_ ]?os') { return "Spezialisierte Arch-Pentesting-Plattform mit thematischen Rollenmodi" }
+    if ($Filename -match '(?i)backbox')         { return "Ubuntu-basiertes Security-OS fuer Penetrationstests, Schwachstellenanalysen und Forensik" }
     if ($Filename -match '(?i)blackarch')        { return "Arch-basierte Security-Distribution mit ueber 2.800 Pentesting-Tools" }
     if ($Filename -match '(?i)kali')             { return "Der weltweite Industriestandard fuer Penetrationstests und Ethical Hacking" }
     if ($Filename -match '(?i)kodachi')          { return "Anti-Forensik-Live-System mit automatischem VPN, Tor-Routing & Panic-Wipe" }

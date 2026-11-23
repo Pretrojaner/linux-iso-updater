@@ -111,19 +111,22 @@ Ein PowerShell- und Python-basiertes All-in-One Automatisierungswerkzeug zum Her
 
 ### 🛡️ 03_Security- & Penetration-Testing (7 Distros)
 - **Kali Linux** – Die weltweite Standard-Distribution für professionelle Penetrationstests, Ethical Hacking und Security-Audits.
+- **BackBox Linux** – Führende Ubuntu-basierte Sicherheits- und Penetrationstest-Distribution mit vorkonfiguriertem Toolkit für Ethical Hacking, Forensik und Netzwerkanalysen.
 - **Parrot Security** – All-in-One-Umgebung für Cyber-Security, Penetration-Testing, Reverse Engineering und digitale Privatsphäre.
 - **Kodachi OS** – Extrem fokussiertes Anonymitäts- und Anti-Forensic-Betriebssystem (basiert auf XFCE) mit automatischem VPN, Tor-Routing, DNSCrypt und Panic-Wipe-Tools.
 - **Athena OS** – Hochmoderne Cybersecurity- und Pentesting-Distribution auf Arch-Basis mit themenbasierten Rollen-Modi.
 - **Tails** – The Amnesic Incognito Live System: Das weltweit führende Privacy- und Anti-Überwachungs-System mit durchgehendem Tor-Routing.
 - **CAINE Live (Forensic & Autopsy)** – Professionelle italienische Forensik-Live-Distribution mit The Sleuth Kit, Autopsy und schreibgeschütztem Block-Device-Zugriff.
 
-### 🧰 04_Rescue-, Diagnose- & Notfall-Systeme (17 Distros & Tools)
+### 🧰 04_Rescue-, Diagnose- & Notfall-Systeme (19 Distros & Tools)
 - **Boot-Repair-Disk** – Offizielles 64-Bit Rettungswerkzeug zur Ein-Klick-Reparatur beschädigter GRUB- und EFI-Bootloader.
 - **Clonezilla Live** – Die bewährte, weltbekannte Festplattenklon- und Image-Backup-Lösung für Bare-Metal-Restore.
 - **Dr.Web LiveDisk** – Zuverlässige Antiviren-Rettungsumgebung von Doctor Web zur Säuberung infizierter Windows-Installationen.
 - **ESET SysRescue Live** – Antiviren-Rettungsumgebung zur Erkennung und Entfernung hartnäckiger Malware außerhalb des Betriebssystems.
+- **Foxclone** – Benutzerfreundliche, moderne Backup-, Image- und Klon-Lösung auf Ubuntu-Basis; explizit optimiert für Ventoy Multi-Boot USB-Sticks.
 - **FygoOS PE** – Leistungsfähiges WinPE-basiertes Rettungssystem zur Diagnose, Datenrettung und Windows-Wartung.
 - **GParted Live** – Bootfähiges Spezialsystem zur Verwaltung, Vergrößerung, Verkleinerung und Reparatur von Partitionen.
+- **Grml** – Das bewährte, legendäre Debian-basierte Rettungs- und Diagnosesystem für Systemadministratoren mit zsh und hunderten Notfallwerkzeugen.
 - **Kaspersky Rescue Disk** – Bootfähige Virenscan- und Bereinigungsumgebung zur Rettung schwer infizierter Systeme.
 - **netboot.xyz** – Ultrakompakter Bootloader zum Starten dutzender Betriebssysteme direkt über das Internet per iPXE.
 - **Rescatux** – Spezialisiertes Reparaturwerkzeug zur einfachen Wiederherstellung von Bootloadern (GRUB) und Zurücksetzen von Passwörtern.
@@ -157,7 +160,7 @@ Ein PowerShell- und Python-basiertes All-in-One Automatisierungswerkzeug zum Her
 | `update-linux-isos.ps1` | Hauptskript für Windows (Downloads, Hash-Prüfung, Archivierung, Ventoy-Themes, Sync). |
 | `update-linux-isos.sh`  | Ausführbares Bash-Startskript für Linux (prüft Abhängigkeiten, richtet ggf. `.venv` ein). |
 | `update_linux_isos.py`  | Vollständige Linux-Portierung in Python 3 (PEP 8, Pillow, Requests, Streaming-Downloads). |
-| `distros.json`          | JSON-Konfigurationsdatei aller 77 Distributionen, Download-Quellen und Regex-Muster. |
+| `distros.json`          | JSON-Konfigurationsdatei aller 80 Distributionen, Download-Quellen und Regex-Muster. |
 | `.gitignore`            | Schließt ISO-Dateien, Logdateien und temporäre Ordner vom Git-Tracking aus. |
 | `GITHUB_ANLEITUNG.md`   | Dokumentation zur Verwaltung und Pflege des GitHub-Repositories. |
 
@@ -216,4 +219,4 @@ chmod +x update-linux-isos.sh
 ## 📄 Lizenz & Danksagung
 
 Entwickelt für IT-Administratoren, Techniker und Linux-Enthusiasten.
-Basiert auf den offiziellen Upstream-Quellen aller 77 Distributionen und dem herausragenden [Ventoy-Projekt](https://www.ventoy.net/).
+Basiert auf den offiziellen Upstream-Quellen aller 80 Distributionen und dem herausragenden [Ventoy-Projekt](https://www.ventoy.net/).

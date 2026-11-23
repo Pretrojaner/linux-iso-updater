@@ -582,7 +582,7 @@ def decompress_bz2(bz2_path: Path, dest_iso_path: Path) -> bool:
 # DISTRIBUTIONS SCRAPING ENGINE (ALLE 59 DISTROS)
 # ==============================================================================
 class DistroScraperEngine:
-    """Implementiert native Web-Scraper für alle 65 Distributionen."""
+    """Implementiert native Web-Scraper für alle 80 Distributionen."""
 
     def __init__(self, download_mgr: DownloadManager):
         self.dm = download_mgr
@@ -1415,6 +1415,24 @@ class DistroScraperEngine:
                 }
         return None
 
+    def scrape_backbox_linux(self) -> Optional[Dict[str, Any]]:
+        base_url = "http://ftp.halifax.rwth-aachen.de/backbox/"
+        html = self.dm.get_web_content(base_url)
+        if html:
+            matches = re.findall(r'href=[\"\'](backbox-(\d+)-desktop-amd64\.iso)[\"\']', html)
+            if matches:
+                matches.sort(key=lambda x: int(x[1]), reverse=True)
+                fn, ver = matches[0]
+                return {
+                    "Version": ver,
+                    "Url": f"{base_url}{fn}",
+                    "Filename": fn,
+                    "ChecksumUrl": f"{base_url}{fn}.sha256",
+                }
+        return None
+
+    scrape_backbox = scrape_backbox_linux
+
     def scrape_kodachi_os(self) -> Optional[Dict[str, Any]]:
         html = self.dm.get_web_content("https://kodachi.cloud/downloads/")
         if html:
@@ -1783,6 +1801,42 @@ class DistroScraperEngine:
             "Filename": "shredos-2025.11_32_x86-64_v0.43.1_20261010.iso"
         }
 
+    def scrape_foxclone_backup__system_restore(self) -> Optional[Dict[str, Any]]:
+        base_url = "https://www.foxclone.org"
+        html = self.dm.get_web_content(f"{base_url}/downloads.html")
+        if html:
+            matches = re.findall(r'href=[\"\'](/downloads/foxclone(\d+)-noble\.iso)[\"\']', html)
+            if matches:
+                matches.sort(key=lambda x: int(x[1]), reverse=True)
+                rel_path, ver = matches[0]
+                fn = f"foxclone{ver}-noble.iso"
+                return {
+                    "Version": ver,
+                    "Url": f"{base_url}{rel_path}",
+                    "Filename": fn,
+                }
+        return None
+
+    scrape_foxclone = scrape_foxclone_backup__system_restore
+
+    def scrape_grml_live_linux_for_sysadmins(self) -> Optional[Dict[str, Any]]:
+        base_url = "https://download.grml.org/"
+        html = self.dm.get_web_content(base_url)
+        if html:
+            matches = re.findall(r'href=[\"\'](grml-full-(\d{4}\.\d{2})-amd64\.iso)[\"\']', html)
+            if matches:
+                matches.sort(key=lambda x: x[1], reverse=True)
+                fn, ver = matches[0]
+                return {
+                    "Version": ver,
+                    "Url": f"{base_url}{fn}",
+                    "Filename": fn,
+                    "ChecksumUrl": f"{base_url}{fn}.sha256",
+                }
+        return None
+
+    scrape_grml = scrape_grml_live_linux_for_sysadmins
+
 
 # ==============================================================================
 # PRETTY ISO NAMES & THEMES
@@ -1817,6 +1871,8 @@ def get_pretty_iso_name(filename: str) -> str:
         (r"easeus", "EaseUS Partition Master / Todo Backup"),
         (r"winpe|windows[-_ ]?pe", "Windows PE Recovery Environment"),
         ("redorescue", "Redo Rescue (Point & Click Backup & Restore)"),
+        ("foxclone", "Foxclone (Backup & Partition Clone)"),
+        ("grml", "Grml Live Linux (Sysadmin & Recovery)"),
 
         # BSD & Unix
         (r"openbsd|install\d+\.iso", "OpenBSD Release"),
@@ -1881,12 +1937,11 @@ def get_pretty_iso_name(filename: str) -> str:
 
         # Security & Pentest
         ("athenaos", "Athena OS (Cybersecurity & Pentesting)"),
+        ("backbox", "BackBox Linux (Ethical Hacking & Pentest)"),
         ("blackarch", "BlackArch Linux (Full)"),
         ("kali", "Kali Linux Security"),
         ("kodachi", "Kodachi OS (Anonymous Anti-Forensic Live)"),
         ("parrot", "Parrot Security OS"),
-        ("tails", "Tails (The Amnesic Incognito Live System)"),
-        ("qubes", "Qubes OS (Security by Isolation)"),
         ("tails", "Tails (The Amnesic Incognito Live System)"),
         ("qubes", "Qubes OS (Security by Isolation)"),
 
@@ -1942,6 +1997,8 @@ def get_iso_menu_tip(filename: str) -> str:
         (r"easeus", "EaseUS Partition Master / Todo Backup - Partitionsverwaltung und Notfall-Recovery"),
         (r"winpe|windows[-_ ]?pe", "Windows Preinstallation Environment - Basis für Windows-Wartung, PE-Tools & Setup"),
         ("redorescue", "Point-and-Click Bare-Metal Backup und Restore für Festplatten und Partitionen"),
+        ("foxclone", "Ventoy-optimiertes Backup- und Klon-System auf Ubuntu-Basis für NVMe-, SSD- und HDD-Images"),
+        ("grml", "Debian-basiertes Notfall- & Diagnosesystem für Administratoren mit reichhaltiger Zsh-Toolbox"),
 
         # BSD & Unix
         (r"openbsd|install\d+\.iso", "Sicherheitsfokussiertes UNIX-Betriebssystem mit extrem sauberem Code und starker Kryptografie"),
@@ -2007,6 +2064,7 @@ def get_iso_menu_tip(filename: str) -> str:
 
         # Security & Pentest
         ("athenaos", "Next-Gen Cybersecurity-OS auf Arch-Basis mit themenbasierten Pentest-Rollen & Hack The Box"),
+        ("backbox", "Ubuntu-basiertes Security-OS für Penetrationstests, Schwachstellenanalysen und Forensik"),
         ("blackarch", "Umfassendste Pentesting-Distribution der Welt mit über 2800 vorinstallierten Hacking-Tools"),
         ("kali", "Weltweiter Standard für Penetration Testing, Ethical Hacking und Incident Response"),
         ("kodachi", "Spezialisiert auf Anonymität und Anti-Forensik mit integriertem VPN, Tor und DNSCrypt"),
