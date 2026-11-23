@@ -2785,8 +2785,15 @@ class VentoyLinuxDriveManager:
                 print(f" [{idx}] {d['mountpoint']} [{d['label']}] ({d['free_gb']:.2f} GB frei / {d['total_gb']:.2f} GB Gesamt, {d['fstype']}){marker}{usb_marker} {status}")
 
         print("")
+        prompt = (
+            f"Bitte Nummer des Ventoy-Ziel-Laufwerks eingeben (1-{len(drives)}) [ENTER = 1]: "
+            if len(drives) == 1
+            else f"Bitte Nummer des Ventoy-Ziel-Laufwerks eingeben (1-{len(drives)}): "
+        )
         try:
-            sel = input(f"Bitte Nummer des Ventoy-Ziel-Laufwerks eingeben (1-{len(drives)}): ").strip()
+            sel = input(prompt).strip()
+            if not sel and len(drives) == 1:
+                sel = "1"
             if sel.isdigit() and 1 <= int(sel) <= len(drives):
                 chosen = drives[int(sel) - 1]
 
@@ -2850,8 +2857,15 @@ class VentoyLinuxDriveManager:
                 self.logger.log("Keine geeigneten Blockgeräte gefunden.", color=Colors.RED, level="FEHLER")
                 return False
 
+            prompt = (
+                f"\nBitte Nummer des USB-Laufwerks für Ventoy eingeben (1-{len(devices)}) [ENTER = 1]: "
+                if len(devices) == 1
+                else f"\nBitte Nummer des USB-Laufwerks für Ventoy eingeben (1-{len(devices)}): "
+            )
             try:
-                sel = input(f"\nBitte Nummer des USB-Laufwerks für Ventoy eingeben (1-{len(devices)}): ").strip()
+                sel = input(prompt).strip()
+                if not sel and len(devices) == 1:
+                    sel = "1"
                 if not sel.isdigit() or not (1 <= int(sel) <= len(devices)):
                     self.logger.log("Ungültige Auswahl. Abbruch.", color=Colors.RED, level="FEHLER")
                     return False

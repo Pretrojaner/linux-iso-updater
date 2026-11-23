@@ -1646,7 +1646,11 @@ function Set-VentoyThemeStandalone {
             Write-Host " [$($i + 1)] $($d.DriveLetter) $labelStr ($($d.CapacityGB) GB, $($d.FileSystem))$vMarker" -ForegroundColor White
         }
         Write-Host ""
-        $selection = Read-Host "Bitte Nummer des Ventoy-Laufwerks eingeben (1-$($drives.Count))"
+        $prompt = if ($drives.Count -eq 1) { "Bitte Nummer des Ventoy-Laufwerks eingeben (1-$($drives.Count)) [ENTER = 1]" } else { "Bitte Nummer des Ventoy-Laufwerks eingeben (1-$($drives.Count))" }
+        $selection = (Read-Host $prompt).Trim()
+        if ([string]::IsNullOrWhiteSpace($selection) -and $drives.Count -eq 1) {
+            $selection = "1"
+        }
         if ($selection -match '^\d+$' -and [int]$selection -ge 1 -and [int]$selection -le $drives.Count) {
             $TargetDrive = $drives[[int]$selection - 1].DriveLetter
         } else {
@@ -1818,7 +1822,11 @@ function Install-VentoyToDisk {
             Write-Host " [$($i + 1)] $($d.DriveLetter) $labelStr ($($d.CapacityGB) GB Gesamt, $($d.FreeGB) GB frei, $($d.FileSystem))$vMarker" -ForegroundColor White
         }
         Write-Host ""
-        $selection = Read-Host "Bitte Nummer des Ziellaufwerks fuer Ventoy eingeben (1-$($drives.Count))"
+        $prompt = if ($drives.Count -eq 1) { "Bitte Nummer des Ziellaufwerks fuer Ventoy eingeben (1-$($drives.Count)) [ENTER = 1]" } else { "Bitte Nummer des Ziellaufwerks fuer Ventoy eingeben (1-$($drives.Count))" }
+        $selection = (Read-Host $prompt).Trim()
+        if ([string]::IsNullOrWhiteSpace($selection) -and $drives.Count -eq 1) {
+            $selection = "1"
+        }
         if ($selection -match '^\d+$' -and [int]$selection -ge 1 -and [int]$selection -le $drives.Count) {
             $TargetDrive = $drives[[int]$selection - 1].DriveLetter
         } else {
@@ -2032,7 +2040,11 @@ function Start-VentoyCopyJob {
             Write-Host "$spaceStatus" -ForegroundColor $statusColor
         }
         Write-Host ""
-        $selection = Read-Host "Bitte Nummer des Ventoy-Ziel-Laufwerks eingeben (1-$($drives.Count))"
+        $prompt = if ($drives.Count -eq 1) { "Bitte Nummer des Ventoy-Ziel-Laufwerks eingeben (1-$($drives.Count)) [ENTER = 1]" } else { "Bitte Nummer des Ventoy-Ziel-Laufwerks eingeben (1-$($drives.Count))" }
+        $selection = (Read-Host $prompt).Trim()
+        if ([string]::IsNullOrWhiteSpace($selection) -and $drives.Count -eq 1) {
+            $selection = "1"
+        }
         if ($selection -match '^\d+$' -and [int]$selection -ge 1 -and [int]$selection -le $drives.Count) {
             $TargetDrive = $drives[[int]$selection - 1].DriveLetter
         } else {
