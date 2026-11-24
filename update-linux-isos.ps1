@@ -1430,6 +1430,11 @@ message-font: "ascii"
 message-color: "$($selectedTheme.Text)"
 terminal-box: "terminal_box_*.png"
 
+# Menu Tip Plugin Einstellungen
+menu-tip-left: "6%"
+menu-tip-top: "84%"
+menu-tip-color: "#73d4b8"
+
 + hbox {
     top = 9%
     left = 6%
@@ -1479,6 +1484,11 @@ desktop-color: "$($selectedTheme.Bg1)"
 title-text: "$($selectedTheme.Title)"
 title-color: "$($selectedTheme.TitleColor)"
 message-color: "$($selectedTheme.Text)"
+
+# Menu Tip Plugin Einstellungen
+menu-tip-left: "10%"
+menu-tip-top: "90%"
+menu-tip-color: "$($selectedTheme.TitleColor)"
 
 + boot_menu {
     left = 10%
@@ -1686,7 +1696,7 @@ function Set-VentoyThemeStandalone {
 
     Install-VentoyTheme -VentoyDir $ventoyDir -ThemeChoice $chosenTheme -Force
 
-    # ventoy.json theme Eintrag aktualisieren
+    # ventoy.json aktualisieren (Theme, Control, Aliase und Menu-Tips fuer alle vorhandenen ISOs)
     $ventoyJsonPath = Join-Path $ventoyDir "ventoy.json"
     try {
         $cfg = @{}
@@ -1694,12 +1704,70 @@ function Set-VentoyThemeStandalone {
             try { $cfg = (Get-Content $ventoyJsonPath -Raw -Encoding UTF8) | ConvertFrom-Json } catch {}
         }
         if (-not $cfg) { $cfg = @{} }
+
+        $controlSettings = @(
+            @{ "VTOY_DEFAULT_MENU_MODE" = "1" },
+            @{ "VTOY_TREE_VIEW_MENU_STYLE" = "1" },
+            @{ "VTOY_FILT_DIR_LEVEL" = "0" },
+            @{ "VTOY_MAX_MENU_NUM" = "12" }
+        )
+        $cfg | Add-Member -NotePropertyName "control" -NotePropertyValue $controlSettings -Force
+
         $themeBlock = @{
             "file" = "/ventoy/theme/theme.txt"
             "gfxmode" = "1920x1080"
             "display_mode" = "GUI"
         }
         $cfg | Add-Member -NotePropertyName "theme" -NotePropertyValue $themeBlock -Force
+
+        $menuAliases = @(
+            @{ "image" = "/01_Desktop-Linux";     "alias" = "Desktop Linux (Ubuntu, Mint, Fedora, Arch, Zorin...)" },
+            @{ "image" = "/02_Enterprise-Server"; "alias" = "Enterprise Server (RHEL, Rocky, Alma, Proxmox, TrueNAS...)" },
+            @{ "image" = "/03_Security-Pentest";  "alias" = "Security & Pentesting (Kali, Parrot, BlackArch...)" },
+            @{ "image" = "/04_Rescue-Systeme";   "alias" = "Rescue & Recovery (GParted, Rescuezilla, FygoOS...)" },
+            @{ "image" = "/05_BSD-Unix";          "alias" = "BSD & Unix (FreeBSD, OpenBSD, NetBSD, DragonFly...)" },
+            @{ "image" = "/06_Windows-PE_Rescue"; "alias" = "Windows PE & Recovery (Hiren's BootCD PE, WinPE, Recovery...)" }
+        )
+
+        $menuTips = @(
+            @{ "dir" = "/01_Desktop-Linux";     "tip" = "Alltags-, Workstation- & Gaming-Betriebssysteme (Ubuntu, Mint, Fedora, Arch...)" },
+            @{ "dir" = "/02_Enterprise-Server"; "tip" = "Enterprise-Server, Hypervisor & NAS-Systeme (RHEL, Proxmox, TrueNAS...)" },
+            @{ "dir" = "/03_Security-Pentest";  "tip" = "IT-Sicherheit, Forensik, Anonymitaet & Penetration-Testing (Kali, Tails...)" },
+            @{ "dir" = "/04_Rescue-Systeme";   "tip" = "Notfall-, Reparatur-, Hardware-Diagnose & Antivirus-Systeme" },
+            @{ "dir" = "/05_BSD-Unix";          "tip" = "BSD-Derivate, Firewalls & alternative Unix-Systeme" },
+            @{ "dir" = "/06_Windows-PE_Rescue"; "tip" = "Windows Preinstallation & PE-Rettungsumgebungen" }
+        )
+
+        $categoryOrder = @("01_Desktop-Linux", "02_Enterprise-Server", "03_Security-Pentest", "04_Rescue-Systeme", "05_BSD-Unix", "06_Windows-PE_Rescue")
+        foreach ($cat in $categoryOrder) {
+            $catDir = Join-Path $driveLetter $cat
+            if (Test-Path $catDir) {
+                $catFiles = Get-ChildItem -Path $catDir -File -ErrorAction SilentlyContinue | Where-Object { $_.Extension -in '.iso', '.img' }
+                foreach ($f in $catFiles) {
+                    $vpath = "/$cat/$($f.Name)"
+                    $prettyTitle = Get-PrettyIsoName -Filename $f.Name
+                    $menuAliases += @{
+                        "image" = $vpath
+                        "alias" = $prettyTitle
+                    }
+                    $menuTips += @{
+                        "image" = $vpath
+                        "tip"   = (Get-IsoMenuTip -Filename $f.Name)
+                    }
+                }
+            }
+        }
+
+        $cfg | Add-Member -NotePropertyName "menu_alias" -NotePropertyValue $menuAliases -Force
+
+        $tipConfig = @{
+            "left"  = "6%"
+            "top"   = "84%"
+            "color" = "#73d4b8"
+            "tips"  = $menuTips
+        }
+        $cfg | Add-Member -NotePropertyName "menu_tip" -NotePropertyValue $tipConfig -Force
+
         $jsonOut = ($cfg | ConvertTo-Json -Depth 10) -replace "`r`n", "`n"
         [System.IO.File]::WriteAllText($ventoyJsonPath, $jsonOut, (New-Object System.Text.UTF8Encoding($false)))
     } catch {}
@@ -2258,7 +2326,6 @@ function Start-VentoyCopyJob {
 
         Install-VentoyTheme -VentoyDir $ventoyDir -ThemeChoice $themeToUse -Force -DryRun:$DryRun
 
-        $alreadyConfigured = $false
         $configObj = @{}
         if (Test-Path $ventoyJsonPath) {
             try {
@@ -2266,25 +2333,16 @@ function Start-VentoyCopyJob {
                 $parsed = $rawJson | ConvertFrom-Json
                 if ($parsed) { 
                     $configObj = $parsed 
-                    # Pruefen ob Theme & TreeView bereits konfiguriert sind
-                    $hasTheme = ($parsed.PSObject.Properties['theme'] -and $parsed.theme.file -eq "/ventoy/theme/theme.txt")
-                    $hasMode  = ($parsed.PSObject.Properties['control'] -and ($parsed.control | Where-Object { $_.VTOY_DEFAULT_MENU_MODE -eq "1" }))
-                    if ($hasTheme -and $hasMode) {
-                        $alreadyConfigured = $true
-                    }
                 }
             } catch {
                 $configObj = @{}
             }
         }
 
-        if ($alreadyConfigured) {
-            Write-Log -Message "[VENTOY] ventoy.json (Dir-Modus & Theme) bereits auf Ziel-Laufwerk vorhanden. Schreibe nichts neu." -Color DarkGreen -Level "OK"
-        } else {
-            try {
-                if (-not (Test-Path $ventoyDir)) {
-                    New-Item -ItemType Directory -Path $ventoyDir -Force | Out-Null
-                }
+        try {
+            if (-not (Test-Path $ventoyDir)) {
+                New-Item -ItemType Directory -Path $ventoyDir -Force | Out-Null
+            }
 
                 $controlSettings = @(
                     @{ "VTOY_DEFAULT_MENU_MODE" = "1" },
@@ -2375,7 +2433,7 @@ function Start-VentoyCopyJob {
 
                 $tipConfig = @{
                     "left"  = "6%"
-                    "top"   = "80%"
+                    "top"   = "84%"
                     "color" = "#73d4b8"
                     "tips"  = $menuTips
                 }
@@ -2389,7 +2447,6 @@ function Start-VentoyCopyJob {
                 Write-Log -Message "Fehler beim Konfigurieren/Schreiben von ventoy.json auf ${ventoyJsonPath}: $_" -Color Red -Level "FEHLER"
             }
         }
-    }
 }
 
 # ==============================================================================

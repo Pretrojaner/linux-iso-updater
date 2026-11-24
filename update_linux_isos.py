@@ -2379,6 +2379,11 @@ message-font: "ascii"
 message-color: "{selected['text']}"
 terminal-box: "terminal_box_*.png"
 
+# Menu Tip Plugin Einstellungen
+menu-tip-left: "6%"
+menu-tip-top: "84%"
+menu-tip-color: "#73d4b8"
+
 + hbox {{
     top = 9%
     left = 6%
@@ -2468,6 +2473,11 @@ desktop-color: "{selected['bg1']}"
 title-text: "{selected['title']}"
 title-color: "{selected['title_color']}"
 message-color: "{selected['text']}"
+
+# Menu Tip Plugin Einstellungen
+menu-tip-left: "10%"
+menu-tip-top: "90%"
+menu-tip-color: "{selected['title_color']}"
 
 + boot_menu {{
     left = 10%
@@ -3462,7 +3472,7 @@ def run_ventoy_sync(
         config["menu_alias"] = menu_aliases
         config["menu_tip"] = {
             "left": "6%",
-            "top": "80%",
+            "top": "84%",
             "color": "#73d4b8",
             "tips": menu_tips
         }
