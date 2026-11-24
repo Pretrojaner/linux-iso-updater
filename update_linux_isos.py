@@ -2512,6 +2512,102 @@ menu-tip-color: "{selected['title_color']}"
 
 
 # ==============================================================================
+# VENTOY SPEICHERBEDARFS- & BEREINIGUNGS-ANALYSE
+# ==============================================================================
+def calculate_ventoy_target_space(
+    target_root: Path,
+    iso_files_to_copy: List[Dict[str, Any]],
+    distro_patterns: List[Dict[str, Any]],
+    category_folders: List[Path],
+) -> Dict[str, Any]:
+    """Berechnet exakt den Netto-Speicherbedarf, reclaimbaren Speicher und veraltete/abgewählte Dateien."""
+    usage = shutil.disk_usage(target_root)
+    free_bytes = usage.free
+
+    files_to_copy = []
+    obsolete_files = []
+    deselected_files = []
+    processed_paths = set()
+    already_present_count = 0
+    actual_bytes_needed = 0
+    reclaimable_bytes = 0
+
+    # 1. Abgewählte / deaktivierte Distros auf Ziel identifizieren
+    deselected_distros = [d for d in distro_patterns if d.get("Enabled") is False and d.get("MatchPattern")]
+    for des in deselected_distros:
+        pat = des["MatchPattern"]
+        for cat in category_folders:
+            dst_cat = target_root / cat.name
+            if dst_cat.is_dir():
+                for target_iso in [x for x in dst_cat.glob("*") if x.is_file() and x.suffix.lower() in [".iso", ".img"]]:
+                    if re.search(pat, target_iso.name):
+                        canon = str(target_iso.resolve()).lower()
+                        if canon not in processed_paths:
+                            processed_paths.add(canon)
+                            deselected_files.append(target_iso)
+                            reclaimable_bytes += target_iso.stat().st_size
+
+    # 2. Zu kopierende ISOs und veraltete Vorgänger identifizieren
+    for item in iso_files_to_copy:
+        dst_iso = target_root / item["category"] / item["filename"]
+        already_present = False
+        if dst_iso.exists() and dst_iso.stat().st_size == item["size_bytes"]:
+            already_present = True
+            already_present_count += 1
+        else:
+            files_to_copy.append(item)
+            actual_bytes_needed += item["size_bytes"]
+
+        # Veraltete Vorgänger im Zielordner suchen
+        dst_cat = target_root / item["category"]
+        if dst_cat.is_dir():
+            pat_to_use = None
+            for d in distro_patterns:
+                pat = d.get("MatchPattern")
+                if pat and re.search(pat, item["filename"]):
+                    pat_to_use = pat
+                    break
+            if not pat_to_use:
+                base_cand = re.sub(r"[-_\d\.]+\.(iso|img)$", "", item["filename"], flags=re.I)
+                if len(base_cand) >= 3:
+                    pat_to_use = rf"^{re.escape(base_cand)}[-_\d\.]+\.(iso|img)$"
+
+            if pat_to_use:
+                for old_target in [x for x in dst_cat.glob("*") if x.is_file() and x.suffix.lower() in [".iso", ".img"]]:
+                    if old_target.name != item["filename"] and re.search(pat_to_use, old_target.name):
+                        canon = str(old_target.resolve()).lower()
+                        if canon not in processed_paths:
+                            processed_paths.add(canon)
+                            obsolete_files.append(old_target)
+                            reclaimable_bytes += old_target.stat().st_size
+
+    effective_free_bytes = free_bytes + reclaimable_bytes
+    has_enough_space = effective_free_bytes >= actual_bytes_needed
+    shortage_bytes = max(0, actual_bytes_needed - effective_free_bytes)
+
+    return {
+        "free_bytes": free_bytes,
+        "free_gb": free_bytes / (1024**3),
+        "actual_bytes_needed": actual_bytes_needed,
+        "actual_gb_needed": actual_bytes_needed / (1024**3),
+        "reclaimable_bytes": reclaimable_bytes,
+        "reclaimable_gb": reclaimable_bytes / (1024**3),
+        "effective_free_bytes": effective_free_bytes,
+        "effective_free_gb": effective_free_bytes / (1024**3),
+        "net_bytes_needed": max(0, actual_bytes_needed - reclaimable_bytes),
+        "net_gb_needed": max(0, actual_bytes_needed - reclaimable_bytes) / (1024**3),
+        "has_enough_space": has_enough_space,
+        "shortage_bytes": shortage_bytes,
+        "shortage_gb": shortage_bytes / (1024**3),
+        "already_present_count": already_present_count,
+        "need_copy_count": len(files_to_copy),
+        "files_to_copy": files_to_copy,
+        "obsolete_files": obsolete_files,
+        "deselected_files": deselected_files,
+    }
+
+
+# ==============================================================================
 # VENTOY LAUFWERKS-ERKENNUNG & INSTALLER (LINUX CLI)
 # ==============================================================================
 class VentoyLinuxDriveManager:
@@ -2771,7 +2867,12 @@ class VentoyLinuxDriveManager:
         return target_mount
 
     def select_target_mount_interactive(
-        self, total_gb_needed: float, tools_dir: Optional[Path] = None, dry_run: bool = False
+        self,
+        total_gb_needed: float,
+        tools_dir: Optional[Path] = None,
+        dry_run: bool = False,
+        iso_dir: Optional[Path] = None,
+        distro_patterns: Optional[List[Dict[str, Any]]] = None,
     ) -> Optional[str]:
         drives = self.get_mounted_drives()
         if not drives:
@@ -2781,12 +2882,51 @@ class VentoyLinuxDriveManager:
         print(f"\n{Colors.CYAN}{'=' * 60}{Colors.RESET}")
         print(f"{Colors.CYAN} VENTOY ZIEL-LAUFWERK AUSWAHL{Colors.RESET}")
         print(f"{Colors.CYAN}{'=' * 60}{Colors.RESET}")
-        print(f"{Colors.YELLOW} Benötigter Speicherplatz: ca. {total_gb_needed:.2f} GB{Colors.RESET}\n")
+        print(f"{Colors.YELLOW} Benötigter Speicherplatz für alle aktivierten ISOs: ca. {total_gb_needed:.2f} GB{Colors.RESET}\n")
+
+        cat_folders = []
+        src_isos = []
+        if iso_dir and distro_patterns and iso_dir.is_dir():
+            try:
+                cat_folders = [iso_dir / c for c in CATEGORY_ORDER if (iso_dir / c).is_dir()]
+                for c_folder in cat_folders:
+                    for f in c_folder.glob("*"):
+                        if f.is_file() and f.suffix.lower() in [".iso", ".img"]:
+                            en = True
+                            for dp in distro_patterns:
+                                if dp.get("MatchPattern") and re.search(dp["MatchPattern"], f.name):
+                                    if dp.get("Enabled") is False:
+                                        en = False
+                                    break
+                            if en:
+                                src_isos.append({
+                                    "source": f,
+                                    "category": c_folder.name,
+                                    "filename": f.name,
+                                    "size_bytes": f.stat().st_size,
+                                })
+            except Exception:
+                pass
 
         for idx, d in enumerate(drives, 1):
-            status = f"{Colors.GREEN}--> [GENUG PLATZ]{Colors.RESET}" if d["free_gb"] >= total_gb_needed else f"{Colors.RED}--> [ZU WENIG PLATZ - fehlen ca. {total_gb_needed - d['free_gb']:.2f} GB]{Colors.RESET}"
             marker = f" {Colors.GREEN}[Ventoy]{Colors.RESET}" if d["is_ventoy"] else ""
             usb_marker = f" {Colors.CYAN}[USB]{Colors.RESET}" if d.get("is_removable") else ""
+            mp = d.get("mountpoint")
+            status = ""
+
+            if mp and Path(mp).is_dir() and (d.get("is_ventoy") or (Path(mp) / "01_Desktop-Linux").is_dir()) and src_isos:
+                try:
+                    sp = calculate_ventoy_target_space(Path(mp), src_isos, distro_patterns, cat_folders)
+                    if sp["need_copy_count"] == 0:
+                        status = f"{Colors.GREEN}--> [ALLES AKTUELL] (0 ISOs neu zu kopieren){Colors.RESET}"
+                    elif sp["has_enough_space"]:
+                        status = f"{Colors.GREEN}--> [GENUG PLATZ] ({sp['need_copy_count']} ISOs neu: {sp['actual_gb_needed']:.2f} GB, Freigabe: +{sp['reclaimable_gb']:.2f} GB){Colors.RESET}"
+                    else:
+                        status = f"{Colors.RED}--> [ZU WENIG PLATZ - fehlen ca. {sp['shortage_gb']:.2f} GB nach Bereinigung]{Colors.RESET}"
+                except Exception:
+                    status = f"{Colors.GREEN}--> [GENUG PLATZ]{Colors.RESET}" if d["free_gb"] >= total_gb_needed else f"{Colors.RED}--> [ZU WENIG PLATZ - fehlen ca. {total_gb_needed - d['free_gb']:.2f} GB]{Colors.RESET}"
+            else:
+                status = f"{Colors.GREEN}--> [GENUG PLATZ]{Colors.RESET}" if d["free_gb"] >= total_gb_needed else f"{Colors.RED}--> [ZU WENIG PLATZ - fehlen ca. {total_gb_needed - d['free_gb']:.2f} GB]{Colors.RESET}"
 
             if d.get("is_raw_disk"):
                 state_desc = "bereit für Ventoy-Installation" if not d["is_ventoy"] else "Ventoy vorhanden (nicht eingehängt)"
@@ -3253,22 +3393,8 @@ def run_ventoy_sync(
         logger.log("Keine aktivierten ISO-Dateien zum Kopieren im Quellverzeichnis gefunden.", color=Colors.YELLOW, level="WARNUNG")
         return
 
-    # Netto-Speicherbedarf berechnen
-    actual_bytes_needed = 0
-    already_present_count = 0
-    need_copy_count = 0
-
-    for item in iso_files_to_copy:
-        dst_iso = target_root / item["category"] / item["filename"]
-        if dst_iso.exists() and dst_iso.stat().st_size == item["size_bytes"]:
-            already_present_count += 1
-        else:
-            actual_bytes_needed += item["size_bytes"]
-            need_copy_count += 1
-
-    usage = shutil.disk_usage(target_root)
-    free_gb = usage.free / (1024**3)
-    needed_gb = actual_bytes_needed / (1024**3)
+    # Exakte Speicheranalyse durchführen (inklusive Scan nach alten Versionen & abgewählten Distros)
+    target_space = calculate_ventoy_target_space(target_root, iso_files_to_copy, distro_patterns, category_folders)
     total_all_gb = sum(item["size_bytes"] for item in iso_files_to_copy) / (1024**3)
 
     logger.log(f"Ventoy-Kopiervorgang vorbereiten nach: {target_root}", color=Colors.CYAN, level="VENTOY")
@@ -3278,21 +3404,29 @@ def run_ventoy_sync(
         level="INFO",
     )
     logger.log(
-        f"Bereits auf Ziel vorhanden: {already_present_count} ISOs | Neu zu kopieren: {need_copy_count} ISOs ({needed_gb:.2f} GB)",
+        f"Bereits auf Ziel vorhanden: {target_space['already_present_count']} ISOs | Neu zu kopieren: {target_space['need_copy_count']} ISOs ({target_space['actual_gb_needed']:.2f} GB)",
         color=Colors.DARK_GRAY,
         level="INFO",
     )
-    logger.log(f"Freier Speicherplatz auf {target_root}: {free_gb:.2f} GB", color=Colors.DARK_GRAY, level="INFO")
+    logger.log(f"Freier Speicherplatz aktuell: {target_space['free_gb']:.2f} GB", color=Colors.DARK_GRAY, level="INFO")
+    if target_space["reclaimable_bytes"] > 0:
+        logger.log(
+            f"Freigabe durch Bereinigung veralteter/abgewählter ISOs: +{target_space['reclaimable_gb']:.2f} GB ({len(target_space['obsolete_files'])} veraltete, {len(target_space['deselected_files'])} abgewählte ISOs)",
+            color=Colors.CYAN,
+            level="INFO",
+        )
+        logger.log(f"Effektiv verfügbarer Speicherplatz: {target_space['effective_free_gb']:.2f} GB", color=Colors.CYAN, level="INFO")
 
     # Speicherprüfung
-    if usage.free < actual_bytes_needed:
-        shortage_gb = (actual_bytes_needed - usage.free) / (1024**3)
+    if not target_space["has_enough_space"]:
         print("")
         logger.log("=" * 60, color=Colors.RED, level="FEHLER")
         logger.log(f"[SPEICHERPLATZ-FEHLER] Nicht genügend freier Speicherplatz auf Ziel-Laufwerk {target_root}!", color=Colors.RED, level="FEHLER")
-        logger.log(f"  Benötigt für neue/geänderte ISOs: {needed_gb:.2f} GB", color=Colors.YELLOW, level="FEHLER")
-        logger.log(f"  Freier Speicherplatz verfügbar:      {free_gb:.2f} GB", color=Colors.YELLOW, level="FEHLER")
-        logger.log(f"  Fehlender Speicherplatz:              {shortage_gb:.2f} GB", color=Colors.RED, level="FEHLER")
+        logger.log(f"  Benötigt für neue/geänderte ISOs: {target_space['actual_gb_needed']:.2f} GB", color=Colors.YELLOW, level="FEHLER")
+        logger.log(f"  Freier Speicherplatz aktuell:        {target_space['free_gb']:.2f} GB", color=Colors.YELLOW, level="FEHLER")
+        logger.log(f"  Freigabe durch Vorab-Bereinigung:    +{target_space['reclaimable_gb']:.2f} GB", color=Colors.YELLOW, level="FEHLER")
+        logger.log(f"  Effektiv verfügbar nach Cleanup:    {target_space['effective_free_gb']:.2f} GB", color=Colors.YELLOW, level="FEHLER")
+        logger.log(f"  Fehlender Speicherplatz:              {target_space['shortage_gb']:.2f} GB", color=Colors.RED, level="FEHLER")
         logger.log("=" * 60, color=Colors.RED, level="FEHLER")
         print("")
 
@@ -3303,23 +3437,34 @@ def run_ventoy_sync(
             if abort not in ["n", "no", "nein"]:
                 logger.log("Kopiervorgang durch Benutzer wegen unzureichendem Speicherplatz abgebrochen.", color=Colors.YELLOW, level="ABBRUCH")
                 return
-            logger.log("Kopiervorgang wird auf ausdrücklichen Wunsch fortgesetzt...", color=Colors.YELLOW, level="WARNUNG")
+            logger.log("Kopiervorgang wird auf ausdrücklichen Wunsch fortgesetzt (Laufwerk könnte vollaufen)...", color=Colors.YELLOW, level="WARNUNG")
+    else:
+        logger.log("Speicherplatz-Prüfung: [GENUG PLATZ VORHANDEN]", color=Colors.GREEN, level="INFO")
 
-    # Bereinigung abgewählter ISOs auf dem Ziel-Stick
-    deselected = [d for d in distro_patterns if d.get("Enabled") is False and d.get("MatchPattern")]
-    for des in deselected:
-        pat = des["MatchPattern"]
-        for target_iso in [x for x in target_root.rglob("*") if x.is_file() and x.suffix.lower() in [".iso", ".img"]]:
-            if re.search(pat, target_iso.name):
-                mb = target_iso.stat().st_size / (1024 * 1024)
-                if dry_run:
-                    logger.log(f"[DRY-RUN] Abgewählte ISO auf Ventoy-Ziel würde gelöscht: {target_iso.name} ({mb:.2f} MB)", color=Colors.YELLOW, level="CLEANUP")
-                else:
-                    logger.log(f"[CLEANUP] Abgewählte ISO auf Ventoy-Ziel ENDGÜLTIG gelöscht: {target_iso.name} ({mb:.2f} MB)", color=Colors.YELLOW, level="CLEANUP")
-                    try:
-                        target_iso.unlink()
-                    except Exception:
-                        pass
+    # VORAB-BEREINIGUNG: Abgewählte & veraltete ISOs vor dem Kopieren löschen (gibt physikalischen Speicherplatz sofort frei)
+    if target_space["deselected_files"]:
+        for target_iso in target_space["deselected_files"]:
+            mb = target_iso.stat().st_size / (1024 * 1024)
+            if dry_run:
+                logger.log(f"[DRY-RUN] Abgewählte ISO auf Ventoy-Ziel würde gelöscht: {target_iso.name} ({mb:.2f} MB)", color=Colors.YELLOW, level="CLEANUP")
+            else:
+                logger.log(f"[CLEANUP] Abgewählte ISO auf Ventoy-Ziel ENDGÜLTIG gelöscht: {target_iso.name} ({mb:.2f} MB)", color=Colors.YELLOW, level="CLEANUP")
+                try:
+                    target_iso.unlink()
+                except Exception:
+                    pass
+
+    if target_space["obsolete_files"]:
+        for old_target in target_space["obsolete_files"]:
+            old_mb = old_target.stat().st_size / (1024 * 1024)
+            if dry_run:
+                logger.log(f"[DRY-RUN] Veraltete Vorgänger-ISO auf Ventoy-Ziel würde gelöscht: {old_target.name} ({old_mb:.2f} MB)", color=Colors.YELLOW, level="CLEANUP")
+            else:
+                logger.log(f"[CLEANUP] Veraltete Vorgänger-ISO auf Ventoy-Ziel ENDGÜLTIG gelöscht: {old_target.name} ({old_mb:.2f} MB)", color=Colors.YELLOW, level="CLEANUP")
+                try:
+                    old_target.unlink()
+                except Exception:
+                    pass
 
     # Kopiervorgang durchführen
     total_copy = len(iso_files_to_copy)
@@ -3720,15 +3865,26 @@ def main() -> None:
                         if not args.skip_ventoy:
                             cp = input("Möchtest du vorhandene ISOs auf den Ventoy-Stick kopieren? (J/n): ").strip().lower()
                             if cp not in ["n", "no", "nein"]:
+                                pats = []
+                                try:
+                                    with open(iso_dir / "distros.json", "r", encoding="utf-8-sig") as f:
+                                        pats = json.load(f)
+                                except Exception:
+                                    pass
                                 t_mount = args.target or drive_mgr.select_target_mount_interactive(
-                                    total_gb_needed=10.0, tools_dir=iso_dir / "tools" / "ventoy", dry_run=args.dry_run
+                                    total_gb_needed=10.0,
+                                    tools_dir=iso_dir / "tools" / "ventoy",
+                                    dry_run=args.dry_run,
+                                    iso_dir=iso_dir,
+                                    distro_patterns=pats,
                                 )
                                 if t_mount:
                                     t_mount = drive_mgr.ensure_ventoy_target(
                                         t_mount, tools_dir=iso_dir / "tools" / "ventoy", dry_run=args.dry_run
                                     )
-                                    with open(iso_dir / "distros.json", "r", encoding="utf-8-sig") as f:
-                                        pats = json.load(f)
+                                    if not pats:
+                                        with open(iso_dir / "distros.json", "r", encoding="utf-8-sig") as f:
+                                            pats = json.load(f)
                                     run_ventoy_sync(t_mount, iso_dir, pats, args.theme, args.dry_run, logger)
                         logger.log("Vorgang beendet.", color=Colors.GREEN, level="ENDE")
                         return
@@ -4104,7 +4260,11 @@ def main() -> None:
                     return
 
                 target_mount = drive_mgr.select_target_mount_interactive(
-                    total_gb_needed=total_gb_needed, tools_dir=iso_dir / "tools" / "ventoy", dry_run=args.dry_run
+                    total_gb_needed=total_gb_needed,
+                    tools_dir=iso_dir / "tools" / "ventoy",
+                    dry_run=args.dry_run,
+                    iso_dir=iso_dir,
+                    distro_patterns=distros,
                 )
             else:
                 target_mount = drive_mgr.ensure_ventoy_target(

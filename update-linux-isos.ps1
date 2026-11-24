@@ -2010,6 +2010,121 @@ function Install-VentoyToDisk {
     }
 }
 
+function Measure-VentoyTargetSpace {
+    param(
+        [string]$TargetRoot,
+        [array]$IsoFilesToCopy,
+        [array]$DistroPatterns,
+        [array]$CategoryFolders
+    )
+
+    $driveLetter = $TargetRoot.TrimEnd('\').TrimEnd(':') + ":"
+    $freeBytes = 0
+    try {
+        $driveObj = New-Object System.IO.DriveInfo($driveLetter)
+        $freeBytes = $driveObj.AvailableFreeSpace
+    } catch {}
+
+    $filesToCopy = @()
+    $obsoleteFilesToDelete = @()
+    $deselectedFilesToDelete = @()
+    $processedPaths = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+    $alreadyPresentCount = 0
+    $actualBytesNeeded = 0
+    $reclaimableBytes = 0
+
+    # 1. Scanne abgewaehlte/deaktivierte Distros auf dem Ziel-Laufwerk
+    $deselectedDistros = $DistroPatterns | Where-Object { $_.PSObject.Properties['Enabled'] -and $_.Enabled -eq $false -and $_.MatchPattern }
+    if ($deselectedDistros) {
+        foreach ($folder in $CategoryFolders) {
+            $catName = if ($folder.Name) { $folder.Name } else { [string]$folder }
+            $dstCatDir = Join-Path $TargetRoot $catName
+            if (Test-Path $dstCatDir) {
+                $targetIsos = Get-ChildItem -Path $dstCatDir -File -ErrorAction SilentlyContinue | Where-Object { $_.Extension -in '.iso', '.img' }
+                foreach ($des in $deselectedDistros) {
+                    $matches = $targetIsos | Where-Object { $_.Name -match $des.MatchPattern }
+                    foreach ($m in $matches) {
+                        if ($processedPaths.Add($m.FullName)) {
+                            $deselectedFilesToDelete += $m
+                            $reclaimableBytes += $m.Length
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    # 2. Scanne zu kopierende ISOs und veraltete Vorgaenger
+    foreach ($iso in $IsoFilesToCopy) {
+        $dstFolder = Join-Path $TargetRoot $iso.CategoryFolder
+        $dstFilePath = Join-Path $dstFolder $iso.Filename
+
+        $alreadyPresent = $false
+        if (Test-Path $dstFilePath) {
+            try {
+                $dstItem = Get-Item $dstFilePath -ErrorAction SilentlyContinue
+                if ($dstItem -and $dstItem.Length -eq $iso.SizeBytes) {
+                    $alreadyPresent = $true
+                    $alreadyPresentCount++
+                }
+            } catch {}
+        }
+
+        if (-not $alreadyPresent) {
+            $filesToCopy += $iso
+            $actualBytesNeeded += $iso.SizeBytes
+        }
+
+        # Pruefe ob veraltete Vorgaenger-ISOs dieser Distro im Zielordner liegen
+        if (Test-Path $dstFolder) {
+            $distroMatch = $DistroPatterns | Where-Object { $_.MatchPattern -and ($iso.Filename -match $_.MatchPattern) } | Select-Object -First 1
+            $patternToUse = if ($distroMatch) {
+                $distroMatch.MatchPattern
+            } else {
+                $baseCand = $iso.Filename -replace '(?i)[-_\d\.]+\.(iso|img)$', ''
+                if ($baseCand.Length -ge 3) { "^" + [regex]::Escape($baseCand) + "[-_\d\.]+\.(iso|img)$" } else { $null }
+            }
+
+            if ($patternToUse) {
+                $oldTargetIsos = Get-ChildItem -Path $dstFolder -File -ErrorAction SilentlyContinue | Where-Object {
+                    ($_.Extension -in '.iso', '.img') -and ($_.Name -ne $iso.Filename) -and ($_.Name -match $patternToUse)
+                }
+                foreach ($oldIso in $oldTargetIsos) {
+                    if ($processedPaths.Add($oldIso.FullName)) {
+                        $obsoleteFilesToDelete += $oldIso
+                        $reclaimableBytes += $oldIso.Length
+                    }
+                }
+            }
+        }
+    }
+
+    $effectiveFreeBytes = $freeBytes + $reclaimableBytes
+    $hasEnoughSpace = ($effectiveFreeBytes -ge $actualBytesNeeded)
+    $shortageBytes = if ($hasEnoughSpace) { 0 } else { $actualBytesNeeded - $effectiveFreeBytes }
+
+    return [PSCustomObject]@{
+        FreeBytes               = $freeBytes
+        FreeGB                  = [math]::Round($freeBytes / 1GB, 2)
+        ActualBytesNeeded       = $actualBytesNeeded
+        ActualGBNeeded          = [math]::Round($actualBytesNeeded / 1GB, 2)
+        ReclaimableBytes        = $reclaimableBytes
+        ReclaimableGB           = [math]::Round($reclaimableBytes / 1GB, 2)
+        EffectiveFreeBytes      = $effectiveFreeBytes
+        EffectiveFreeGB         = [math]::Round($effectiveFreeBytes / 1GB, 2)
+        NetBytesNeeded          = [math]::Max(0, $actualBytesNeeded - $reclaimableBytes)
+        NetGBNeeded             = [math]::Round([math]::Max(0, $actualBytesNeeded - $reclaimableBytes) / 1GB, 2)
+        HasEnoughSpace          = $hasEnoughSpace
+        ShortageBytes           = $shortageBytes
+        ShortageGB              = [math]::Round($shortageBytes / 1GB, 2)
+        AlreadyPresentCount     = $alreadyPresentCount
+        NeedCopyCount           = $filesToCopy.Count
+        FilesToCopy             = $filesToCopy
+        ObsoleteFilesToDelete   = $obsoleteFilesToDelete
+        DeselectedFilesToDelete = $deselectedFilesToDelete
+    }
+}
+
 function Start-VentoyCopyJob {
     param(
         [string]$TargetDrive,
@@ -2097,12 +2212,28 @@ function Start-VentoyCopyJob {
             $labelStr = if ($d.Label) { "[$($d.Label)]" } else { "" }
             $hasVentoy = (Test-Path "$($d.DriveLetter)\ventoy") -or ($d.Label -match "Ventoy")
             $vMarker = if ($hasVentoy) { " [Ventoy bereit]" } else { " [Kein Ventoy]" }
-            $spaceStatus = if ($d.FreeGB -ge $totalGBToCopy) {
-                "--> [GENUG PLATZ]"
+
+            $targetHasData = $hasVentoy -or (Test-Path "$($d.DriveLetter)\01_Desktop-Linux")
+            if ($targetHasData) {
+                $sp = Measure-VentoyTargetSpace -TargetRoot "$($d.DriveLetter)\" -IsoFilesToCopy $isoFilesToCopy -DistroPatterns $distroPatterns -CategoryFolders $categoryFolders
+                if ($sp.NeedCopyCount -eq 0) {
+                    $spaceStatus = "--> [ALLES AKTUELL] (0 ISOs neu zu kopieren)"
+                    $statusColor = [ConsoleColor]::Green
+                } elseif ($sp.HasEnoughSpace) {
+                    $spaceStatus = "--> [GENUG PLATZ] ($($sp.NeedCopyCount) ISOs neu: $($sp.ActualGBNeeded) GB, Freigabe: +$($sp.ReclaimableGB) GB)"
+                    $statusColor = [ConsoleColor]::Green
+                } else {
+                    $spaceStatus = "--> [ZU WENIG PLATZ - fehlen ca. $($sp.ShortageGB) GB nach Bereinigung]"
+                    $statusColor = [ConsoleColor]::Red
+                }
             } else {
-                "--> [ZU WENIG PLATZ - fehlen ca. $([math]::Round($totalGBToCopy - $d.FreeGB, 2)) GB]"
+                $spaceStatus = if ($d.FreeGB -ge $totalGBToCopy) {
+                    "--> [GENUG PLATZ] (Erstbefuellung: $totalGBToCopy GB)"
+                } else {
+                    "--> [ZU WENIG PLATZ - fehlen ca. $([math]::Round($totalGBToCopy - $d.FreeGB, 2)) GB]"
+                }
+                $statusColor = if ($d.FreeGB -ge $totalGBToCopy) { [ConsoleColor]::Green } else { [ConsoleColor]::Red }
             }
-            $statusColor = if ($d.FreeGB -ge $totalGBToCopy) { [ConsoleColor]::Green } else { [ConsoleColor]::Red }
 
             Write-Host " [$($i + 1)] $($d.DriveLetter) $labelStr ($($d.FreeGB) GB frei / $($d.CapacityGB) GB)$vMarker " -NoNewline -ForegroundColor White
             Write-Host "$spaceStatus" -ForegroundColor $statusColor
@@ -2134,50 +2265,28 @@ function Start-VentoyCopyJob {
         return
     }
 
-    $freeBytes = 0
-    try {
-        $driveObj = New-Object System.IO.DriveInfo($TargetDriveLetter)
-        $freeBytes = $driveObj.AvailableFreeSpace
-    } catch {}
-    $freeGB = [math]::Round($freeBytes / 1GB, 2)
-
-    # Berechne wie viele Bytes TATSaeCHLICH neu kopiert werden muessen
-    $actualBytesNeeded = 0
-    $alreadyPresentCount = 0
-    $needCopyCount = 0
-
-    foreach ($iso in $isoFilesToCopy) {
-        $dstFolder = Join-Path $TargetDriveRoot $iso.CategoryFolder
-        $dstFilePath = Join-Path $dstFolder $iso.Filename
-        if (Test-Path $dstFilePath) {
-            try {
-                $dstItem = Get-Item $dstFilePath -ErrorAction SilentlyContinue
-                if ($dstItem -and $dstItem.Length -eq $iso.SizeBytes) {
-                    $alreadyPresentCount++
-                    continue
-                }
-            } catch {}
-        }
-        $actualBytesNeeded += $iso.SizeBytes
-        $needCopyCount++
-    }
-
-    $actualGBNeeded = [math]::Round($actualBytesNeeded / 1GB, 2)
+    # Exakte Speicheranalyse durchfuehren (inklusive Scan nach alten Versionen & abgewaehlten Distros)
+    $targetSpace = Measure-VentoyTargetSpace -TargetRoot $TargetDriveRoot -IsoFilesToCopy $isoFilesToCopy -DistroPatterns $distroPatterns -CategoryFolders $categoryFolders
 
     Write-Log -Message "Ventoy-Kopiervorgang vorbereiten nach: $TargetDriveRoot" -Color Cyan -Level "VENTOY"
     Write-Log -Message "Gefundene ISO-Dateien: $($isoFilesToCopy.Count) Dateien in $($categoryFolders.Count) Ordnern (Gesamt: $totalGBToCopy GB)" -Color Green -Level "INFO"
-    Write-Log -Message "Bereits auf Ziel vorhanden: $alreadyPresentCount ISOs | Neu zu kopieren: $needCopyCount ISOs ($actualGBNeeded GB)" -Color DarkGray -Level "INFO"
-    Write-Log -Message "Freier Speicherplatz auf $($TargetDriveRoot): $freeGB GB" -Color DarkGray -Level "INFO"
+    Write-Log -Message "Bereits auf Ziel vorhanden: $($targetSpace.AlreadyPresentCount) ISOs | Neu zu kopieren: $($targetSpace.NeedCopyCount) ISOs ($($targetSpace.ActualGBNeeded) GB)" -Color DarkGray -Level "INFO"
+    Write-Log -Message "Freier Speicherplatz aktuell: $($targetSpace.FreeGB) GB" -Color DarkGray -Level "INFO"
+    if ($targetSpace.ReclaimableBytes -gt 0) {
+        Write-Log -Message "Freigabe durch Vorab-Bereinigung: +$($targetSpace.ReclaimableGB) GB ($($targetSpace.ObsoleteFilesToDelete.Count) veraltete, $($targetSpace.DeselectedFilesToDelete.Count) abgewaehlte ISOs)" -Color Cyan -Level "INFO"
+        Write-Log -Message "Effektiv verfuegbar nach Bereinigung: $($targetSpace.EffectiveFreeGB) GB" -Color Cyan -Level "INFO"
+    }
 
-    # SPEICHERPLATZ-PRUeFUNG
-    if ($freeBytes -lt $actualBytesNeeded) {
-        $shortageGB = [math]::Round(($actualBytesNeeded - $freeBytes) / 1GB, 2)
+    # SPEICHERPLATZ-PRUEFUNG
+    if (-not $targetSpace.HasEnoughSpace) {
         Write-Host ""
         Write-Log -Message "=========================================================" -Color Red -Level "FEHLER"
         Write-Log -Message "[SPEICHERPLATZ-FEHLER] Nicht genuegend freier Speicherplatz auf Ziel-Laufwerk $TargetDriveRoot!" -Color Red -Level "FEHLER"
-        Write-Log -Message "  Benoetigt fuer neue/geaenderte ISOs: $actualGBNeeded GB" -Color Yellow -Level "FEHLER"
-        Write-Log -Message "  Freier Speicherplatz verfuegbar:      $freeGB GB" -Color Yellow -Level "FEHLER"
-        Write-Log -Message "  Fehlender Speicherplatz:              $shortageGB GB" -Color Red -Level "FEHLER"
+        Write-Log -Message "  Benoetigt fuer neue/geaenderte ISOs: $($targetSpace.ActualGBNeeded) GB" -Color Yellow -Level "FEHLER"
+        Write-Log -Message "  Freier Speicherplatz aktuell:        $($targetSpace.FreeGB) GB" -Color Yellow -Level "FEHLER"
+        Write-Log -Message "  Freigabe durch Vorab-Bereinigung:    +$($targetSpace.ReclaimableGB) GB" -Color Yellow -Level "FEHLER"
+        Write-Log -Message "  Effektiv verfuegbar nach Cleanup:    $($targetSpace.EffectiveFreeGB) GB" -Color Yellow -Level "FEHLER"
+        Write-Log -Message "  Fehlender Speicherplatz:             $($targetSpace.ShortageGB) GB" -Color Red -Level "FEHLER"
         Write-Log -Message "=========================================================" -Color Red -Level "FEHLER"
         Write-Host ""
 
@@ -2191,30 +2300,38 @@ function Start-VentoyCopyJob {
             }
             Write-Log -Message "Kopiervorgang wird auf ausdruecklichen Wunsch fortgesetzt (Laufwerk koennte vollaufen)..." -Color Yellow -Level "WARNUNG"
         }
+    } else {
+        Write-Log -Message "Speicherplatz-Pruefung: [GENUG PLATZ VORHANDEN]" -Color Green -Level "INFO"
     }
 
-    # Bereinigung abgewaehlter/deaktivierter Distributionen auf dem Ventoy-Ziel-Laufwerk
-    $deselectedDistros = $distroPatterns | Where-Object { $_.PSObject.Properties['Enabled'] -and $_.Enabled -eq $false -and $_.MatchPattern }
-    if ($deselectedDistros -and $deselectedDistros.Count -gt 0) {
-        foreach ($folder in $categoryFolders) {
-            $dstCatDir = Join-Path $TargetDriveRoot $folder.Name
-            if (Test-Path $dstCatDir) {
-                $targetIsosInDir = Get-ChildItem -Path $dstCatDir -File -ErrorAction SilentlyContinue | Where-Object { $_.Extension -in '.iso', '.img' }
-                foreach ($des in $deselectedDistros) {
-                    $matchesToDelete = $targetIsosInDir | Where-Object { $_.Name -match $des.MatchPattern }
-                    foreach ($mFile in $matchesToDelete) {
-                        $mMB = [math]::Round($mFile.Length / 1MB, 2)
-                        if ($DryRun) {
-                            Write-Log -Message "[DRY-RUN] Abgewaehlte ISO auf Ventoy-Ziel wuerde geloescht: $($mFile.Name) ($mMB MB) [$($des.Name)]" -Color Yellow -Level "CLEANUP"
-                        } else {
-                            Write-Log -Message "[CLEANUP] Abgewaehlte ISO auf Ventoy-Ziel ENDGUeLTIG geloescht: $($mFile.Name) ($mMB MB) [$($des.Name)]" -Color Yellow -Level "CLEANUP"
-                            try {
-                                [System.IO.File]::Delete($mFile.FullName)
-                            } catch {
-                                Remove-Item -Path $mFile.FullName -Force
-                            }
-                        }
-                    }
+    # VORAB-BEREINIGUNG: Abgewaehlte und veraltete ISOs vor dem Kopieren loeschen (gibt physikalischen Speicherplatz sofort frei)
+    if ($targetSpace.DeselectedFilesToDelete.Count -gt 0) {
+        foreach ($mFile in $targetSpace.DeselectedFilesToDelete) {
+            $mMB = [math]::Round($mFile.Length / 1MB, 2)
+            if ($DryRun) {
+                Write-Log -Message "[DRY-RUN] Abgewaehlte ISO auf Ventoy-Ziel wuerde geloescht: $($mFile.Name) ($mMB MB)" -Color Yellow -Level "CLEANUP"
+            } else {
+                Write-Log -Message "[CLEANUP] Abgewaehlte ISO auf Ventoy-Ziel ENDGUeLTIG geloescht: $($mFile.Name) ($mMB MB)" -Color Yellow -Level "CLEANUP"
+                try {
+                    [System.IO.File]::Delete($mFile.FullName)
+                } catch {
+                    Remove-Item -Path $mFile.FullName -Force -ErrorAction SilentlyContinue
+                }
+            }
+        }
+    }
+
+    if ($targetSpace.ObsoleteFilesToDelete.Count -gt 0) {
+        foreach ($mFile in $targetSpace.ObsoleteFilesToDelete) {
+            $mMB = [math]::Round($mFile.Length / 1MB, 2)
+            if ($DryRun) {
+                Write-Log -Message "[DRY-RUN] Veraltete Vorgaenger-ISO auf Ventoy-Ziel wuerde geloescht: $($mFile.Name) ($mMB MB)" -Color Yellow -Level "CLEANUP"
+            } else {
+                Write-Log -Message "[CLEANUP] Veraltete Vorgaenger-ISO auf Ventoy-Ziel ENDGUeLTIG geloescht: $($mFile.Name) ($mMB MB)" -Color Yellow -Level "CLEANUP"
+                try {
+                    [System.IO.File]::Delete($mFile.FullName)
+                } catch {
+                    Remove-Item -Path $mFile.FullName -Force -ErrorAction SilentlyContinue
                 }
             }
         }
