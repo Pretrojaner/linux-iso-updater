@@ -1,4 +1,4 @@
-﻿<#
+<#
 .SYNOPSIS
     All-in-One Linux ISO Auto-Updater & Ventoy Sync Tool
 .DESCRIPTION
@@ -1520,9 +1520,127 @@ menu-tip-color: "$($selectedTheme.TitleColor)"
         [System.IO.File]::WriteAllText($themeTxtPath, $themeTxtContent, (New-Object System.Text.UTF8Encoding($false)))
         [System.IO.File]::WriteAllText($activeRecordPath, $selectedTheme.Key, (New-Object System.Text.UTF8Encoding($false)))
         Write-Log -Message "[VENTOY] Theme '$($selectedTheme.Name)' (1080p) auf Ziel-Laufwerk eingerichtet." -Color Green -Level "ERFOLG"
+
+        # Distro-Icons (48x48) in Theme-Verzeichnis kopieren
+        $destIconsDir = Join-Path $themeDir "icons"
+        if (-not (Test-Path $destIconsDir)) {
+            New-Item -ItemType Directory -Path $destIconsDir -Force | Out-Null
+        }
+        $localIcons = Join-Path $PSScriptRoot "ventoy_themes\icons"
+        if (-not (Test-Path $localIcons)) {
+            $localIcons = "Z:\ISO_LOAD\ventoy_themes\icons"
+        }
+        if (Test-Path $localIcons) {
+            Copy-Item -Path "$localIcons\*.png" -Destination $destIconsDir -Force -ErrorAction SilentlyContinue
+            Write-Log -Message "[VENTOY] Distro-Icons (48x48 PNG) in Theme-Verzeichnis kopiert." -Color Green -Level "THEME"
+        }
     } catch {
         Write-Log -Message "[VENTOY] Fehler beim Schreiben von theme.txt ($themeTxtPath): $_" -Color Red -Level "FEHLER"
     }
+}
+
+function Get-VentoyMenuClassMapping {
+    return @(
+        # Kategorien (Ordner-Darstellung im TreeView-Modus)
+        @{ "dir" = "/01_Desktop-Linux";     "class" = "linux" },
+        @{ "dir" = "/02_Enterprise-Server"; "class" = "server" },
+        @{ "dir" = "/03_Security-Pentest";  "class" = "security" },
+        @{ "dir" = "/04_Rescue-Systeme";   "class" = "recovery" },
+        @{ "dir" = "/05_BSD-Unix";          "class" = "freebsd" },
+        @{ "dir" = "/06_Windows-PE_Rescue"; "class" = "windows" },
+
+        # 01_Desktop-Linux
+        @{ "key" = "alpine-standard-";      "class" = "alpine" },
+        @{ "key" = "antiX-";                "class" = "antix" },
+        @{ "key" = "archlinux-";            "class" = "arch" },
+        @{ "key" = "bazzite-";              "class" = "bazzite" },
+        @{ "key" = "cachyos-";              "class" = "cachyos" },
+        @{ "key" = "cld-";                  "class" = "calculate" },
+        @{ "key" = "crux-";                 "class" = "crux" },
+        @{ "key" = "debian-";               "class" = "debian" },
+        @{ "key" = "devuan_";               "class" = "devuan" },
+        @{ "key" = "elementaryos-";         "class" = "elementary" },
+        @{ "key" = "EndeavourOS";           "class" = "endeavouros" },
+        @{ "key" = "Fedora-Workstation-";   "class" = "fedora" },
+        @{ "key" = "garuda-";               "class" = "garuda" },
+        @{ "key" = "livegui-";              "class" = "gentoo" },
+        @{ "key" = "neon-user-";            "class" = "neon" },
+        @{ "key" = "kubuntu-";              "class" = "kubuntu" },
+        @{ "key" = "linux-lite-";           "class" = "linuxlite" },
+        @{ "key" = "linuxmint-";            "class" = "linuxmint" },
+        @{ "key" = "lubuntu-";              "class" = "lubuntu" },
+        @{ "key" = "Mageia-";               "class" = "mageia" },
+        @{ "key" = "manjaro-";              "class" = "manjaro" },
+        @{ "key" = "MX-";                   "class" = "mx-linux" },
+        @{ "key" = "nixos-";                "class" = "nixos" },
+        @{ "key" = "Nobara-";               "class" = "nobara" },
+        @{ "key" = "omarchy-";              "class" = "omarchy" },
+        @{ "key" = "openSUSE-Tumbleweed-";  "class" = "opensuse" },
+        @{ "key" = "pop-os_";               "class" = "pop-os" },
+        @{ "key" = "q4os-";                 "class" = "q4os" },
+        @{ "key" = "slackware64-";          "class" = "slackware" },
+        @{ "key" = "Solus-";                "class" = "solus" },
+        @{ "key" = "TUXEDO-OS-";            "class" = "tuxedo" },
+        @{ "key" = "ubuntucinnamon-";       "class" = "ubuntu-cinnamon" },
+        @{ "key" = "ubuntu-";               "class" = "ubuntu" },
+        @{ "key" = "void-live-";            "class" = "void" },
+        @{ "key" = "winux-";                "class" = "winux" },
+        @{ "key" = "Zorin-OS-";             "class" = "zorin" },
+
+        # 02_Enterprise-Server
+        @{ "key" = "AzureLinux-";           "class" = "azure" },
+        @{ "key" = "CentOS-Stream-";        "class" = "centos" },
+        @{ "key" = "TrueNAS-";              "class" = "truenas" },
+        @{ "key" = "openmediavault_";       "class" = "openmediavault" },
+        @{ "key" = "OracleLinux-";          "class" = "oracle" },
+        @{ "key" = "proxmox-backup-server_"; "class" = "proxmox-pbs" },
+        @{ "key" = "proxmox-ve_";           "class" = "proxmox" },
+        @{ "key" = "Rockstor-";             "class" = "rockstor" },
+        @{ "key" = "live-server-amd64";     "class" = "ubuntu" },
+        @{ "key" = "xcp-ng-";               "class" = "xcp-ng" },
+        @{ "key" = "zimaos-";               "class" = "zimaos" },
+
+        # 03_Security-Pentest
+        @{ "key" = "athenaos-live-";        "class" = "athena" },
+        @{ "key" = "backbox-";              "class" = "backbox" },
+        @{ "key" = "caine";                 "class" = "caine" },
+        @{ "key" = "kali-linux-";           "class" = "kali" },
+        @{ "key" = "kodachi-os-";           "class" = "kodachi" },
+        @{ "key" = "Parrot-security-";      "class" = "parrot" },
+        @{ "key" = "tails-amd64-";          "class" = "tails" },
+
+        # 04_Rescue-Systeme
+        @{ "key" = "boot-repair-disk";      "class" = "boot-repair" },
+        @{ "key" = "clonezilla-live-";      "class" = "clonezilla" },
+        @{ "key" = "drweb-livedisk-";       "class" = "drweb" },
+        @{ "key" = "eset_sysrescue_live";   "class" = "eset" },
+        @{ "key" = "foxclone";              "class" = "foxclone" },
+        @{ "key" = "fygoos_PE";             "class" = "fygoos" },
+        @{ "key" = "gparted-live-";         "class" = "gparted" },
+        @{ "key" = "grml-full-";            "class" = "grml" },
+        @{ "key" = "krd";                   "class" = "kaspersky" },
+        @{ "key" = "mt86plus";              "class" = "memtest" },
+        @{ "key" = "netboot.xyz";           "class" = "netbootxyz" },
+        @{ "key" = "redorescue-";           "class" = "redorescue" },
+        @{ "key" = "rescatux-";             "class" = "rescatux" },
+        @{ "key" = "rescuezilla-";          "class" = "rescuezilla" },
+        @{ "key" = "shredos-";              "class" = "shredos" },
+        @{ "key" = "supergrub2-";           "class" = "supergrub" },
+        @{ "key" = "systemrescue-";         "class" = "systemrescue" },
+        @{ "key" = "CorePure64-";           "class" = "tinycore" },
+        @{ "key" = "ubcd";                  "class" = "ubcd" },
+
+        # 05_BSD-Unix
+        @{ "key" = "dfly-";                 "class" = "dragonfly" },
+        @{ "key" = "FreeBSD-";              "class" = "freebsd" },
+        @{ "key" = "GhostBSD-";             "class" = "ghostbsd" },
+        @{ "key" = "NetBSD-";               "class" = "netbsd" },
+        @{ "key" = "install";               "class" = "openbsd" },
+        @{ "key" = "OPNsense-";             "class" = "opnsense" },
+
+        # 06_Windows-PE_Rescue
+        @{ "key" = "HBCD_PE_";              "class" = "hirens" }
+    )
 }
 
 function Get-AvailableUsbDrives {
@@ -1759,6 +1877,7 @@ function Set-VentoyThemeStandalone {
         }
 
         $cfg | Add-Member -NotePropertyName "menu_alias" -NotePropertyValue $menuAliases -Force
+        $cfg | Add-Member -NotePropertyName "menu_class" -NotePropertyValue (Get-VentoyMenuClassMapping) -Force
 
         $tipConfig = @{
             "left"  = "6%"
@@ -2547,6 +2666,7 @@ function Start-VentoyCopyJob {
                 }
 
                 $configObj | Add-Member -NotePropertyName "menu_alias" -NotePropertyValue $menuAliases -Force
+                $configObj | Add-Member -NotePropertyName "menu_class" -NotePropertyValue (Get-VentoyMenuClassMapping) -Force
 
                 $tipConfig = @{
                     "left"  = "6%"

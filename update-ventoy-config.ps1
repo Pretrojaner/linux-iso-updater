@@ -148,13 +148,9 @@ $controlSettings = @(
 )
 $configObj | Add-Member -NotePropertyName "control" -NotePropertyValue $controlSettings -Force
 
-$themeSetting = @{
-    "file"         = "/ventoy/theme/theme.txt"
-    "gfxmode"      = "1920x1080"
-    "display_mode" = "GUI"
-}
 $configObj | Add-Member -NotePropertyName "theme" -NotePropertyValue $themeSetting -Force
 $configObj | Add-Member -NotePropertyName "menu_alias" -NotePropertyValue $menuAliases -Force
+$configObj | Add-Member -NotePropertyName "menu_class" -NotePropertyValue (Get-VentoyMenuClassMapping) -Force
 
 $tipConfig = @{
     "left"  = "6%"
@@ -172,6 +168,7 @@ Write-Host " VENTOY-KONFIGURATION ERFOLGREICH AKTUALISIERT!" -ForegroundColor Gr
 Write-Host "===================================================================" -ForegroundColor Green
 Write-Host " Ziel-Laufwerk: $driveLetter" -ForegroundColor White
 Write-Host " Theme:         Dark Glass 42 (Cyber-Hacker 127.0.0.1 Dual-Glassbox)" -ForegroundColor White
+Write-Host " Distro-Icons:  80+ Distro-Logos (48x48 PNG) im Theme aktiv" -ForegroundColor White
 Write-Host " Menue-Aliase:  $($allTargetImages.Count) ISOs mit klaren Namen" -ForegroundColor White
 Write-Host " Menu-Tips:     $($allTargetImages.Count) Distros mit Kurzbeschreibung konfiguriert" -ForegroundColor White
 Write-Host " Position Info: left = 6%, top = 84%, color = #73d4b8 (untere Glasbox)" -ForegroundColor White

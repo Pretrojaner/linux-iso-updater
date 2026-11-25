@@ -2507,8 +2507,122 @@ menu-tip-color: "{selected['title_color']}"
             theme_txt_path.write_text(theme_txt_content, encoding="utf-8")
             active_record_path.write_text(selected["key"], encoding="utf-8")
             self.logger.log(f"[VENTOY] Theme '{selected['name']}' (1080p) auf Ziel-Laufwerk eingerichtet.", color=Colors.GREEN, level="ERFOLG")
+
+            # Distro-Icons (48x48 PNG) in Theme-Verzeichnis kopieren
+            dest_icons_dir = theme_dir / "icons"
+            dest_icons_dir.mkdir(parents=True, exist_ok=True)
+            local_icons_dir = Path(__file__).resolve().parent / "ventoy_themes" / "icons"
+            if local_icons_dir.exists() and local_icons_dir.is_dir():
+                for icon_file in local_icons_dir.glob("*.png"):
+                    shutil.copy2(icon_file, dest_icons_dir / icon_file.name)
+                self.logger.log("[VENTOY] Distro-Icons (48x48 PNG) in Theme-Verzeichnis kopiert.", color=Colors.GREEN, level="THEME")
         except Exception as e:
             self.logger.log(f"[VENTOY] Fehler beim Schreiben von theme.txt ({theme_txt_path}): {e}", color=Colors.RED, level="FEHLER")
+
+
+def get_ventoy_menu_class_mapping() -> List[Dict[str, str]]:
+    """Gibt das vollständige menu_class Mapping für alle 80 Distributionen und Verzeichnisse zurück."""
+    return [
+        # Kategorien (Ordner-Darstellung im TreeView-Modus)
+        {"dir": "/01_Desktop-Linux", "class": "linux"},
+        {"dir": "/02_Enterprise-Server", "class": "server"},
+        {"dir": "/03_Security-Pentest", "class": "security"},
+        {"dir": "/04_Rescue-Systeme", "class": "recovery"},
+        {"dir": "/05_BSD-Unix", "class": "freebsd"},
+        {"dir": "/06_Windows-PE_Rescue", "class": "windows"},
+
+        # 01_Desktop-Linux
+        {"key": "alpine-standard-", "class": "alpine"},
+        {"key": "antiX-", "class": "antix"},
+        {"key": "archlinux-", "class": "arch"},
+        {"key": "bazzite-", "class": "bazzite"},
+        {"key": "cachyos-", "class": "cachyos"},
+        {"key": "cld-", "class": "calculate"},
+        {"key": "crux-", "class": "crux"},
+        {"key": "debian-", "class": "debian"},
+        {"key": "devuan_", "class": "devuan"},
+        {"key": "elementaryos-", "class": "elementary"},
+        {"key": "EndeavourOS", "class": "endeavouros"},
+        {"key": "Fedora-Workstation-", "class": "fedora"},
+        {"key": "garuda-", "class": "garuda"},
+        {"key": "livegui-", "class": "gentoo"},
+        {"key": "neon-user-", "class": "neon"},
+        {"key": "kubuntu-", "class": "kubuntu"},
+        {"key": "linux-lite-", "class": "linuxlite"},
+        {"key": "linuxmint-", "class": "linuxmint"},
+        {"key": "lubuntu-", "class": "lubuntu"},
+        {"key": "Mageia-", "class": "mageia"},
+        {"key": "manjaro-", "class": "manjaro"},
+        {"key": "MX-", "class": "mx-linux"},
+        {"key": "nixos-", "class": "nixos"},
+        {"key": "Nobara-", "class": "nobara"},
+        {"key": "omarchy-", "class": "omarchy"},
+        {"key": "openSUSE-Tumbleweed-", "class": "opensuse"},
+        {"key": "pop-os_", "class": "pop-os"},
+        {"key": "q4os-", "class": "q4os"},
+        {"key": "slackware64-", "class": "slackware"},
+        {"key": "Solus-", "class": "solus"},
+        {"key": "TUXEDO-OS-", "class": "tuxedo"},
+        {"key": "ubuntucinnamon-", "class": "ubuntu-cinnamon"},
+        {"key": "ubuntu-", "class": "ubuntu"},
+        {"key": "void-live-", "class": "void"},
+        {"key": "winux-", "class": "winux"},
+        {"key": "Zorin-OS-", "class": "zorin"},
+
+        # 02_Enterprise-Server
+        {"key": "AzureLinux-", "class": "azure"},
+        {"key": "CentOS-Stream-", "class": "centos"},
+        {"key": "TrueNAS-", "class": "truenas"},
+        {"key": "openmediavault_", "class": "openmediavault"},
+        {"key": "OracleLinux-", "class": "oracle"},
+        {"key": "proxmox-backup-server_", "class": "proxmox-pbs"},
+        {"key": "proxmox-ve_", "class": "proxmox"},
+        {"key": "Rockstor-", "class": "rockstor"},
+        {"key": "live-server-amd64", "class": "ubuntu"},
+        {"key": "xcp-ng-", "class": "xcp-ng"},
+        {"key": "zimaos-", "class": "zimaos"},
+
+        # 03_Security-Pentest
+        {"key": "athenaos-live-", "class": "athena"},
+        {"key": "backbox-", "class": "backbox"},
+        {"key": "caine", "class": "caine"},
+        {"key": "kali-linux-", "class": "kali"},
+        {"key": "kodachi-os-", "class": "kodachi"},
+        {"key": "Parrot-security-", "class": "parrot"},
+        {"key": "tails-amd64-", "class": "tails"},
+
+        # 04_Rescue-Systeme
+        {"key": "boot-repair-disk", "class": "boot-repair"},
+        {"key": "clonezilla-live-", "class": "clonezilla"},
+        {"key": "drweb-livedisk-", "class": "drweb"},
+        {"key": "eset_sysrescue_live", "class": "eset"},
+        {"key": "foxclone", "class": "foxclone"},
+        {"key": "fygoos_PE", "class": "fygoos"},
+        {"key": "gparted-live-", "class": "gparted"},
+        {"key": "grml-full-", "class": "grml"},
+        {"key": "krd", "class": "kaspersky"},
+        {"key": "mt86plus", "class": "memtest"},
+        {"key": "netboot.xyz", "class": "netbootxyz"},
+        {"key": "redorescue-", "class": "redorescue"},
+        {"key": "rescatux-", "class": "rescatux"},
+        {"key": "rescuezilla-", "class": "rescuezilla"},
+        {"key": "shredos-", "class": "shredos"},
+        {"key": "supergrub2-", "class": "supergrub"},
+        {"key": "systemrescue-", "class": "systemrescue"},
+        {"key": "CorePure64-", "class": "tinycore"},
+        {"key": "ubcd", "class": "ubcd"},
+
+        # 05_BSD-Unix
+        {"key": "dfly-", "class": "dragonfly"},
+        {"key": "FreeBSD-", "class": "freebsd"},
+        {"key": "GhostBSD-", "class": "ghostbsd"},
+        {"key": "NetBSD-", "class": "netbsd"},
+        {"key": "install", "class": "openbsd"},
+        {"key": "OPNsense-", "class": "opnsense"},
+
+        # 06_Windows-PE_Rescue
+        {"key": "HBCD_PE_", "class": "hirens"},
+    ]
 
 
 # ==============================================================================
@@ -3621,6 +3735,7 @@ def run_ventoy_sync(
             "color": "#73d4b8",
             "tips": menu_tips
         }
+        config["menu_class"] = get_ventoy_menu_class_mapping()
 
         try:
             ventoy_json_path.parent.mkdir(parents=True, exist_ok=True)
@@ -3929,6 +4044,7 @@ def main() -> None:
                 "gfxmode": "1920x1080",
                 "display_mode": "GUI",
             }
+            cfg["menu_class"] = get_ventoy_menu_class_mapping()
             if not args.dry_run:
                 try:
                     v_json.write_text(json.dumps(cfg, indent=4, ensure_ascii=False), encoding="utf-8")
